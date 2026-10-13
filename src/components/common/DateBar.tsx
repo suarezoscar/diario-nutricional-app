@@ -1,16 +1,22 @@
 import React from 'react'
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native'
 import { FontAwesome } from '@expo/vector-icons'
 import { theme } from '../../utils/theme'
 import { formatearFechaLarga, hoy } from '../../utils/fechas'
 
 interface DateBarProps {
   fecha: string
+  cargando?: boolean
   onCambiarDia: (delta: number) => void
   onIrAHoy: () => void
 }
 
-export const DateBar: React.FC<DateBarProps> = ({ fecha, onCambiarDia, onIrAHoy }) => {
+export const DateBar: React.FC<DateBarProps> = ({
+  fecha,
+  cargando,
+  onCambiarDia,
+  onIrAHoy,
+}) => {
   const esHoy = fecha === hoy()
 
   return (
@@ -25,7 +31,16 @@ export const DateBar: React.FC<DateBarProps> = ({ fecha, onCambiarDia, onIrAHoy 
       </TouchableOpacity>
 
       <View style={styles.centerSection}>
-        <Text style={styles.dateText}>{formatearFechaLarga(fecha)}</Text>
+        <View style={styles.dateRow}>
+          <Text style={styles.dateText}>{formatearFechaLarga(fecha)}</Text>
+          {cargando && (
+            <ActivityIndicator
+              size="small"
+              color={theme.colors.primary}
+              style={styles.spinner}
+            />
+          )}
+        </View>
         {!esHoy && (
           <TouchableOpacity style={styles.todayBadge} onPress={onIrAHoy} activeOpacity={0.7}>
             <Text style={styles.todayBadgeText}>Ir a Hoy</Text>
@@ -63,6 +78,14 @@ const styles = StyleSheet.create({
   },
   centerSection: {
     alignItems: 'center',
+  },
+  dateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  spinner: {
+    marginLeft: 4,
   },
   dateText: {
     fontSize: 15,

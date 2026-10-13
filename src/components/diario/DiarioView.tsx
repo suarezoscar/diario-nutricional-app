@@ -63,13 +63,13 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
       const dir = fecha > prevFechaRef.current ? 1 : -1
       prevFechaRef.current = fecha
 
-      fadeAnim.setValue(0.25)
-      slideAnim.setValue(dir * 25)
+      fadeAnim.setValue(0.5)
+      slideAnim.setValue(dir * 18)
 
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
-          duration: 220,
+          duration: 180,
           useNativeDriver: true,
         }),
         Animated.spring(slideAnim, {
@@ -78,9 +78,20 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
           tension: 70,
           useNativeDriver: true,
         }),
-      ]).start()
+      ]).start(() => {
+        fadeAnim.setValue(1)
+        slideAnim.setValue(0)
+      })
     }
   }, [fecha, fadeAnim, slideAnim])
+
+  // Failsafe: asegurar que la opacidad siempre sea 1 al terminar de cargar
+  useEffect(() => {
+    if (!cargando) {
+      fadeAnim.setValue(1)
+      slideAnim.setValue(0)
+    }
+  }, [cargando, fadeAnim, slideAnim])
 
   useEffect(() => {
     if (fechaSeleccionada && fechaSeleccionada !== fecha) {
@@ -97,9 +108,14 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
         onAbrirSubidaMultiple={() => setShowBulkModal(true)}
         onVerificarActualizacion={onVerificarActualizacion}
       />
-      <DateBar fecha={fecha} onCambiarDia={cambiarDia} onIrAHoy={irAHoy} />
+      <DateBar
+        fecha={fecha}
+        cargando={cargando}
+        onCambiarDia={cambiarDia}
+        onIrAHoy={irAHoy}
+      />
 
-      {cargando ? (
+      {cargando && Object.keys(datos).length === 0 ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text style={styles.loadingText}>Cargando diario...</Text>
