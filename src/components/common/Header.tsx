@@ -10,6 +10,7 @@ interface HeaderProps {
   usuario: UsuarioAutenticado
   onLogout: () => void
   onAbrirPdf?: () => void
+  onAbrirSubidaMultiple?: () => void
   onVerificarActualizacion?: () => void
 }
 
@@ -17,6 +18,7 @@ export const Header: React.FC<HeaderProps> = ({
   usuario,
   onLogout,
   onAbrirPdf,
+  onAbrirSubidaMultiple,
   onVerificarActualizacion,
 }) => {
   const insets = useSafeAreaInsets()
@@ -35,6 +37,17 @@ export const Header: React.FC<HeaderProps> = ({
       </View>
 
       <View style={styles.userRow}>
+        {onAbrirSubidaMultiple && (
+          <TouchableOpacity
+            onPress={onAbrirSubidaMultiple}
+            style={styles.actionBtn}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityLabel="Subida múltiple de fotos con IA"
+          >
+            <FontAwesome name="camera-retro" size={17} color={theme.colors.primary} />
+          </TouchableOpacity>
+        )}
+
         {onAbrirPdf && (
           <TouchableOpacity
             onPress={onAbrirPdf}

@@ -5,7 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { useAuth } from './src/hooks/useAuth'
 import { useActualizador } from './src/hooks/useActualizador'
 import { LoginView } from './src/components/auth/LoginView'
-import { DiarioView } from './src/components/diario/DiarioView'
+import { MainScreen } from './src/components/MainScreen'
 import { theme } from './src/utils/theme'
 
 export default function App() {
@@ -26,7 +26,7 @@ export default function App() {
       <View style={styles.container}>
         <StatusBar style="dark" />
         {usuario ? (
-          <DiarioView
+          <MainScreen
             usuario={usuario}
             onLogout={logout}
             onVerificarActualizacion={verificarManual}

@@ -3,9 +3,10 @@ import { hoy, desplazarDia } from '../utils/fechas'
 import { cargarDia, guardarDia } from '../services/registroService'
 import type { Registro } from '../types'
 
-export function useDiario(userId: string) {
-  const [fecha, setFecha] = useState<string>(hoy())
+export function useDiario(userId: string, fechaInicial?: string) {
+  const [fecha, setFecha] = useState<string>(fechaInicial || hoy())
   const [datos, setDatos] = useState<Partial<Registro>>({})
+  const [datosAnterior, setDatosAnterior] = useState<Partial<Registro>>({})
   const [cargando, setCargando] = useState<boolean>(true)
   const [guardando, setGuardando] = useState<boolean>(false)
   const [errorGuardado, setErrorGuardado] = useState<string | null>(null)
@@ -13,15 +14,20 @@ export function useDiario(userId: string) {
   const datosRef = useRef(datos)
   datosRef.current = datos
 
-  // Cargar registro al cambiar de fecha
+  // Cargar registro y día anterior al cambiar de fecha
   useEffect(() => {
     let cancelado = false
     async function cargar() {
       setCargando(true)
       try {
-        const doc = await cargarDia(userId, fecha)
+        const diaPrev = desplazarDia(fecha, -1)
+        const [doc, docAnt] = await Promise.all([
+          cargarDia(userId, fecha),
+          cargarDia(userId, diaPrev),
+        ])
         if (!cancelado) {
           setDatos(doc)
+          setDatosAnterior(docAnt)
         }
       } catch (err) {
         if (!cancelado) {
@@ -70,14 +76,20 @@ export function useDiario(userId: string) {
     }
   }, [userId, fecha])
 
+  const establecerFecha = useCallback((nuevaFecha: string) => {
+    setFecha(nuevaFecha)
+  }, [])
+
   return {
     fecha,
     datos,
+    datosAnterior,
     cargando,
     guardando,
     errorGuardado,
     cambiarDia,
     irAHoy,
+    establecerFecha,
     actualizarCampo,
     guardar,
   }

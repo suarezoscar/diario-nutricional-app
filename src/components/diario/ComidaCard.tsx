@@ -16,6 +16,7 @@ import type { DefinicionComida } from '../../config/comidas'
 interface ComidaCardProps {
   comida: DefinicionComida
   valor: string
+  valorAnterior?: string
   fuera: boolean
   analizando: boolean
   onActualizarTexto: (texto: string) => void
@@ -26,6 +27,7 @@ interface ComidaCardProps {
 export const ComidaCard: React.FC<ComidaCardProps> = ({
   comida,
   valor,
+  valorAnterior,
   fuera,
   analizando,
   onActualizarTexto,
@@ -48,6 +50,18 @@ export const ComidaCard: React.FC<ComidaCardProps> = ({
         </View>
 
         <View style={styles.actions}>
+          {!!valorAnterior && valorAnterior.trim().length > 0 && (
+            <TouchableOpacity
+              style={styles.ayerBtn}
+              onPress={() => onActualizarTexto(valorAnterior)}
+              activeOpacity={0.7}
+              accessibilityLabel="Copiar comida del día anterior"
+            >
+              <FontAwesome name="history" size={11} color={theme.colors.primary} style={styles.ayerIcon} />
+              <Text style={styles.ayerBtnText}>Ayer</Text>
+            </TouchableOpacity>
+          )}
+
           <TouchableOpacity
             style={[styles.fueraBtn, fuera && styles.fueraBtnActivo]}
             onPress={onToggleFuera}
@@ -118,6 +132,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.sm,
+  },
+  ayerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: 3,
+    borderRadius: theme.radius.sm,
+    backgroundColor: theme.colors.primarySoft,
+    borderWidth: 1,
+    borderColor: theme.colors.primaryLight,
+  },
+  ayerIcon: {
+    marginRight: 4,
+  },
+  ayerBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: theme.colors.primary,
   },
   fueraBtn: {
     paddingHorizontal: theme.spacing.sm,

@@ -44,3 +44,6 @@ export function generarListaDias(desdeStr: string, hastaStr: string): string[] {
     return [desdeStr]
   }
 }
+
+export const generarDiasRango = generarListaDias
+

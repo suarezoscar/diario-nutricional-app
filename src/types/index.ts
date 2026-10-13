@@ -24,3 +24,12 @@ export interface UsuarioAutenticado {
   email: string | null
   displayName: string | null
 }
+
+export interface PuntoPeso {
+  fecha: string
+  peso: number
+}
+
+export type PesosPorFecha = Record<string, number>
+
+export type TabPrincipal = 'diario' | 'historico' | 'peso'

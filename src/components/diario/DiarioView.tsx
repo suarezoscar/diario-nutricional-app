@@ -14,6 +14,7 @@ import { ComidaCard } from './ComidaCard'
 import { AguaCard } from './AguaCard'
 import { PesoCard } from './PesoCard'
 import { ExportarPdfModal } from './ExportarPdfModal'
+import { BulkUploadModal } from './BulkUploadModal'
 import { useDiario } from '../../hooks/useDiario'
 import { useFotoPlato } from '../../hooks/useFotoPlato'
 import { COMIDAS } from '../../config/comidas'
@@ -22,24 +23,29 @@ import type { UsuarioAutenticado } from '../../types'
 
 interface DiarioViewProps {
   usuario: UsuarioAutenticado
+  fechaSeleccionada?: string
   onLogout: () => void
   onVerificarActualizacion?: () => void
 }
 
 export const DiarioView: React.FC<DiarioViewProps> = ({
   usuario,
+  fechaSeleccionada,
   onLogout,
   onVerificarActualizacion,
 }) => {
   const [showPdfModal, setShowPdfModal] = useState(false)
+  const [showBulkModal, setShowBulkModal] = useState(false)
 
   const {
     fecha,
     datos,
+    datosAnterior,
     cargando,
     guardando,
     cambiarDia,
     irAHoy,
+    establecerFecha,
     actualizarCampo,
     guardar,
   } = useDiario(usuario.uid)
@@ -74,12 +80,19 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
     }
   }, [fecha, fadeAnim, slideAnim])
 
+  useEffect(() => {
+    if (fechaSeleccionada && fechaSeleccionada !== fecha) {
+      establecerFecha(fechaSeleccionada)
+    }
+  }, [fechaSeleccionada, fecha, establecerFecha])
+
   return (
     <View style={styles.container}>
       <Header
         usuario={usuario}
         onLogout={onLogout}
         onAbrirPdf={() => setShowPdfModal(true)}
+        onAbrirSubidaMultiple={() => setShowBulkModal(true)}
         onVerificarActualizacion={onVerificarActualizacion}
       />
       <DateBar fecha={fecha} onCambiarDia={cambiarDia} onIrAHoy={irAHoy} />
@@ -99,6 +112,7 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
           <Animated.View style={{ opacity: fadeAnim, transform: [{ translateX: slideAnim }] }}>
           {COMIDAS.map(comida => {
             const valor = (datos[comida.clave] as string) || ''
+            const valorAnterior = (datosAnterior?.[comida.clave] as string) || ''
             const fuera = !!datos[comida.claveFuera]
 
             return (
@@ -106,6 +120,7 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
                 key={comida.clave}
                 comida={comida}
                 valor={valor}
+                valorAnterior={valorAnterior}
                 fuera={fuera}
                 analizando={analizando}
                 onActualizarTexto={texto => actualizarCampo(comida.clave, texto)}
@@ -154,6 +169,13 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
         userId={usuario.uid}
         nombreUsuario={usuario.displayName || usuario.email || 'Usuario'}
         onClose={() => setShowPdfModal(false)}
+      />
+
+      <BulkUploadModal
+        visible={showBulkModal}
+        userId={usuario.uid}
+        onClose={() => setShowBulkModal(false)}
+        onCompletado={() => establecerFecha(fecha)}
       />
     </View>
   )
