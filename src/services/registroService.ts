@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore'
+import { collection, doc, getDoc, getDocs, query, setDoc, where, limit } from 'firebase/firestore'
 import { db } from '../config/firebase'
 import type { Registro } from '../types'
 
@@ -37,14 +37,15 @@ export async function cargarRango(
   const q = query(
     collection(db, 'registros'),
     where('userId', '==', userId),
-    where('fecha', '>=', desde),
-    where('fecha', '<=', hasta),
+    limit(1000),
   )
   const snap = await getDocs(q)
   const mapa: Record<string, Registro> = {}
   snap.forEach(d => {
     const reg = d.data() as Registro
-    mapa[reg.fecha] = reg
+    if (reg.fecha && reg.fecha >= desde && reg.fecha <= hasta) {
+      mapa[reg.fecha] = reg
+    }
   })
   return mapa
 }
