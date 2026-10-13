@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
   View,
   ScrollView,
@@ -6,13 +6,13 @@ import {
   Text,
   ActivityIndicator,
   StyleSheet,
-  SafeAreaView,
 } from 'react-native'
 import { Header } from '../common/Header'
 import { DateBar } from '../common/DateBar'
 import { ComidaCard } from './ComidaCard'
 import { AguaCard } from './AguaCard'
 import { PesoCard } from './PesoCard'
+import { ExportarPdfModal } from './ExportarPdfModal'
 import { useDiario } from '../../hooks/useDiario'
 import { useFotoPlato } from '../../hooks/useFotoPlato'
 import { COMIDAS } from '../../config/comidas'
@@ -30,6 +30,8 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
   onLogout,
   onVerificarActualizacion,
 }) => {
+  const [showPdfModal, setShowPdfModal] = useState(false)
+
   const {
     fecha,
     datos,
@@ -44,10 +46,11 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
   const { analizando, tomarFotoOSeleccionar } = useFotoPlato()
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.container}>
       <Header
         usuario={usuario}
         onLogout={onLogout}
+        onAbrirPdf={() => setShowPdfModal(true)}
         onVerificarActualizacion={onVerificarActualizacion}
       />
       <DateBar fecha={fecha} onCambiarDia={cambiarDia} onIrAHoy={irAHoy} />
@@ -108,12 +111,19 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
           </TouchableOpacity>
         </ScrollView>
       )}
-    </SafeAreaView>
+
+      <ExportarPdfModal
+        visible={showPdfModal}
+        userId={usuario.uid}
+        nombreUsuario={usuario.displayName || usuario.email || 'Usuario'}
+        onClose={() => setShowPdfModal(false)}
+      />
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
     backgroundColor: theme.colors.background,
   },

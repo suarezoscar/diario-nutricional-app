@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { collection, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore'
 import { db } from '../config/firebase'
 import type { Registro } from '../types'
 
@@ -27,4 +27,24 @@ export async function guardarDia(
     fecha,
   }
   await setDoc(docRef, payload, { merge: true })
+}
+
+export async function cargarRango(
+  userId: string,
+  desde: string,
+  hasta: string,
+): Promise<Record<string, Registro>> {
+  const q = query(
+    collection(db, 'registros'),
+    where('userId', '==', userId),
+    where('fecha', '>=', desde),
+    where('fecha', '<=', hasta),
+  )
+  const snap = await getDocs(q)
+  const mapa: Record<string, Registro> = {}
+  snap.forEach(d => {
+    const reg = d.data() as Registro
+    mapa[reg.fecha] = reg
+  })
+  return mapa
 }

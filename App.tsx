@@ -1,6 +1,7 @@
 import React from 'react'
 import { View, ActivityIndicator, StyleSheet } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
+import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { useAuth } from './src/hooks/useAuth'
 import { useActualizador } from './src/hooks/useActualizador'
 import { LoginView } from './src/components/auth/LoginView'
@@ -21,18 +22,20 @@ export default function App() {
   }
 
   return (
-    <View style={styles.container}>
-      <StatusBar style="dark" />
-      {usuario ? (
-        <DiarioView
-          usuario={usuario}
-          onLogout={logout}
-          onVerificarActualizacion={verificarManual}
-        />
-      ) : (
-        <LoginView onLogin={login} />
-      )}
-    </View>
+    <SafeAreaProvider>
+      <View style={styles.container}>
+        <StatusBar style="dark" />
+        {usuario ? (
+          <DiarioView
+            usuario={usuario}
+            onLogout={logout}
+            onVerificarActualizacion={verificarManual}
+          />
+        ) : (
+          <LoginView onLogin={login} />
+        )}
+      </View>
+    </SafeAreaProvider>
   )
 }
 

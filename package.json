@@ -8,10 +8,13 @@
     "date-fns": "^4.4.0",
     "expo": "~57.0.28",
     "expo-image-picker": "~57.0.20",
+    "expo-print": "^57.0.2",
+    "expo-sharing": "^57.0.23",
     "expo-status-bar": "~57.0.1",
     "firebase": "^13.0.0",
     "react": "19.2.3",
-    "react-native": "0.86.3"
+    "react-native": "0.86.3",
+    "react-native-safe-area-context": "^5.10.1"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",

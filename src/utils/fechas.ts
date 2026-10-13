@@ -19,3 +19,28 @@ export function formatearFechaLarga(fechaStr: string): string {
     return fechaStr
   }
 }
+
+export function formatearDiaMes(fechaStr: string): string {
+  try {
+    const d = parseISO(fechaStr)
+    return format(d, 'EEE dd/MM', { locale: es })
+  } catch {
+    return fechaStr
+  }
+}
+
+export function generarListaDias(desdeStr: string, hastaStr: string): string[] {
+  try {
+    const dInicio = parseISO(desdeStr)
+    const dFin = parseISO(hastaStr)
+    const lista: string[] = []
+    let actual = dInicio
+    while (actual <= dFin) {
+      lista.push(format(actual, 'yyyy-MM-dd'))
+      actual = addDays(actual, 1)
+    }
+    return lista
+  } catch {
+    return [desdeStr]
+  }
+}
