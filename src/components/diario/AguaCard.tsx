@@ -28,16 +28,16 @@ export const AguaCard: React.FC<AguaCardProps> = ({ valor, onCambiar }) => {
       </View>
 
       <View style={styles.stepper}>
-        <TouchableOpacity style={styles.btn} onPress={() => sumar(-0.25)}>
+        <TouchableOpacity style={styles.btn} onPress={() => sumar(-0.25)} activeOpacity={0.65}>
           <Text style={styles.btnText}>-0.25L</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.btn} onPress={() => sumar(-0.5)}>
+        <TouchableOpacity style={styles.btn} onPress={() => sumar(-0.5)} activeOpacity={0.65}>
           <Text style={styles.btnText}>-0.5L</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.btn, styles.btnPlus]} onPress={() => sumar(0.25)}>
+        <TouchableOpacity style={[styles.btn, styles.btnPlus]} onPress={() => sumar(0.25)} activeOpacity={0.65}>
           <Text style={[styles.btnText, styles.btnPlusText]}>+0.25L</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.btn, styles.btnPlus]} onPress={() => sumar(0.5)}>
+        <TouchableOpacity style={[styles.btn, styles.btnPlus]} onPress={() => sumar(0.5)} activeOpacity={0.65}>
           <Text style={[styles.btnText, styles.btnPlusText]}>+0.5L</Text>
         </TouchableOpacity>
       </View>

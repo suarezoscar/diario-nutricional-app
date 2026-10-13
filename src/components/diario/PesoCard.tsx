@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { View, Text, TextInput, StyleSheet } from 'react-native'
 import { FontAwesome } from '@expo/vector-icons'
 import { Card } from '../common/Card'
@@ -17,6 +17,8 @@ export const PesoCard: React.FC<PesoCardProps> = ({
   onCambiarPeso,
   onCambiarEjercicio,
 }) => {
+  const [focusedField, setFocusedField] = useState<'peso' | 'ejercicio' | null>(null)
+
   return (
     <Card>
       <View style={styles.row}>
@@ -26,12 +28,14 @@ export const PesoCard: React.FC<PesoCardProps> = ({
             <Text style={styles.title}>Peso (kg)</Text>
           </View>
           <TextInput
-            style={styles.input}
+            style={[styles.input, focusedField === 'peso' && styles.inputFocused]}
             placeholder="Ej: 72.5"
             placeholderTextColor={theme.colors.textMuted}
             keyboardType="decimal-pad"
             value={peso}
             onChangeText={onCambiarPeso}
+            onFocus={() => setFocusedField('peso')}
+            onBlur={() => setFocusedField(null)}
           />
         </View>
 
@@ -41,11 +45,13 @@ export const PesoCard: React.FC<PesoCardProps> = ({
             <Text style={styles.title}>Ejercicio</Text>
           </View>
           <TextInput
-            style={styles.input}
+            style={[styles.input, focusedField === 'ejercicio' && styles.inputFocused]}
             placeholder="Ej: 45 min paseo"
             placeholderTextColor={theme.colors.textMuted}
             value={ejercicio}
             onChangeText={onCambiarEjercicio}
+            onFocus={() => setFocusedField('ejercicio')}
+            onBlur={() => setFocusedField(null)}
           />
         </View>
       </View>
@@ -75,7 +81,7 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
   },
   input: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: theme.colors.border,
     borderRadius: theme.radius.sm,
     paddingHorizontal: theme.spacing.sm,
@@ -83,5 +89,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: theme.colors.text,
     backgroundColor: theme.colors.background,
+  },
+  inputFocused: {
+    borderColor: theme.colors.borderFocus,
+    backgroundColor: theme.colors.focusSoft,
+    elevation: 2,
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
 })

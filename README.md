@@ -34,11 +34,14 @@
 
 ## ✨ Características Principales
 
-- 📱 **Diseño Nativo y Cómodo:** Creado específicamente para el uso diario en móviles Android, con navegación rápida de fechas (`< Día >` y atajo a `Hoy`).
+- 📱 **Diseño Nativo y Cómodo:** Creado específicamente para móviles Android con safe-area insets precisos, navegación rápida de fechas y transiciones suaves.
+- 📄 **Exportación a PDF por Rango de Fechas:** Generación de informes nutricionales elegantes y detallados con cálculo de medias de agua y comidas, listos para compartir o imprimir.
+- ✨ **Animaciones y UX Cuidada:** Transiciones elegantes de cambio de día a 60 FPS, scroll pulido con auto-ocultación de teclado y feedback visual de foco activo en cada campo de comida y peso.
 - 🥗 **Registro Completo de Comidas:** 5 comidas diarias (*Desayuno, Media mañana, Comida, Merienda y Cena*) con selector rápido de *"Comida fuera de casa"*.
 - 📸 **Visión por IA (Gemini):** Botón de cámara en cada comida para fotografiar tu plato o elegir una imagen de la galería. La IA describe y transcribe los alimentos automáticamente a coste 0,00 €.
 - 💧 **Contador de Agua:** Stepper intuitivo para sumar o restar consumo (`+0.25L`, `+0.5L`, `-0.25L`, `-0.5L`).
 - ⚖️ **Peso y Ejercicio:** Registro diario de peso corporal en kg y actividad física.
+- 🎨 **Icono Oficial Instalable:** Icono adaptativo para Android con paleta de marca `#7A9E7E` y compatibilidad con launcher circular, squircle y Material You mono.
 - 🔐 **Persistencia de Sesión Segura:** Conexión con Firebase Auth almacenada nativamente en `@react-native-async-storage/async-storage` (solo inicias sesión una vez).
 - 🔄 **Auto-actualizaciones In-App:** La aplicación comprueba automáticamente si hay una nueva versión publicada en GitHub Releases y ofrece descargar e instalar el `.apk` con un toque.
 

@@ -8,6 +8,8 @@ export const theme = {
     text: '#212121',
     textMuted: '#666666',
     border: '#e0e0e0',
+    borderFocus: '#4caf50',
+    focusSoft: '#ffffff',
     error: '#d32f2f',
     errorSoft: '#ffebee',
     white: '#ffffff',

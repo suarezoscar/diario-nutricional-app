@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
   View,
   Text,
@@ -32,6 +32,8 @@ export const ComidaCard: React.FC<ComidaCardProps> = ({
   onToggleFuera,
   onTomarFoto,
 }) => {
+  const [isFocused, setIsFocused] = useState(false)
+
   return (
     <Card>
       <View style={styles.header}>
@@ -49,6 +51,7 @@ export const ComidaCard: React.FC<ComidaCardProps> = ({
           <TouchableOpacity
             style={[styles.fueraBtn, fuera && styles.fueraBtnActivo]}
             onPress={onToggleFuera}
+            activeOpacity={0.7}
           >
             <Text style={[styles.fueraBtnText, fuera && styles.fueraBtnTextActivo]}>
               {fuera ? '✓ Fuera' : 'Fuera'}
@@ -60,6 +63,7 @@ export const ComidaCard: React.FC<ComidaCardProps> = ({
             onPress={onTomarFoto}
             disabled={analizando}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            activeOpacity={0.7}
           >
             {analizando ? (
               <ActivityIndicator size="small" color={theme.colors.primary} />
@@ -71,13 +75,15 @@ export const ComidaCard: React.FC<ComidaCardProps> = ({
       </View>
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, isFocused && styles.inputFocused]}
         multiline
         placeholder={comida.placeholder}
         placeholderTextColor={theme.colors.textMuted}
         value={valor}
         onChangeText={onActualizarTexto}
         maxLength={MAX_CARACTERES_COMIDA}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
       />
 
       <View style={styles.footer}>
@@ -138,7 +144,7 @@ const styles = StyleSheet.create({
     marginLeft: theme.spacing.xs,
   },
   input: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: theme.colors.border,
     borderRadius: theme.radius.sm,
     padding: theme.spacing.sm,
@@ -147,6 +153,15 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
     minHeight: 64,
     textAlignVertical: 'top',
+  },
+  inputFocused: {
+    borderColor: theme.colors.borderFocus,
+    backgroundColor: theme.colors.focusSoft,
+    elevation: 2,
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   footer: {
     alignItems: 'flex-end',

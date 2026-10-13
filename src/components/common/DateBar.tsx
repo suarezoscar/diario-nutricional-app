@@ -18,6 +18,7 @@ export const DateBar: React.FC<DateBarProps> = ({ fecha, onCambiarDia, onIrAHoy 
       <TouchableOpacity
         style={styles.navButton}
         onPress={() => onCambiarDia(-1)}
+        activeOpacity={0.6}
         accessibilityLabel="Día anterior"
       >
         <FontAwesome name="chevron-left" size={16} color={theme.colors.text} />
@@ -26,7 +27,7 @@ export const DateBar: React.FC<DateBarProps> = ({ fecha, onCambiarDia, onIrAHoy 
       <View style={styles.centerSection}>
         <Text style={styles.dateText}>{formatearFechaLarga(fecha)}</Text>
         {!esHoy && (
-          <TouchableOpacity style={styles.todayBadge} onPress={onIrAHoy}>
+          <TouchableOpacity style={styles.todayBadge} onPress={onIrAHoy} activeOpacity={0.7}>
             <Text style={styles.todayBadgeText}>Ir a Hoy</Text>
           </TouchableOpacity>
         )}
@@ -35,6 +36,7 @@ export const DateBar: React.FC<DateBarProps> = ({ fecha, onCambiarDia, onIrAHoy 
       <TouchableOpacity
         style={styles.navButton}
         onPress={() => onCambiarDia(1)}
+        activeOpacity={0.6}
         accessibilityLabel="Día siguiente"
       >
         <FontAwesome name="chevron-right" size={16} color={theme.colors.text} />

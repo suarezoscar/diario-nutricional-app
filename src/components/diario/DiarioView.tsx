@@ -1,10 +1,11 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import {
   View,
   ScrollView,
   TouchableOpacity,
   Text,
   ActivityIndicator,
+  Animated,
   StyleSheet,
 } from 'react-native'
 import { Header } from '../common/Header'
@@ -45,6 +46,34 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
 
   const { analizando, tomarFotoOSeleccionar } = useFotoPlato()
 
+  const fadeAnim = useRef(new Animated.Value(1)).current
+  const slideAnim = useRef(new Animated.Value(0)).current
+  const prevFechaRef = useRef(fecha)
+
+  useEffect(() => {
+    if (prevFechaRef.current !== fecha) {
+      const dir = fecha > prevFechaRef.current ? 1 : -1
+      prevFechaRef.current = fecha
+
+      fadeAnim.setValue(0.25)
+      slideAnim.setValue(dir * 25)
+
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 220,
+          useNativeDriver: true,
+        }),
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          friction: 8,
+          tension: 70,
+          useNativeDriver: true,
+        }),
+      ]).start()
+    }
+  }, [fecha, fadeAnim, slideAnim])
+
   return (
     <View style={styles.container}>
       <Header
@@ -61,7 +90,13 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
           <Text style={styles.loadingText}>Cargando diario...</Text>
         </View>
       ) : (
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        >
+          <Animated.View style={{ opacity: fadeAnim, transform: [{ translateX: slideAnim }] }}>
           {COMIDAS.map(comida => {
             const valor = (datos[comida.clave] as string) || ''
             const fuera = !!datos[comida.claveFuera]
@@ -98,17 +133,19 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
             onCambiarEjercicio={val => actualizarCampo('ejercicio', val)}
           />
 
-          <TouchableOpacity
-            style={[styles.saveBtn, guardando && styles.saveBtnDisabled]}
-            onPress={guardar}
-            disabled={guardando}
-          >
-            {guardando ? (
-              <ActivityIndicator color={theme.colors.white} />
-            ) : (
-              <Text style={styles.saveBtnText}>Guardar cambios</Text>
-            )}
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.saveBtn, guardando && styles.saveBtnDisabled]}
+              onPress={guardar}
+              disabled={guardando}
+              activeOpacity={0.8}
+            >
+              {guardando ? (
+                <ActivityIndicator color={theme.colors.white} />
+              ) : (
+                <Text style={styles.saveBtnText}>Guardar cambios</Text>
+              )}
+            </TouchableOpacity>
+          </Animated.View>
         </ScrollView>
       )}
 
