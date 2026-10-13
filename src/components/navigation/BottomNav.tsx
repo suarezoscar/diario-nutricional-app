@@ -1,5 +1,5 @@
-import React from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native'
+import React, { useState, useEffect } from 'react'
+import { View, Text, TouchableOpacity, StyleSheet, Platform, Keyboard } from 'react-native'
 import { FontAwesome } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { theme } from '../../utils/theme'
@@ -25,6 +25,24 @@ const ITEMS: ItemTab[] = [
 export const BottomNav: React.FC<BottomNavProps> = ({ tabActiva, onCambiarTab }) => {
   const insets = useSafeAreaInsets()
   const bottomPadding = Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 12)
+  const [tecladoVisible, setTecladoVisible] = useState(false)
+
+  useEffect(() => {
+    const showEvent = Platform.OS === 'android' ? 'keyboardDidShow' : 'keyboardWillShow'
+    const hideEvent = Platform.OS === 'android' ? 'keyboardDidHide' : 'keyboardWillHide'
+
+    const showSub = Keyboard.addListener(showEvent, () => setTecladoVisible(true))
+    const hideSub = Keyboard.addListener(hideEvent, () => setTecladoVisible(false))
+
+    return () => {
+      showSub.remove()
+      hideSub.remove()
+    }
+  }, [])
+
+  if (tecladoVisible) {
+    return null
+  }
 
   return (
     <View style={[styles.container, { paddingBottom: bottomPadding }]}>

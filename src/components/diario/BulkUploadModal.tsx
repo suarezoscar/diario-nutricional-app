@@ -79,7 +79,13 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
           </TouchableOpacity>
         </View>
 
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          automaticallyAdjustKeyboardInsets={true}
+        >
           <TouchableOpacity
             style={styles.pickerBtn}
             onPress={seleccionarFotos}

@@ -55,6 +55,8 @@ export const PesoView: React.FC<PesoViewProps> = ({ userId, onSeleccionarDia }) 
       contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
+      automaticallyAdjustKeyboardInsets={true}
     >
       {/* Tarjeta de métricas */}
       {estadisticas && (
@@ -171,7 +173,7 @@ export const PesoView: React.FC<PesoViewProps> = ({ userId, onSeleccionarDia }) 
 const styles = StyleSheet.create({
   scrollContent: {
     padding: theme.spacing.md,
-    paddingBottom: theme.spacing.xxl * 2,
+    paddingBottom: 160,
   },
   statsCard: {
     backgroundColor: theme.colors.primarySoft,

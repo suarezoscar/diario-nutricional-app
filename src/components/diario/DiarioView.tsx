@@ -6,6 +6,8 @@ import {
   Text,
   ActivityIndicator,
   Animated,
+  KeyboardAvoidingView,
+  Platform,
   StyleSheet,
 } from 'react-native'
 import { Header } from '../common/Header'
@@ -103,12 +105,17 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
           <Text style={styles.loadingText}>Cargando diario...</Text>
         </View>
       ) : (
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
+        <KeyboardAvoidingView
+          style={styles.keyboardAvoid}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            automaticallyAdjustKeyboardInsets={true}
+          >
           <Animated.View style={{ opacity: fadeAnim, transform: [{ translateX: slideAnim }] }}>
           {COMIDAS.map(comida => {
             const valor = (datos[comida.clave] as string) || ''
@@ -162,7 +169,8 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
             </TouchableOpacity>
           </Animated.View>
         </ScrollView>
-      )}
+      </KeyboardAvoidingView>
+    )}
 
       <ExportarPdfModal
         visible={showPdfModal}
@@ -186,6 +194,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
+  keyboardAvoid: {
+    flex: 1,
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -198,7 +209,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: theme.spacing.md,
-    paddingBottom: theme.spacing.xxl * 2,
+    paddingBottom: 160,
   },
   saveBtn: {
     backgroundColor: theme.colors.primary,
