@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "diario-nutricional-app",
+    "name": "Diario Nutricional",
     "slug": "diario-nutricional-app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -10,6 +10,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.oscar.diarionutricional",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
