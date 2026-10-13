@@ -9,29 +9,37 @@ dist/
 web-build/
 expo-env.d.ts
 
-# Native
+# Native credentials and signing keys
 .kotlin/
 *.orig.*
 *.jks
 *.p8
 *.p12
 *.key
+*.keystore
+credentials/
 *.mobileprovision
+
+# Environment and sensitive data
+.env
+.env.*
+*.env
+*.env.local
+!.env.example
 
 # Metro
 .metro-health-check*
 
-# debug
+# debug & logs
 npm-debug.*
 yarn-debug.*
 yarn-error.*
+*.log
 
-# macOS
+# OS files
 .DS_Store
+Thumbs.db
 *.pem
-
-# local env files
-.env*.local
 
 # typescript
 *.tsbuildinfo

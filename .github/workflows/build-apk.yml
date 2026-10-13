@@ -1,0 +1,107 @@
+name: Compilar APK y Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Configurar Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Configurar Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 17
+
+      - name: Configurar Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      - name: Prebuild nativo Android (Expo)
+        run: pnpm exec expo prebuild --platform android --clean
+
+      - name: Compilar APK con Gradle
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Preparar Keystore de Firma
+        id: keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          mkdir -p credentials
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "Usando keystore configurado en GitHub Secrets..."
+            echo "$KEYSTORE_BASE64" | base64 -d > credentials/release.keystore
+            echo "store_pass=${KEYSTORE_PASSWORD:-diarionutricional2026}" >> "$GITHUB_OUTPUT"
+            echo "key_alias=${KEY_ALIAS:-diarionutricional}" >> "$GITHUB_OUTPUT"
+            echo "key_pass=${KEY_PASSWORD:-diarionutricional2026}" >> "$GITHUB_OUTPUT"
+          else
+            echo "Aviso: ANDROID_KEYSTORE_BASE64 no configurado en Secrets. Generando clave temporal de compilación..."
+            keytool -genkeypair -v -keystore credentials/release.keystore \
+              -alias diarionutricional -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass tempkeystorepass -keypass tempkeystorepass \
+              -dname "CN=DiarioNutricional, OU=Mobile, O=SuarezOscar, L=Madrid, ST=Madrid, C=ES"
+            echo "store_pass=tempkeystorepass" >> "$GITHUB_OUTPUT"
+            echo "key_alias=diarionutricional" >> "$GITHUB_OUTPUT"
+            echo "key_pass=tempkeystorepass" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Firmar APK con apksigner
+        run: |
+          APK_RAW=$(find android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          BUILD_TOOLS_DIR=$(ls -1d $ANDROID_HOME/build-tools/* | sort -V | tail -n 1)
+          TAG_NAME="${{ github.ref_name }}"
+          [ -z "$TAG_NAME" ] && TAG_NAME="v1.0.0"
+          OUTPUT_APK="DiarioNutricional-${TAG_NAME}.apk"
+
+          echo "Firmando $APK_RAW con apksigner..."
+          $BUILD_TOOLS_DIR/apksigner sign \
+            --ks credentials/release.keystore \
+            --ks-pass "pass:${{ steps.keystore.outputs.store_pass }}" \
+            --ks-key-alias "${{ steps.keystore.outputs.key_alias }}" \
+            --key-pass "pass:${{ steps.keystore.outputs.key_pass }}" \
+            --out "$OUTPUT_APK" \
+            "$APK_RAW"
+
+          echo "Verificando firma..."
+          $BUILD_TOOLS_DIR/apksigner verify "$OUTPUT_APK"
+
+      - name: Publicar Release en GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          files: DiarioNutricional-*.apk
+          name: Versión ${{ github.ref_name || 'v1.0.0' }}
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

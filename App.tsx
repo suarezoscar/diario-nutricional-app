@@ -2,12 +2,14 @@ import React from 'react'
 import { View, ActivityIndicator, StyleSheet } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import { useAuth } from './src/hooks/useAuth'
+import { useActualizador } from './src/hooks/useActualizador'
 import { LoginView } from './src/components/auth/LoginView'
 import { DiarioView } from './src/components/diario/DiarioView'
 import { theme } from './src/utils/theme'
 
 export default function App() {
   const { usuario, cargando, login, logout } = useAuth()
+  const { verificarManual } = useActualizador()
 
   if (cargando) {
     return (
@@ -22,7 +24,11 @@ export default function App() {
     <View style={styles.container}>
       <StatusBar style="dark" />
       {usuario ? (
-        <DiarioView usuario={usuario} onLogout={logout} />
+        <DiarioView
+          usuario={usuario}
+          onLogout={logout}
+          onVerificarActualizacion={verificarManual}
+        />
       ) : (
         <LoginView onLogin={login} />
       )}

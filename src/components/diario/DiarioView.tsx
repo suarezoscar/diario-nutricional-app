@@ -22,9 +22,14 @@ import type { UsuarioAutenticado } from '../../types'
 interface DiarioViewProps {
   usuario: UsuarioAutenticado
   onLogout: () => void
+  onVerificarActualizacion?: () => void
 }
 
-export const DiarioView: React.FC<DiarioViewProps> = ({ usuario, onLogout }) => {
+export const DiarioView: React.FC<DiarioViewProps> = ({
+  usuario,
+  onLogout,
+  onVerificarActualizacion,
+}) => {
   const {
     fecha,
     datos,
@@ -40,7 +45,11 @@ export const DiarioView: React.FC<DiarioViewProps> = ({ usuario, onLogout }) => 
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <Header usuario={usuario} onLogout={onLogout} />
+      <Header
+        usuario={usuario}
+        onLogout={onLogout}
+        onVerificarActualizacion={onVerificarActualizacion}
+      />
       <DateBar fecha={fecha} onCambiarDia={cambiarDia} onIrAHoy={irAHoy} />
 
       {cargando ? (
