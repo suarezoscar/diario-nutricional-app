@@ -81,10 +81,10 @@ const styles = StyleSheet.create({
     borderTopColor: theme.colors.border,
     paddingTop: theme.spacing.xs,
     elevation: 8,
-    shadowColor: '#000',
+    shadowColor: theme.colors.primaryDark,
     shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
   },
   tabBtn: {
     flex: 1,

@@ -2,7 +2,7 @@
   "expo": {
     "name": "Diario Nutricional",
     "slug": "diario-nutricional-app",
-    "version": "1.0.8",
+    "version": "1.0.9",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -11,13 +11,13 @@
     },
     "android": {
       "package": "com.oscar.diarionutricional",
-      "versionCode": 9,
+      "versionCode": 10,
       "permissions": [
         "REQUEST_INSTALL_PACKAGES"
       ],
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
-        "backgroundColor": "#7A9E7E",
+        "backgroundColor": "#1b5e20",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"

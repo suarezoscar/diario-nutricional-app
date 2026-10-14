@@ -113,11 +113,11 @@ const styles = StyleSheet.create({
   versionBadge: {
     marginLeft: 6,
     fontSize: 10,
-    fontWeight: '600',
-    color: theme.colors.textMuted,
-    backgroundColor: theme.colors.background,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
+    fontWeight: '700',
+    color: theme.colors.primary,
+    backgroundColor: theme.colors.primarySoft,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
     borderRadius: theme.radius.sm,
   },
   userRow: {
