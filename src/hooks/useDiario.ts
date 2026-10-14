@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { hoy, desplazarDia } from '../utils/fechas'
 import { cargarDia, guardarDia } from '../services/registroService'
+import { guardarCacheHoyYSincronizarWidget } from '../services/widgetService'
 import type { Registro } from '../types'
 
 /**
@@ -50,6 +51,10 @@ export function useDiario(userId: string, fechaInicial?: string) {
         hayCambiosPendientesRef.current = false
         setEstadoGuardado('guardado')
 
+        if (fechaDestino === hoy()) {
+          void guardarCacheHoyYSincronizarWidget(datosAGuardar)
+        }
+
         if (resetEstadoTimerRef.current) clearTimeout(resetEstadoTimerRef.current)
         resetEstadoTimerRef.current = setTimeout(() => {
           setEstadoGuardado('al_dia')
@@ -97,6 +102,9 @@ export function useDiario(userId: string, fechaInicial?: string) {
           setDatosAnterior(docAnt)
           hayCambiosPendientesRef.current = false
           setEstadoGuardado('al_dia')
+          if (fecha === hoy()) {
+            void guardarCacheHoyYSincronizarWidget(doc)
+          }
         }
       } catch (err) {
         if (!cancelado) {
@@ -163,6 +171,9 @@ export function useDiario(userId: string, fechaInicial?: string) {
           [campo]: valor,
         }
         datosRef.current = actualizados
+        if (fechaRef.current === hoy()) {
+          void guardarCacheHoyYSincronizarWidget(actualizados)
+        }
         return actualizados
       })
 
