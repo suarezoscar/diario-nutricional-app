@@ -1,4 +1,6 @@
-import { Linking } from 'react-native'
+import { Linking, Platform } from 'react-native'
+import * as FileSystem from 'expo-file-system/legacy'
+import * as IntentLauncher from 'expo-intent-launcher'
 import { APP_VERSION, GITHUB_LATEST_RELEASE_URL } from '../config/constants'
 
 export interface InfoActualizacion {
@@ -68,11 +70,67 @@ export async function comprobarActualizacion(): Promise<InfoActualizacion | null
 }
 
 /**
- * Abre la descarga del APK directamente en el navegador del dispositivo para su instalación.
+ * Abre la descarga del APK directamente en el navegador del dispositivo como alternativa.
  */
 export async function abrirDescargaApk(url: string): Promise<void> {
   const soportado = await Linking.canOpenURL(url)
   if (soportado) {
     await Linking.openURL(url)
   }
+}
+
+/**
+ * Descarga el APK internamente con indicador de progreso y lanza
+ * el instalador nativo de Android (PackageInstaller).
+ */
+export async function descargarEInstalarApk(
+  url: string,
+  onProgreso?: (porcentaje: number) => void,
+): Promise<void> {
+  if (Platform.OS !== 'android') {
+    await abrirDescargaApk(url)
+    return
+  }
+
+  const destino = `${FileSystem.cacheDirectory}diario-nutricional-update.apk`
+
+  // Limpiar archivo temporal previo si existiese
+  try {
+    const info = await FileSystem.getInfoAsync(destino)
+    if (info.exists) {
+      await FileSystem.deleteAsync(destino, { idempotent: true })
+    }
+  } catch {
+    // Si no se puede borrar, continuar
+  }
+
+  // Descarga con reporte progresivo en porcentaje
+  const downloadResumable = FileSystem.createDownloadResumable(
+    url,
+    destino,
+    {},
+    (downloadProgress) => {
+      const total = downloadProgress.totalBytesExpectedToWrite
+      const actual = downloadProgress.totalBytesWritten
+      if (total > 0 && onProgreso) {
+        const pct = Math.min(100, Math.max(0, Math.round((actual / total) * 100)))
+        onProgreso(pct)
+      }
+    },
+  )
+
+  const resultado = await downloadResumable.downloadAsync()
+  if (!resultado || !resultado.uri) {
+    throw new Error('No se pudo completar la descarga del APK de actualización.')
+  }
+
+  // Convertir file:// a content:// mediante FileProvider para que el PackageInstaller del sistema lo pueda leer
+  const contentUri = await FileSystem.getContentUriAsync(resultado.uri)
+
+  // Abrir el instalador nativo del sistema operativo Android
+  await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
+    data: contentUri,
+    flags: 1, // Intent.FLAG_GRANT_READ_URI_PERMISSION
+    type: 'application/vnd.android.package-archive',
+  })
 }

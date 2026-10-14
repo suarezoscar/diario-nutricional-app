@@ -6,11 +6,21 @@ import { useAuth } from './src/hooks/useAuth'
 import { useActualizador } from './src/hooks/useActualizador'
 import { LoginView } from './src/components/auth/LoginView'
 import { MainScreen } from './src/components/MainScreen'
+import { UpdateModal } from './src/components/common/UpdateModal'
 import { theme } from './src/utils/theme'
 
 export default function App() {
   const { usuario, cargando, login, logout } = useAuth()
-  const { verificarManual } = useActualizador()
+  const {
+    actualizacion,
+    descargando,
+    progreso,
+    errorDescarga,
+    instalar,
+    descartar,
+    abrirEnNavegador,
+    verificarManual,
+  } = useActualizador()
 
   if (cargando) {
     return (
@@ -34,6 +44,17 @@ export default function App() {
         ) : (
           <LoginView onLogin={login} />
         )}
+
+        <UpdateModal
+          visible={!!actualizacion}
+          info={actualizacion}
+          descargando={descargando}
+          progreso={progreso}
+          error={errorDescarga}
+          onInstalar={instalar}
+          onCerrar={descartar}
+          onAbrirNavegador={abrirEnNavegador}
+        />
       </View>
     </SafeAreaProvider>
   )
