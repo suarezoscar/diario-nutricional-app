@@ -96,7 +96,7 @@ export const ExportarPdfModal: React.FC<ExportarPdfModalProps> = ({
           </View>
 
           <Text style={styles.subtitle}>
-            Genera un documento PDF profesional con todas tus comidas, agua y peso en formato horizontal.
+            Genera un documento PDF profesional con todas tus comidas, agua y ejercicio en formato horizontal.
           </Text>
 
           <Text style={styles.labelRango}>Atajos rápidos:</Text>

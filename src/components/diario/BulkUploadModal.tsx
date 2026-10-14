@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
   Modal,
   View,
@@ -10,9 +10,14 @@ import {
   ActivityIndicator,
   Alert,
   StyleSheet,
+  Platform,
+  StatusBar as RNStatusBar,
 } from 'react-native'
 import { FontAwesome } from '@expo/vector-icons'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useBulkProcessor } from '../../hooks/useBulkProcessor'
+import { CalendarModal } from '../common/CalendarModal'
+import { formatearFechaCorta } from '../../utils/fechas'
 import { theme } from '../../utils/theme'
 import type { ClaveComida } from '../../types'
 
@@ -37,6 +42,13 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
   onClose,
   onCompletado,
 }) => {
+  const insets = useSafeAreaInsets()
+  const topPadding = Math.max(
+    insets.top,
+    Platform.OS === 'android' ? (RNStatusBar.currentHeight || 24) : 0,
+    16,
+  )
+
   const {
     items,
     procesando,
@@ -47,6 +59,10 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
     guardarLote,
     limpiar,
   } = useBulkProcessor(userId)
+
+  const [itemEditandoFecha, setItemEditandoFecha] = useState<{ id: string; fecha: string } | null>(
+    null,
+  )
 
   const handleCerrar = () => {
     limpiar()
@@ -61,20 +77,26 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
     }
 
     const total = await guardarLote()
-    Alert.alert('¡Guardado!', `Se han registrado ${total} comidas en tu diario.`)
+    Alert.alert('¡Guardado!', `Se han registrado ${total} platos en tu diario.`)
     onCompletado()
     handleCerrar()
   }
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={handleCerrar}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      onRequestClose={handleCerrar}
+      statusBarTranslucent={true}
+    >
+      <RNStatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
       <View style={styles.container}>
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: topPadding + 6 }]}>
           <View style={styles.headerTitleWrap}>
             <FontAwesome name="camera-retro" size={18} color={theme.colors.primary} />
             <Text style={styles.headerTitle}>Subida múltiple (IA)</Text>
           </View>
-          <TouchableOpacity onPress={handleCerrar} style={styles.closeBtn}>
+          <TouchableOpacity onPress={handleCerrar} style={styles.closeBtn} activeOpacity={0.7}>
             <FontAwesome name="times" size={18} color={theme.colors.textMuted} />
           </TouchableOpacity>
         </View>
@@ -107,7 +129,23 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
               <View style={styles.itemHeader}>
                 <Image source={{ uri: item.uri }} style={styles.thumb} />
                 <View style={styles.itemInfo}>
-                  <View style={styles.statusRow}>
+                  <View style={styles.metaRow}>
+                    {/* Botón táctil para cambiar la fecha manualmente */}
+                    <TouchableOpacity
+                      style={styles.dateBadge}
+                      onPress={() => setItemEditandoFecha({ id: item.id, fecha: item.fecha })}
+                      activeOpacity={0.7}
+                      accessibilityLabel="Cambiar día asignado a la foto"
+                    >
+                      <FontAwesome name="calendar" size={11} color={theme.colors.primary} />
+                      <Text style={styles.dateBadgeText}>
+                        {formatearFechaCorta(item.fecha)}
+                        {item.horaFormateada ? ` (${item.horaFormateada})` : ''}
+                      </Text>
+                      <FontAwesome name="pencil" size={10} color={theme.colors.textMuted} />
+                    </TouchableOpacity>
+
+                    {/* Estado del análisis IA */}
                     {item.estado === 'analizando' && (
                       <View style={styles.statusPill}>
                         <ActivityIndicator size="small" color={theme.colors.primary} />
@@ -116,18 +154,19 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
                     )}
                     {item.estado === 'listo' && (
                       <View style={[styles.statusPill, styles.statusPillOk]}>
-                        <FontAwesome name="check" size={11} color={theme.colors.primary} />
+                        <FontAwesome name="check" size={10} color={theme.colors.primary} />
                         <Text style={[styles.statusText, styles.statusTextOk]}>Listo</Text>
                       </View>
                     )}
                     {item.estado === 'error' && (
                       <View style={[styles.statusPill, styles.statusPillErr]}>
-                        <FontAwesome name="exclamation-triangle" size={11} color={theme.colors.error} />
-                        <Text style={[styles.statusText, styles.statusTextErr]}>Reintentar</Text>
+                        <FontAwesome name="exclamation-triangle" size={10} color={theme.colors.error} />
+                        <Text style={[styles.statusText, styles.statusTextErr]}>Error</Text>
                       </View>
                     )}
                   </View>
 
+                  {/* Selector de comida táctil para cambiar la casilla */}
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.mealSelector}>
                     {OPCIONES_COMIDA.map(op => {
                       const activo = item.comidaClave === op.clave
@@ -136,6 +175,7 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
                           key={op.clave}
                           style={[styles.mealBtn, activo && styles.mealBtnActivo]}
                           onPress={() => actualizarItem(item.id, { comidaClave: op.clave })}
+                          activeOpacity={0.7}
                         >
                           <Text style={[styles.mealBtnText, activo && styles.mealBtnTextActivo]}>
                             {op.label}
@@ -150,6 +190,8 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
                   onPress={() => eliminarItem(item.id)}
                   style={styles.delBtn}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  activeOpacity={0.7}
+                  accessibilityLabel="Eliminar foto"
                 >
                   <FontAwesome name="trash-o" size={16} color={theme.colors.error} />
                 </TouchableOpacity>
@@ -186,6 +228,21 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
           </View>
         )}
       </View>
+
+      {/* Modal para cambiar manualmente la fecha asignada a la foto */}
+      <CalendarModal
+        visible={itemEditandoFecha !== null}
+        modo="single"
+        titulo="Asignar día a la foto"
+        fechaSeleccionada={itemEditandoFecha?.fecha}
+        onSeleccionarFecha={nuevaFecha => {
+          if (itemEditandoFecha) {
+            actualizarItem(itemEditandoFecha.id, { fecha: nuevaFecha })
+          }
+          setItemEditandoFecha(null)
+        }}
+        onClose={() => setItemEditandoFecha(null)}
+      />
     </Modal>
   )
 }
@@ -200,7 +257,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.xl,
     paddingBottom: theme.spacing.md,
     backgroundColor: theme.colors.card,
     borderBottomWidth: 1,
@@ -278,8 +334,28 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: theme.spacing.sm,
   },
-  statusRow: {
-    marginBottom: 4,
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+    gap: 6,
+  },
+  dateBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: theme.colors.background,
+    borderWidth: 1,
+    borderColor: theme.colors.primaryLight,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: theme.radius.sm,
+  },
+  dateBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: theme.colors.primary,
   },
   statusPill: {
     flexDirection: 'row',

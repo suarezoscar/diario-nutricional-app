@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react'
 import * as ImagePicker from 'expo-image-picker'
 import { describirPlatoConBase64 } from '../services/iaService'
 import { cargarDia, guardarDia } from '../services/registroService'
-import { hoy } from '../utils/fechas'
+import { asignarComidaPorHora, extraerFechaYHoraDeFoto } from '../utils/fechas'
 import type { ClaveComida, Registro } from '../types'
 
 export interface ItemFotoLote {
@@ -11,18 +11,10 @@ export interface ItemFotoLote {
   base64?: string
   comidaClave: ClaveComida
   fecha: string
+  horaFormateada?: string
   descripcion: string
   estado: 'pendiente' | 'analizando' | 'listo' | 'error'
   error?: string
-}
-
-function sugerirComidaPorHora(): ClaveComida {
-  const hora = new Date().getHours()
-  if (hora < 11) return 'desayuno'
-  if (hora < 13) return 'mediaManana'
-  if (hora < 16) return 'comida'
-  if (hora < 19) return 'merienda'
-  return 'cena'
 }
 
 export function useBulkProcessor(userId: string) {
@@ -78,22 +70,28 @@ export function useBulkProcessor(userId: string) {
       allowsMultipleSelection: true,
       quality: 0.7,
       base64: true,
+      exif: true,
     })
 
     if (res.canceled || !res.assets || res.assets.length === 0) return
 
-    const comidaSugerida = sugerirComidaPorHora()
-    const fechaActual = hoy()
+    const nuevos: ItemFotoLote[] = await Promise.all(
+      res.assets.map(async (asset, idx) => {
+        const info = await extraerFechaYHoraDeFoto(asset)
+        const comidaSugerida = asignarComidaPorHora(info.hora, info.minuto)
 
-    const nuevos: ItemFotoLote[] = res.assets.map((asset, idx) => ({
-      id: `${Date.now()}_${idx}`,
-      uri: asset.uri,
-      base64: asset.base64 || undefined,
-      comidaClave: comidaSugerida,
-      fecha: fechaActual,
-      descripcion: '',
-      estado: 'pendiente',
-    }))
+        return {
+          id: `${Date.now()}_${idx}`,
+          uri: asset.uri,
+          base64: asset.base64 || undefined,
+          comidaClave: comidaSugerida,
+          fecha: info.fecha,
+          horaFormateada: info.horaFormateada,
+          descripcion: '',
+          estado: 'pendiente' as const,
+        }
+      }),
+    )
 
     setItems(prev => [...prev, ...nuevos])
     procesarCola(nuevos)

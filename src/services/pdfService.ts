@@ -39,12 +39,10 @@ export function construirHtmlReporte(
       const cena = formatearCeldaComida(reg.cena, reg.cenaFuera)
 
       const agua = reg.agua ? `${reg.agua} L` : '-'
-      const pesoEj = [
-        reg.peso ? `Peso: ${reg.peso} kg` : '',
-        reg.ejercicio ? reg.ejercicio : '',
-      ]
-        .filter(Boolean)
-        .join('<br/>') || '-'
+      const ejercicio =
+        reg.ejercicio && reg.ejercicio.trim()
+          ? reg.ejercicio.trim().replace(/\n/g, '<br/>')
+          : '-'
 
       return `
         <tr>
@@ -55,7 +53,7 @@ export function construirHtmlReporte(
           <td>${merienda}</td>
           <td>${cena}</td>
           <td class="col-centro">${agua}</td>
-          <td>${pesoEj}</td>
+          <td>${ejercicio}</td>
         </tr>
       `
     })
@@ -143,7 +141,7 @@ export function construirHtmlReporte(
             <th>Merienda</th>
             <th>Cena</th>
             <th class="col-centro">Agua</th>
-            <th>Peso / Ejercicio</th>
+            <th>Ejercicio</th>
           </tr>
         </thead>
         <tbody>

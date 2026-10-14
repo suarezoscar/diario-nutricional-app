@@ -118,3 +118,138 @@ export function inicioYFinMesActual(): { desde: string; hasta: string } {
     hasta: format(endOfMonth(ahora), 'yyyy-MM-dd'),
   }
 }
+
+/**
+ * Asigna una comida según la hora y minuto del día:
+ * - 06:00 a 10:59: Desayuno
+ * - 11:00 a 13:29: Media mañana
+ * - 13:30 a 16:59: Comida
+ * - 17:00 a 19:59: Merienda
+ * - 20:00 a 05:59: Cena
+ */
+export function asignarComidaPorHora(hora: number, minuto: number = 0): import('../types').ClaveComida {
+  const tiempoMinutos = hora * 60 + minuto
+
+  if (tiempoMinutos >= 6 * 60 && tiempoMinutos < 11 * 60) {
+    return 'desayuno'
+  }
+  if (tiempoMinutos >= 11 * 60 && tiempoMinutos < 13 * 60 + 30) {
+    return 'mediaManana'
+  }
+  if (tiempoMinutos >= 13 * 60 + 30 && tiempoMinutos < 17 * 60) {
+    return 'comida'
+  }
+  if (tiempoMinutos >= 17 * 60 && tiempoMinutos < 20 * 60) {
+    return 'merienda'
+  }
+  return 'cena'
+}
+
+export interface InfoFechaFoto {
+  fecha: string
+  hora: number
+  minuto: number
+  horaFormateada: string
+}
+
+export async function extraerFechaYHoraDeFoto(asset: {
+  uri: string
+  fileName?: string | null
+  exif?: Record<string, any> | null
+}): Promise<InfoFechaFoto> {
+  // 1. Intentar extraer de EXIF
+  if (asset.exif) {
+    const rawExifDate =
+      asset.exif.DateTimeOriginal ||
+      asset.exif.DateTimeDigitized ||
+      asset.exif.DateTime ||
+      asset.exif['{Exif}']?.DateTimeOriginal ||
+      asset.exif['{TIFF}']?.DateTime
+
+    if (typeof rawExifDate === 'string') {
+      const match = rawExifDate.match(/(\d{4})[:\-](\d{2})[:\-](\d{2})[ T](\d{2}):(\d{2})/)
+      if (match) {
+        const [, y, m, d, hh, mm] = match
+        const h = parseInt(hh, 10)
+        const min = parseInt(mm, 10)
+        return {
+          fecha: `${y}-${m}-${d}`,
+          hora: h,
+          minuto: min,
+          horaFormateada: `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`,
+        }
+      }
+    }
+  }
+
+  // 2. Intentar extraer del nombre del archivo (ej. IMG_20261014_143000.jpg)
+  if (asset.fileName) {
+    const matchTime = asset.fileName.match(
+      /(?:IMG_|PXL_|VID_|PHOTO_)?(20\d{2})[-_]?(\d{2})[-_]?(\d{2})[_-](\d{2})(\d{2})/,
+    )
+    if (matchTime) {
+      const [, y, m, d, hh, mm] = matchTime
+      const h = parseInt(hh, 10)
+      const min = parseInt(mm, 10)
+      return {
+        fecha: `${y}-${m}-${d}`,
+        hora: h,
+        minuto: min,
+        horaFormateada: `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`,
+      }
+    }
+
+    const matchDateOnly = asset.fileName.match(/(?:IMG-|WA-)?(20\d{2})[-_]?(\d{2})[-_]?(\d{2})/)
+    if (matchDateOnly) {
+      const [, y, m, d] = matchDateOnly
+      const ahora = new Date()
+      const h = ahora.getHours()
+      const min = ahora.getMinutes()
+      return {
+        fecha: `${y}-${m}-${d}`,
+        hora: h,
+        minuto: min,
+        horaFormateada: `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`,
+      }
+    }
+  }
+
+  // 3. Intentar extraer con FileSystem
+  try {
+    const FileSystem = await import('expo-file-system')
+    const info = await FileSystem.getInfoAsync(asset.uri)
+    if (info.exists && (info as any).modificationTime) {
+      const ts = (info as any).modificationTime
+      const modDate = new Date(ts > 1e11 ? ts : ts * 1000)
+      if (!isNaN(modDate.getTime())) {
+        const y = modDate.getFullYear()
+        const m = String(modDate.getMonth() + 1).padStart(2, '0')
+        const d = String(modDate.getDate()).padStart(2, '0')
+        const h = modDate.getHours()
+        const min = modDate.getMinutes()
+        return {
+          fecha: `${y}-${m}-${d}`,
+          hora: h,
+          minuto: min,
+          horaFormateada: `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`,
+        }
+      }
+    }
+  } catch {
+    // Fallback silencioso
+  }
+
+  // 4. Fallback a fecha y hora actual
+  const ahora = new Date()
+  const y = ahora.getFullYear()
+  const m = String(ahora.getMonth() + 1).padStart(2, '0')
+  const d = String(ahora.getDate()).padStart(2, '0')
+  const h = ahora.getHours()
+  const min = ahora.getMinutes()
+  return {
+    fecha: `${y}-${m}-${d}`,
+    hora: h,
+    minuto: min,
+    horaFormateada: `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`,
+  }
+}
