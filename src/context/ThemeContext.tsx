@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react'
 import { useColorScheme } from 'react-native'
-import { paletteLight, paletteDark, theme, type ThemeColors } from '../utils/theme'
+import { paletteLight, paletteDark, type ThemeColors } from '../utils/theme'
 import { cargarConfiguracion, guardarConfiguracion, type ModoTema } from '../services/configService'
 
 interface ThemeContextValue {
@@ -40,11 +40,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const colors = useMemo(() => {
     return esOscuro ? paletteDark : paletteLight
   }, [esOscuro])
-
-  // Sincronizar el objeto global theme.colors para compatibilidad con estilos estáticos
-  useEffect(() => {
-    Object.assign(theme.colors, colors)
-  }, [colors])
 
   const cambiarModoTema = useCallback(
     async (nuevoModo: ModoTema) => {

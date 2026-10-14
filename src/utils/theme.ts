@@ -1,4 +1,24 @@
-export const paletteLight = {
+export interface ThemeColors {
+  readonly primary: string
+  readonly primaryDark: string
+  readonly primaryLight: string
+  readonly primarySoft: string
+  readonly primaryUltraSoft: string
+  readonly background: string
+  readonly card: string
+  readonly text: string
+  readonly textMuted: string
+  readonly border: string
+  readonly borderFocus: string
+  readonly focusSoft: string
+  readonly error: string
+  readonly errorSoft: string
+  readonly white: string
+  readonly water: string
+  readonly waterSoft: string
+}
+
+export const paletteLight: ThemeColors = Object.freeze({
   primary: '#2e7d32',
   primaryDark: '#1b5e20',
   primaryLight: '#43a047',
@@ -16,9 +36,9 @@ export const paletteLight = {
   white: '#ffffff',
   water: '#0288d1',
   waterSoft: '#e1f5fe',
-}
+})
 
-export const paletteDark = {
+export const paletteDark: ThemeColors = Object.freeze({
   primary: '#4caf50',
   primaryDark: '#2e7d32',
   primaryLight: '#81c784',
@@ -36,7 +56,7 @@ export const paletteDark = {
   white: '#ffffff',
   water: '#29b6f6',
   waterSoft: '#102a38',
-}
+})
 
 export const themeSpacing = {
   xs: 4,
@@ -59,5 +79,3 @@ export const theme = {
   spacing: themeSpacing,
   radius: themeRadius,
 }
-
-export type ThemeColors = typeof paletteLight
