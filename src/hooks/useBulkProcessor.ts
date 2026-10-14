@@ -3,6 +3,7 @@ import * as ImagePicker from 'expo-image-picker'
 import { describirPlatoConBase64 } from '../services/iaService'
 import { cargarDia, guardarDia } from '../services/registroService'
 import { asignarComidaPorHora, extraerFechaYHoraDeFoto } from '../utils/fechas'
+import { cargarConfiguracion } from '../services/configService'
 import type { ClaveComida, Registro } from '../types'
 
 export interface ItemFotoLote {
@@ -75,10 +76,11 @@ export function useBulkProcessor(userId: string) {
 
     if (res.canceled || !res.assets || res.assets.length === 0) return
 
+    const config = await cargarConfiguracion()
     const nuevos: ItemFotoLote[] = await Promise.all(
       res.assets.map(async (asset, idx) => {
         const info = await extraerFechaYHoraDeFoto(asset)
-        const comidaSugerida = asignarComidaPorHora(info.hora, info.minuto)
+        const comidaSugerida = asignarComidaPorHora(info.hora, info.minuto, config.horarios)
 
         return {
           id: `${Date.now()}_${idx}`,

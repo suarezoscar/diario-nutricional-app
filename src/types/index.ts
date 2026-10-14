@@ -32,4 +32,4 @@ export interface PuntoPeso {
 
 export type PesosPorFecha = Record<string, number>
 
-export type TabPrincipal = 'diario' | 'historico' | 'peso'
+export type TabPrincipal = 'diario' | 'historico' | 'peso' | 'ajustes'

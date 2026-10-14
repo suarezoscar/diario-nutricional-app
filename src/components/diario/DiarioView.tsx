@@ -26,12 +26,15 @@ import { BulkUploadModal } from './BulkUploadModal'
 import { useDiario } from '../../hooks/useDiario'
 import { useFotoPlato } from '../../hooks/useFotoPlato'
 import { COMIDAS } from '../../config/comidas'
+import { hoy, obtenerComidaActual } from '../../utils/fechas'
+import { cargarConfiguracion, type HorariosConfig } from '../../services/configService'
 import { theme } from '../../utils/theme'
 import type { UsuarioAutenticado } from '../../types'
 
 interface DiarioViewProps {
   usuario: UsuarioAutenticado
   fechaSeleccionada?: string
+  accionWidget?: { clave: string; accion: 'foto' | 'texto'; timestamp: number }
   onLogout: () => void
   onVerificarActualizacion?: () => void
 }
@@ -39,6 +42,7 @@ interface DiarioViewProps {
 export const DiarioView: React.FC<DiarioViewProps> = ({
   usuario,
   fechaSeleccionada,
+  accionWidget,
   onLogout,
   onVerificarActualizacion,
 }) => {
@@ -68,6 +72,34 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
   const fadeAnim = useRef(new Animated.Value(1)).current
   const slideAnim = useRef(new Animated.Value(0)).current
   const prevFechaRef = useRef(fecha)
+  const [horariosUsuario, setHorariosUsuario] = useState<HorariosConfig | undefined>(undefined)
+
+  useEffect(() => {
+    async function leerConfig() {
+      const cfg = await cargarConfiguracion()
+      setHorariosUsuario(cfg.horarios)
+    }
+    void leerConfig()
+  }, [fecha])
+
+  const comidaActual = fecha === hoy() ? obtenerComidaActual(horariosUsuario) : null
+
+  // Manejo de acciones enviadas desde el Widget del escritorio de Android
+  const ultimaAccionRef = useRef<number>(0)
+  useEffect(() => {
+    if (accionWidget && accionWidget.timestamp !== ultimaAccionRef.current) {
+      ultimaAccionRef.current = accionWidget.timestamp
+      if (accionWidget.accion === 'foto') {
+        setTimeout(() => {
+          tomarFotoOSeleccionar(accionWidget.clave, textoDescrito => {
+            const textoActual = (datos[accionWidget.clave] as string) || ''
+            const nuevo = textoActual ? `${textoActual}\n${textoDescrito}` : textoDescrito
+            actualizarCampo(accionWidget.clave, nuevo)
+          })
+        }, 350)
+      }
+    }
+  }, [accionWidget, datos, tomarFotoOSeleccionar, actualizarCampo])
 
   // Manejo de eventos de teclado para ajustar dinámicamente el scroll y evitar solapamientos
   useEffect(() => {
@@ -203,6 +235,7 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
                     valorAnterior={valorAnterior}
                     fuera={fuera}
                     analizando={estaAnalizando}
+                    esActual={comidaActual === comida.clave}
                     onActualizarTexto={txt => actualizarCampo(comida.clave, txt)}
                     onToggleFuera={() => actualizarCampo(comida.claveFuera, !fuera)}
                     onTomarFoto={() => {

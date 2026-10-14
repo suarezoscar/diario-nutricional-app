@@ -227,9 +227,45 @@ export function inicioYFinMesActual(): { desde: string; hasta: string } {
  * @param minuto - Minuto de la hora (0 a 59). Por defecto 0.
  * @returns La clave de comida (`desayuno`, `mediaManana`, `comida`, `merienda`, `cena`).
  */
-export function asignarComidaPorHora(hora: number, minuto: number = 0): import('../types').ClaveComida {
+export function horaTextoAMinutos(horaTexto: string): number {
+  const partes = horaTexto.split(':').map(Number)
+  return (partes[0] || 0) * 60 + (partes[1] || 0)
+}
+
+function estaEnRangoHorario(minutos: number, inicioStr: string, finStr: string): boolean {
+  const inicio = horaTextoAMinutos(inicioStr)
+  const fin = horaTextoAMinutos(finStr)
+  if (inicio < fin) {
+    return minutos >= inicio && minutos < fin
+  }
+  // Rango que cruza la medianoche (ej: 20:00 a 06:00)
+  return minutos >= inicio || minutos < fin
+}
+
+export function asignarComidaPorHora(
+  hora: number,
+  minuto: number = 0,
+  horarios?: import('../services/configService').HorariosConfig,
+): import('../types').ClaveComida {
   const tiempoMinutos = hora * 60 + minuto
 
+  if (horarios) {
+    if (estaEnRangoHorario(tiempoMinutos, horarios.desayuno.inicio, horarios.desayuno.fin)) {
+      return 'desayuno'
+    }
+    if (estaEnRangoHorario(tiempoMinutos, horarios.mediaManana.inicio, horarios.mediaManana.fin)) {
+      return 'mediaManana'
+    }
+    if (estaEnRangoHorario(tiempoMinutos, horarios.comida.inicio, horarios.comida.fin)) {
+      return 'comida'
+    }
+    if (estaEnRangoHorario(tiempoMinutos, horarios.merienda.inicio, horarios.merienda.fin)) {
+      return 'merienda'
+    }
+    return 'cena'
+  }
+
+  // Rangos por defecto estándar
   if (tiempoMinutos >= 6 * 60 && tiempoMinutos < 11 * 60) {
     return 'desayuno'
   }
@@ -243,6 +279,16 @@ export function asignarComidaPorHora(hora: number, minuto: number = 0): import('
     return 'merienda'
   }
   return 'cena'
+}
+
+/**
+ * Determina cuál es la comida en curso en el momento actual según la hora del reloj.
+ */
+export function obtenerComidaActual(
+  horarios?: import('../services/configService').HorariosConfig,
+): import('../types').ClaveComida {
+  const ahora = new Date()
+  return asignarComidaPorHora(ahora.getHours(), ahora.getMinutes(), horarios)
 }
 
 export interface InfoFechaFoto {

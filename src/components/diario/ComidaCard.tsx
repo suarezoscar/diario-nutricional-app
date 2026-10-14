@@ -19,6 +19,7 @@ interface ComidaCardProps {
   valorAnterior?: string
   fuera: boolean
   analizando: boolean
+  esActual?: boolean
   onActualizarTexto: (texto: string) => void
   onToggleFuera: () => void
   onTomarFoto: () => void
@@ -68,6 +69,7 @@ export const ComidaCard: React.FC<ComidaCardProps> = ({
   valorAnterior,
   fuera,
   analizando,
+  esActual,
   onActualizarTexto,
   onToggleFuera,
   onTomarFoto,
@@ -75,7 +77,7 @@ export const ComidaCard: React.FC<ComidaCardProps> = ({
   const [isFocused, setIsFocused] = useState(false)
 
   return (
-    <Card>
+    <Card style={esActual ? styles.cardActual : undefined}>
       <View style={styles.header}>
         <View style={styles.titleWrap}>
           <FontAwesome
@@ -85,6 +87,12 @@ export const ComidaCard: React.FC<ComidaCardProps> = ({
             style={styles.icon}
           />
           <Text style={styles.title}>{comida.titulo}</Text>
+          {esActual && (
+            <View style={styles.actualBadge}>
+              <FontAwesome name="clock-o" size={10} color={theme.colors.primary} />
+              <Text style={styles.actualBadgeText}>En curso</Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.actions}>
@@ -272,5 +280,30 @@ const styles = StyleSheet.create({
   countText: {
     fontSize: 11,
     color: theme.colors.textMuted,
+  },
+  cardActual: {
+    borderColor: theme.colors.primary,
+    borderWidth: 1.5,
+    backgroundColor: theme.colors.primaryUltraSoft,
+    elevation: 3,
+    shadowColor: theme.colors.primaryDark,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 5,
+  },
+  actualBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: theme.colors.primarySoft,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: 2,
+    borderRadius: theme.radius.full,
+    marginLeft: theme.spacing.xs,
+  },
+  actualBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: theme.colors.primary,
   },
 })

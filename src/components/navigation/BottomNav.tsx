@@ -20,6 +20,7 @@ const ITEMS: ItemTab[] = [
   { id: 'diario', titulo: 'Diario', icono: 'calendar-check-o' },
   { id: 'historico', titulo: 'Histórico', icono: 'list-alt' },
   { id: 'peso', titulo: 'Peso', icono: 'line-chart' },
+  { id: 'ajustes', titulo: 'Ajustes', icono: 'cog' },
 ]
 
 export const BottomNav: React.FC<BottomNavProps> = ({ tabActiva, onCambiarTab }) => {

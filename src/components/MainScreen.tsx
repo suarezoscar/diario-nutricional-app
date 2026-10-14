@@ -5,7 +5,10 @@ import { BottomNav } from './navigation/BottomNav'
 import { DiarioView } from './diario/DiarioView'
 import { HistoricoView } from './historico/HistoricoView'
 import { PesoView } from './peso/PesoView'
+import { AjustesView } from './ajustes/AjustesView'
 import { theme } from '../utils/theme'
+import { hoy } from '../utils/fechas'
+import * as Linking from 'expo-linking'
 import type { TabPrincipal, UsuarioAutenticado } from '../types'
 
 interface MainScreenProps {
@@ -21,8 +24,36 @@ export const MainScreen: React.FC<MainScreenProps> = ({
 }) => {
   const [tabActiva, setTabActiva] = useState<TabPrincipal>('diario')
   const [fechaSeleccionada, setFechaSeleccionada] = useState<string | undefined>(undefined)
+  const [accionWidget, setAccionWidget] = useState<
+    { clave: string; accion: 'foto' | 'texto'; timestamp: number } | undefined
+  >(undefined)
 
   const [showHistoricoPdf, setShowHistoricoPdf] = useState(false)
+
+  // Escuchar Deep Links entrantes desde el Widget de escritorio Android
+  React.useEffect(() => {
+    const procesarUrl = (url: string | null) => {
+      if (!url) return
+      const parsed = Linking.parse(url)
+      // diarionutricional://hoy
+      if (parsed.hostname === 'hoy' || parsed.path === 'hoy') {
+        setFechaSeleccionada(hoy())
+        setTabActiva('diario')
+      }
+      // diarionutricional://comida?clave=...&accion=...
+      else if (parsed.hostname === 'comida' || parsed.path === 'comida') {
+        setFechaSeleccionada(hoy())
+        setTabActiva('diario')
+        const clave = (parsed.queryParams?.clave as string) || 'comida'
+        const accion = (parsed.queryParams?.accion as 'foto' | 'texto') || 'texto'
+        setAccionWidget({ clave, accion, timestamp: Date.now() })
+      }
+    }
+
+    void Linking.getInitialURL().then(procesarUrl)
+    const sub = Linking.addEventListener('url', evt => procesarUrl(evt.url))
+    return () => sub.remove()
+  }, [])
 
   const irADiaEnDiario = (fecha: string) => {
     setFechaSeleccionada(fecha)
@@ -36,6 +67,7 @@ export const MainScreen: React.FC<MainScreenProps> = ({
           <DiarioView
             usuario={usuario}
             fechaSeleccionada={fechaSeleccionada}
+            accionWidget={accionWidget}
             onLogout={onLogout}
             onVerificarActualizacion={onVerificarActualizacion}
           />
@@ -69,6 +101,21 @@ export const MainScreen: React.FC<MainScreenProps> = ({
             <PesoView
               userId={usuario.uid}
               onSeleccionarDia={irADiaEnDiario}
+            />
+          </View>
+        )}
+
+        {tabActiva === 'ajustes' && (
+          <View style={styles.pageWrap}>
+            <Header
+              usuario={usuario}
+              onLogout={onLogout}
+              onVerificarActualizacion={onVerificarActualizacion}
+            />
+            <AjustesView
+              usuario={usuario}
+              onLogout={onLogout}
+              onVerificarActualizacion={onVerificarActualizacion}
             />
           </View>
         )}

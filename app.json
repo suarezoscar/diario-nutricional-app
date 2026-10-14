@@ -2,7 +2,8 @@
   "expo": {
     "name": "Diario Nutricional",
     "slug": "diario-nutricional-app",
-    "version": "1.0.15",
+    "version": "1.0.16",
+    "scheme": "diarionutricional",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -11,7 +12,7 @@
     },
     "android": {
       "package": "com.oscar.diarionutricional",
-      "versionCode": 16,
+      "versionCode": 17,
       "permissions": [
         "REQUEST_INSTALL_PACKAGES"
       ],
@@ -26,6 +27,25 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "ComidaWidget",
+              "label": "Comida en curso",
+              "description": "Acceso directo a la comida actual con foto o texto, y botón Ir a Hoy",
+              "minWidth": "180dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "updatePeriodMillis": 1800000
+            }
+          ]
+        }
+      ]
+    ]
   }
 }

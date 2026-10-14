@@ -47,6 +47,23 @@ describe('Motor de fechas y horarios (fechas.ts)', () => {
       expect(asignarComidaPorHora(3, 15)).toBe('cena')
       expect(asignarComidaPorHora(5, 59)).toBe('cena')
     })
+
+    it('respeta horarios personalizados configurados por el usuario', () => {
+      const horariosCustom = {
+        desayuno: { inicio: '07:00', fin: '10:00' },
+        mediaManana: { inicio: '10:00', fin: '12:00' },
+        comida: { inicio: '12:00', fin: '15:00' },
+        merienda: { inicio: '15:00', fin: '19:00' },
+        cena: { inicio: '19:00', fin: '07:00' },
+      }
+
+      // Con el default 12:30 era mediaManana, pero con el custom es comida
+      expect(asignarComidaPorHora(12, 30, horariosCustom)).toBe('comida')
+      // A las 19:30 con default era merienda, pero con custom es cena
+      expect(asignarComidaPorHora(19, 30, horariosCustom)).toBe('cena')
+      // A las 06:30 con default era desayuno, pero con custom es cena
+      expect(asignarComidaPorHora(6, 30, horariosCustom)).toBe('cena')
+    })
   })
 
   describe('Formateo de fechas en español', () => {
