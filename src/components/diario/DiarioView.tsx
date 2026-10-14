@@ -88,6 +88,9 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
 
   // Manejo de acciones enviadas desde el Widget del escritorio de Android
   const ultimaAccionRef = useRef<number>(0)
+  const cardLayoutsRef = useRef<Record<string, number>>({})
+  const [comidaAEnfocar, setComidaAEnfocar] = useState<{ clave: string; timestamp: number } | null>(null)
+
   useEffect(() => {
     if (accionWidget && accionWidget.timestamp !== ultimaAccionRef.current) {
       ultimaAccionRef.current = accionWidget.timestamp
@@ -99,9 +102,24 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
             actualizarCampo(accionWidget.clave, nuevo)
           })
         }, 350)
+      } else if (accionWidget.accion === 'texto') {
+        setComidaAEnfocar({ clave: accionWidget.clave, timestamp: accionWidget.timestamp })
+        const posY = cardLayoutsRef.current[accionWidget.clave]
+        if (posY !== undefined) {
+          scrollViewRef.current?.scrollTo({ y: Math.max(0, posY - 20), animated: true })
+        }
       }
     }
   }, [accionWidget, datos, tomarFotoOSeleccionar, actualizarCampo])
+
+  useEffect(() => {
+    if (comidaAEnfocar && !cargando) {
+      const posY = cardLayoutsRef.current[comidaAEnfocar.clave]
+      if (posY !== undefined) {
+        scrollViewRef.current?.scrollTo({ y: Math.max(0, posY - 20), animated: true })
+      }
+    }
+  }, [comidaAEnfocar, cargando])
 
   // Manejo de eventos de teclado para ajustar dinámicamente el scroll y evitar solapamientos
   useEffect(() => {
@@ -231,26 +249,40 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
                 const valorAnterior = (datosAnterior?.[comida.clave] as string) || ''
                 const fuera = !!datos[comida.claveFuera]
                 const estaAnalizando = comidaAnalizando === comida.clave
+                const debeEnfocar =
+                  comidaAEnfocar?.clave === comida.clave &&
+                  comidaAEnfocar?.timestamp === accionWidget?.timestamp
 
                 return (
-                  <ComidaCard
+                  <View
                     key={comida.clave}
-                    comida={comida}
-                    valor={valor}
-                    valorAnterior={valorAnterior}
-                    fuera={fuera}
-                    analizando={estaAnalizando}
-                    esActual={comidaActual === comida.clave}
-                    onActualizarTexto={txt => actualizarCampo(comida.clave, txt)}
-                    onToggleFuera={() => actualizarCampo(comida.claveFuera, !fuera)}
-                    onTomarFoto={() => {
-                      tomarFotoOSeleccionar(comida.clave, textoDescrito => {
-                        const textoActual = (datos[comida.clave] as string) || ''
-                        const nuevo = textoActual ? `${textoActual}\n${textoDescrito}` : textoDescrito
-                        actualizarCampo(comida.clave, nuevo)
-                      })
+                    onLayout={e => {
+                      const y = e.nativeEvent.layout.y
+                      cardLayoutsRef.current[comida.clave] = y
+                      if (comidaAEnfocar?.clave === comida.clave) {
+                        scrollViewRef.current?.scrollTo({ y: Math.max(0, y - 20), animated: true })
+                      }
                     }}
-                  />
+                  >
+                    <ComidaCard
+                      comida={comida}
+                      valor={valor}
+                      valorAnterior={valorAnterior}
+                      fuera={fuera}
+                      analizando={estaAnalizando}
+                      esActual={comidaActual === comida.clave}
+                      debeEnfocar={debeEnfocar}
+                      onActualizarTexto={txt => actualizarCampo(comida.clave, txt)}
+                      onToggleFuera={() => actualizarCampo(comida.claveFuera, !fuera)}
+                      onTomarFoto={() => {
+                        tomarFotoOSeleccionar(comida.clave, textoDescrito => {
+                          const textoActual = (datos[comida.clave] as string) || ''
+                          const nuevo = textoActual ? `${textoActual}\n${textoDescrito}` : textoDescrito
+                          actualizarCampo(comida.clave, nuevo)
+                        })
+                      }}
+                    />
+                  </View>
                 )
               })}
 

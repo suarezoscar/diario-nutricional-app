@@ -21,6 +21,7 @@ interface ComidaCardProps {
   fuera: boolean
   analizando: boolean
   esActual?: boolean
+  debeEnfocar?: boolean
   onActualizarTexto: (texto: string) => void
   onToggleFuera: () => void
   onTomarFoto: () => void
@@ -83,12 +84,30 @@ export const ComidaCard: React.FC<ComidaCardProps> = ({
   fuera,
   analizando,
   esActual,
+  debeEnfocar,
   onActualizarTexto,
   onToggleFuera,
   onTomarFoto,
 }) => {
   const { colors } = useTheme()
   const [isFocused, setIsFocused] = useState(false)
+  const inputRef = useRef<TextInput>(null)
+
+  // Auto-enfoque inmediato y despliegue del teclado cuando se solicita (por ejemplo, desde el Widget)
+  useEffect(() => {
+    if (debeEnfocar && !analizando) {
+      const timer1 = setTimeout(() => {
+        inputRef.current?.focus()
+      }, 150)
+      const timer2 = setTimeout(() => {
+        inputRef.current?.focus()
+      }, 400)
+      return () => {
+        clearTimeout(timer1)
+        clearTimeout(timer2)
+      }
+    }
+  }, [debeEnfocar, analizando])
 
   return (
     <Card
@@ -178,6 +197,7 @@ export const ComidaCard: React.FC<ComidaCardProps> = ({
         <InputSkeletonIa />
       ) : (
         <TextInput
+          ref={inputRef}
           style={[
             styles.input,
             {
