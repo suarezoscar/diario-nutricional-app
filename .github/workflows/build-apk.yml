@@ -10,7 +10,37 @@ permissions:
   contents: write
 
 jobs:
+  test:
+    name: 1. Verificación y Tests Unitarios
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Configurar Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      - name: Verificar tipos TypeScript
+        run: pnpm run typecheck
+
+      - name: Ejecutar tests unitarios
+        run: pnpm test
+
   build-android:
+    name: 2. Compilar APK y Publicar Release
+    needs: test
     runs-on: ubuntu-latest
 
     steps:
@@ -39,12 +69,6 @@ jobs:
 
       - name: Instalar dependencias
         run: pnpm install --frozen-lockfile
-
-      - name: Verificar Tipos TypeScript
-        run: pnpm run typecheck
-
-      - name: Ejecutar Tests Unitarios Vitales
-        run: pnpm test
 
       - name: Prebuild nativo Android (Expo)
         run: pnpm exec expo prebuild --platform android --clean
@@ -101,7 +125,15 @@ jobs:
           echo "Verificando firma..."
           $BUILD_TOOLS_DIR/apksigner verify "$OUTPUT_APK"
 
+      - name: Guardar APK como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: DiarioNutricional-APK
+          path: DiarioNutricional-*.apk
+          retention-days: 14
+
       - name: Publicar Release en GitHub
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           files: DiarioNutricional-*.apk
