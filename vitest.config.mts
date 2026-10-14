@@ -12,6 +12,9 @@ export default defineConfig({
       'expo-print': path.resolve(import.meta.dirname, 'src/__tests__/__mocks__/expo-print.js'),
       'expo-sharing': path.resolve(import.meta.dirname, 'src/__tests__/__mocks__/expo-sharing.js'),
       'expo-file-system': path.resolve(import.meta.dirname, 'src/__tests__/__mocks__/expo-file-system.js'),
+      'expo-notifications': path.resolve(import.meta.dirname, 'src/__tests__/__mocks__/expo-notifications.js'),
+      '@react-native-async-storage/async-storage': path.resolve(import.meta.dirname, 'src/__tests__/__mocks__/async-storage.js'),
+      'react-native-android-widget': path.resolve(import.meta.dirname, 'src/__tests__/__mocks__/react-native-android-widget.js'),
     },
   },
 })

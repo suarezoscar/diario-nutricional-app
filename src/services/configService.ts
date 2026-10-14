@@ -11,8 +11,10 @@ export interface HorarioComida {
 export type HorariosConfig = Record<ClaveComida, HorarioComida>
 
 export interface NotificacionesConfig {
-  recordatorioComidas: boolean
-  recordatorioAgua: boolean
+  recordatorioComidas: boolean      // Recordatorio individual por cada comida al terminar su horario
+  recordatorioFinJornada: boolean   // Recordatorio general al final de la jornada con comidas pendientes
+  horaFinJornada: string            // Hora del recordatorio de fin de jornada (formato "HH:mm", ej: "22:00")
+  recordatorioAgua?: boolean
 }
 
 export interface ConfiguracionApp {
@@ -34,6 +36,8 @@ export const CONFIGURACION_POR_DEFECTO: ConfiguracionApp = {
   horarios: HORARIOS_POR_DEFECTO,
   notificaciones: {
     recordatorioComidas: false,
+    recordatorioFinJornada: false,
+    horaFinJornada: '22:00',
     recordatorioAgua: false,
   },
 }

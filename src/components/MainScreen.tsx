@@ -10,6 +10,8 @@ import { useTheme } from '../context/ThemeContext'
 import { theme } from '../utils/theme'
 import { hoy } from '../utils/fechas'
 import * as Linking from 'expo-linking'
+import * as Notifications from 'expo-notifications'
+import { configurarNotificaciones, sincronizarNotificaciones } from '../services/notificationService'
 import type { TabPrincipal, UsuarioAutenticado } from '../types'
 
 interface MainScreenProps {
@@ -31,8 +33,11 @@ export const MainScreen: React.FC<MainScreenProps> = ({
 
   const [showHistoricoPdf, setShowHistoricoPdf] = useState(false)
 
-  // Escuchar Deep Links entrantes desde el Widget de escritorio Android
+  // Escuchar Deep Links entrantes desde el Widget de escritorio Android o Notificaciones
   React.useEffect(() => {
+    void configurarNotificaciones()
+    void sincronizarNotificaciones()
+
     const procesarUrl = (url: string | null) => {
       if (!url) return
       const parsed = Linking.parse(url)
@@ -53,7 +58,27 @@ export const MainScreen: React.FC<MainScreenProps> = ({
 
     void Linking.getInitialURL().then(procesarUrl)
     const sub = Linking.addEventListener('url', evt => procesarUrl(evt.url))
-    return () => sub.remove()
+
+    const notifSub = Notifications.addNotificationResponseReceivedListener(response => {
+      const url = response.notification.request.content.data?.url
+      if (typeof url === 'string') {
+        procesarUrl(url)
+      }
+    })
+
+    void Notifications.getLastNotificationResponseAsync().then(response => {
+      if (response) {
+        const url = response.notification.request.content.data?.url
+        if (typeof url === 'string') {
+          procesarUrl(url)
+        }
+      }
+    })
+
+    return () => {
+      sub.remove()
+      notifSub.remove()
+    }
   }, [])
 
   const { colors } = useTheme()

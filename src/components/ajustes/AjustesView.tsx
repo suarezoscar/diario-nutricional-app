@@ -14,9 +14,16 @@ import {
   cargarConfiguracion,
   guardarConfiguracion,
   HORARIOS_POR_DEFECTO,
+  CONFIGURACION_POR_DEFECTO,
   type HorariosConfig,
+  type NotificacionesConfig,
   type ModoTema,
 } from '../../services/configService'
+import {
+  solicitarPermisoNotificaciones,
+  sincronizarNotificaciones,
+  enviarNotificacionPrueba,
+} from '../../services/notificationService'
 import { APP_VERSION } from '../../config/constants'
 import { COMIDAS } from '../../config/comidas'
 import { theme } from '../../utils/theme'
@@ -47,12 +54,16 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
 }) => {
   const { modoTema, cambiarModoTema, esOscuro, colors } = useTheme()
   const [horarios, setHorarios] = useState<HorariosConfig>(HORARIOS_POR_DEFECTO)
+  const [notificaciones, setNotificaciones] = useState<NotificacionesConfig>(
+    CONFIGURACION_POR_DEFECTO.notificaciones,
+  )
   const [guardadoFeedback, setGuardadoFeedback] = useState(false)
 
   useEffect(() => {
     async function inicializar() {
       const cfg = await cargarConfiguracion()
       setHorarios(cfg.horarios)
+      setNotificaciones(cfg.notificaciones)
     }
     void inicializar()
   }, [])
@@ -64,8 +75,80 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
       ...cfg,
       horarios: nuevos,
     })
+    await sincronizarNotificaciones()
     setGuardadoFeedback(true)
     setTimeout(() => setGuardadoFeedback(false), 2000)
+  }
+
+  const persistirNotificaciones = async (nuevas: NotificacionesConfig) => {
+    setNotificaciones(nuevas)
+    const cfg = await cargarConfiguracion()
+    await guardarConfiguracion({
+      ...cfg,
+      notificaciones: nuevas,
+    })
+    await sincronizarNotificaciones()
+    setGuardadoFeedback(true)
+    setTimeout(() => setGuardadoFeedback(false), 2000)
+  }
+
+  const toggleRecordatorioComidas = async () => {
+    if (!notificaciones.recordatorioComidas) {
+      const permitido = await solicitarPermisoNotificaciones()
+      if (!permitido) {
+        Alert.alert(
+          'Permiso de notificaciones',
+          'Para recibir recordatorios debes activar las notificaciones en los ajustes del dispositivo.',
+          [{ text: 'Entendido' }],
+        )
+        return
+      }
+      await persistirNotificaciones({ ...notificaciones, recordatorioComidas: true })
+    } else {
+      await persistirNotificaciones({ ...notificaciones, recordatorioComidas: false })
+    }
+  }
+
+  const toggleRecordatorioFinJornada = async () => {
+    if (!notificaciones.recordatorioFinJornada) {
+      const permitido = await solicitarPermisoNotificaciones()
+      if (!permitido) {
+        Alert.alert(
+          'Permiso de notificaciones',
+          'Para recibir recordatorios debes activar las notificaciones en los ajustes del dispositivo.',
+          [{ text: 'Entendido' }],
+        )
+        return
+      }
+      await persistirNotificaciones({ ...notificaciones, recordatorioFinJornada: true })
+    } else {
+      await persistirNotificaciones({ ...notificaciones, recordatorioFinJornada: false })
+    }
+  }
+
+  const modificarHoraFinJornada = (delta: number) => {
+    const actual = notificaciones.horaFinJornada || '22:00'
+    const nuevaHora = ajustarHora(actual, delta)
+    void persistirNotificaciones({
+      ...notificaciones,
+      horaFinJornada: nuevaHora,
+    })
+  }
+
+  const handleProbarNotificacion = async () => {
+    try {
+      await enviarNotificacionPrueba()
+      Alert.alert(
+        'Notificación enviada',
+        'La notificación aparecerá en tu teléfono en un instante. Púlsala para comprobar que abre el día de hoy.',
+        [{ text: 'Genial' }],
+      )
+    } catch {
+      Alert.alert(
+        'Permiso denegado',
+        'No se pudo enviar la notificación. Asegúrate de permitir las notificaciones en los ajustes de tu teléfono.',
+      )
+    }
   }
 
   const modificarHorario = (comida: ClaveComida, campo: 'inicio' | 'fin', delta: number) => {
@@ -253,28 +336,165 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
         </TouchableOpacity>
       </Card>
 
-      {/* 3. SECCIÓN: NOTIFICACIONES (PREVIEW) */}
+      {/* 3. SECCIÓN: NOTIFICACIONES Y RECORDATORIOS */}
       <Card>
-        <View style={styles.cardHeader}>
-          <FontAwesome name="bell-o" size={16} color={colors.primary} style={styles.headerIcon} />
-          <Text style={[styles.cardTitle, { color: colors.text }]}>Notificaciones</Text>
-          <View style={[styles.badgeProximamente, { backgroundColor: colors.primarySoft }]}>
-            <Text style={[styles.badgeProximamenteText, { color: colors.primary }]}>Próximamente</Text>
+        <View style={styles.cardHeaderBetween}>
+          <View style={styles.cardHeader}>
+            <FontAwesome name="bell-o" size={16} color={colors.primary} style={styles.headerIcon} />
+            <Text style={[styles.cardTitle, { color: colors.text }]}>Notificaciones</Text>
+          </View>
+          <View
+            style={[
+              styles.badgeEstadoNotif,
+              (notificaciones.recordatorioComidas || notificaciones.recordatorioFinJornada)
+                ? { backgroundColor: colors.primarySoft }
+                : { backgroundColor: colors.background, borderColor: colors.border, borderWidth: 1 },
+            ]}
+          >
+            <Text
+              style={[
+                styles.badgeEstadoNotifText,
+                (notificaciones.recordatorioComidas || notificaciones.recordatorioFinJornada)
+                  ? { color: colors.primary }
+                  : { color: colors.textMuted },
+              ]}
+            >
+              {notificaciones.recordatorioComidas || notificaciones.recordatorioFinJornada
+                ? 'Activas'
+                : 'Desactivadas'}
+            </Text>
           </View>
         </View>
 
         <Text style={[styles.sectionDesc, { color: colors.textMuted }]}>
-          En las próximas versiones podrás programar recordatorios automáticos locales en tu móvil para registrar comidas y beber agua.
+          Programa recordatorios locales en tu móvil para registrar comidas a tiempo o al finalizar tu día. Al pulsar el aviso se abrirá directamente el diario de hoy.
         </Text>
 
-        <View style={styles.notificationPreviewRow}>
-          <Text style={[styles.previewItemText, { color: colors.text }]}>Recordatorios de comidas</Text>
-          <Text style={[styles.previewDisabledText, { color: colors.textMuted }]}>Desactivado</Text>
+        {/* Opción 1: Recordatorio individual al terminar el horario de cada comida */}
+        <View style={[styles.notifOptionItem, { borderBottomColor: colors.border }]}>
+          <View style={styles.notifOptionInfo}>
+            <Text style={[styles.notifOptionTitle, { color: colors.text }]}>
+              Avisar al terminar cada comida
+            </Text>
+            <Text style={[styles.notifOptionDesc, { color: colors.textMuted }]}>
+              Te avisa al finalizar el horario de una comida si aún no la has anotado.
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            style={[
+              styles.notifSwitchBtn,
+              { borderColor: colors.border, backgroundColor: colors.background },
+              notificaciones.recordatorioComidas && {
+                borderColor: colors.primary,
+                backgroundColor: colors.primarySoft,
+              },
+            ]}
+            onPress={toggleRecordatorioComidas}
+            activeOpacity={0.7}
+          >
+            <FontAwesome
+              name={notificaciones.recordatorioComidas ? 'check-circle' : 'circle-o'}
+              size={14}
+              color={notificaciones.recordatorioComidas ? colors.primary : colors.textMuted}
+            />
+            <Text
+              style={[
+                styles.notifSwitchText,
+                { color: colors.textMuted },
+                notificaciones.recordatorioComidas && {
+                  color: colors.primary,
+                  fontWeight: '700',
+                },
+              ]}
+            >
+              {notificaciones.recordatorioComidas ? 'Activo' : 'Inactivo'}
+            </Text>
+          </TouchableOpacity>
         </View>
-        <View style={styles.notificationPreviewRow}>
-          <Text style={[styles.previewItemText, { color: colors.text }]}>Recordatorio de hidratación</Text>
-          <Text style={[styles.previewDisabledText, { color: colors.textMuted }]}>Desactivado</Text>
+
+        {/* Opción 2: Recordatorio al final de la jornada */}
+        <View style={[styles.notifOptionItem, { borderBottomColor: colors.border }]}>
+          <View style={styles.notifOptionInfo}>
+            <Text style={[styles.notifOptionTitle, { color: colors.text }]}>
+              Resumen al final de la jornada
+            </Text>
+            <Text style={[styles.notifOptionDesc, { color: colors.textMuted }]}>
+              Te envía un aviso con la lista de comidas que quedaron pendientes hoy.
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            style={[
+              styles.notifSwitchBtn,
+              { borderColor: colors.border, backgroundColor: colors.background },
+              notificaciones.recordatorioFinJornada && {
+                borderColor: colors.primary,
+                backgroundColor: colors.primarySoft,
+              },
+            ]}
+            onPress={toggleRecordatorioFinJornada}
+            activeOpacity={0.7}
+          >
+            <FontAwesome
+              name={notificaciones.recordatorioFinJornada ? 'check-circle' : 'circle-o'}
+              size={14}
+              color={notificaciones.recordatorioFinJornada ? colors.primary : colors.textMuted}
+            />
+            <Text
+              style={[
+                styles.notifSwitchText,
+                { color: colors.textMuted },
+                notificaciones.recordatorioFinJornada && {
+                  color: colors.primary,
+                  fontWeight: '700',
+                },
+              ]}
+            >
+              {notificaciones.recordatorioFinJornada ? 'Activo' : 'Inactivo'}
+            </Text>
+          </TouchableOpacity>
         </View>
+
+        {/* Ajuste de hora si el recordatorio final está activado */}
+        {notificaciones.recordatorioFinJornada && (
+          <View style={[styles.horaFinRow, { backgroundColor: colors.background, borderColor: colors.border }]}>
+            <View style={styles.horaFinLabelWrap}>
+              <FontAwesome name="moon-o" size={13} color={colors.primary} style={{ marginRight: 6 }} />
+              <Text style={[styles.horaFinLabel, { color: colors.text }]}>Hora del aviso final:</Text>
+            </View>
+
+            <View style={styles.stepperRow}>
+              <TouchableOpacity
+                style={[styles.miniBtn, { borderColor: colors.border, backgroundColor: colors.card }]}
+                onPress={() => modificarHoraFinJornada(-30)}
+              >
+                <Text style={[styles.miniBtnText, { color: colors.text }]}>-</Text>
+              </TouchableOpacity>
+              <Text style={[styles.timeValue, { color: colors.text }]}>
+                {notificaciones.horaFinJornada || '22:00'}
+              </Text>
+              <TouchableOpacity
+                style={[styles.miniBtn, { borderColor: colors.border, backgroundColor: colors.card }]}
+                onPress={() => modificarHoraFinJornada(30)}
+              >
+                <Text style={[styles.miniBtnText, { color: colors.text }]}>+</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {/* Botón Probar Notificación */}
+        <TouchableOpacity
+          style={[styles.testNotifBtn, { borderColor: colors.border, backgroundColor: colors.background }]}
+          onPress={handleProbarNotificacion}
+          activeOpacity={0.7}
+        >
+          <FontAwesome name="paper-plane-o" size={12} color={colors.primary} style={{ marginRight: 6 }} />
+          <Text style={[styles.testNotifBtnText, { color: colors.primary }]}>
+            Enviar notificación de prueba ahora
+          </Text>
+        </TouchableOpacity>
       </Card>
 
       {/* 4. SECCIÓN: CUENTA E INFORMACIÓN */}
@@ -464,27 +684,77 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
-  badgeProximamente: {
-    paddingHorizontal: theme.spacing.sm,
+  badgeEstadoNotif: {
+    paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: theme.radius.full,
-    marginLeft: theme.spacing.sm,
   },
-  badgeProximamenteText: {
+  badgeEstadoNotifText: {
     fontSize: 10,
     fontWeight: '700',
   },
-  notificationPreviewRow: {
+  notifOptionItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 6,
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    gap: theme.spacing.sm,
   },
-  previewItemText: {
+  notifOptionInfo: {
+    flex: 1,
+  },
+  notifOptionTitle: {
     fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 2,
   },
-  previewDisabledText: {
+  notifOptionDesc: {
+    fontSize: 11,
+    lineHeight: 15,
+  },
+  notifSwitchBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: theme.radius.sm,
+    borderWidth: 1,
+    gap: 6,
+  },
+  notifSwitchText: {
     fontSize: 12,
-    fontStyle: 'italic',
+  },
+  horaFinRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: theme.radius.sm,
+    borderWidth: 1,
+    marginTop: theme.spacing.sm,
+  },
+  horaFinLabelWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  horaFinLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  testNotifBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    borderRadius: theme.radius.sm,
+    borderWidth: 1,
+    marginTop: theme.spacing.md,
+  },
+  testNotifBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   infoRow: {
     flexDirection: 'row',
