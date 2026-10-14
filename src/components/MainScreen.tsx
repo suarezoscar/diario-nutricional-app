@@ -22,6 +22,8 @@ export const MainScreen: React.FC<MainScreenProps> = ({
   const [tabActiva, setTabActiva] = useState<TabPrincipal>('diario')
   const [fechaSeleccionada, setFechaSeleccionada] = useState<string | undefined>(undefined)
 
+  const [showHistoricoPdf, setShowHistoricoPdf] = useState(false)
+
   const irADiaEnDiario = (fecha: string) => {
     setFechaSeleccionada(fecha)
     setTabActiva('diario')
@@ -45,11 +47,14 @@ export const MainScreen: React.FC<MainScreenProps> = ({
               usuario={usuario}
               onLogout={onLogout}
               onVerificarActualizacion={onVerificarActualizacion}
+              onAbrirPdf={() => setShowHistoricoPdf(true)}
             />
             <HistoricoView
               userId={usuario.uid}
               nombreUsuario={usuario.displayName || usuario.email || 'Usuario'}
               onEditarDia={irADiaEnDiario}
+              showPdfModalExterno={showHistoricoPdf}
+              onCerrarPdfModalExterno={() => setShowHistoricoPdf(false)}
             />
           </View>
         )}

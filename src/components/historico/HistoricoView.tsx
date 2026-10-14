@@ -11,23 +11,30 @@ import { FontAwesome } from '@expo/vector-icons'
 import { Card } from '../common/Card'
 import { DiaResumenCard } from './DiaResumenCard'
 import { ExportarPdfModal } from '../diario/ExportarPdfModal'
+import { CalendarModal } from '../common/CalendarModal'
 import { useHistorico } from '../../hooks/useHistorico'
+import { formatearFechaCorta } from '../../utils/fechas'
 import { theme } from '../../utils/theme'
 
 interface HistoricoViewProps {
   userId: string
   nombreUsuario: string
   onEditarDia: (fecha: string) => void
+  showPdfModalExterno?: boolean
+  onCerrarPdfModalExterno?: () => void
 }
 
 export const HistoricoView: React.FC<HistoricoViewProps> = ({
   userId,
   nombreUsuario,
   onEditarDia,
+  showPdfModalExterno,
+  onCerrarPdfModalExterno,
 }) => {
-  const { desde, hasta, dias, metricas, cargando, establecerPreset } =
+  const { desde, hasta, dias, metricas, cargando, establecerPreset, setDesde, setHasta } =
     useHistorico(userId)
   const [showPdfModal, setShowPdfModal] = useState(false)
+  const [showCustomRangeModal, setShowCustomRangeModal] = useState(false)
   const [presetActivo, setPresetActivo] = useState<number>(14)
 
   const cambiarPreset = (diasCount: number) => {
@@ -35,13 +42,21 @@ export const HistoricoView: React.FC<HistoricoViewProps> = ({
     establecerPreset(diasCount)
   }
 
+  const aplicarRangoPersonalizado = (rango: { desde: string; hasta: string }) => {
+    setPresetActivo(0)
+    setDesde(rango.desde)
+    setHasta(rango.hasta)
+  }
+
+  const modalPdfVisible = showPdfModal || !!showPdfModalExterno
+
   return (
     <View style={styles.container}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Selector de Presets de Rango */}
+        {/* Selector de Presets de Rango + Calendario + PDF */}
         <View style={styles.presetsRow}>
           {[7, 14, 30].map(d => (
             <TouchableOpacity
@@ -56,20 +71,56 @@ export const HistoricoView: React.FC<HistoricoViewProps> = ({
                   presetActivo === d && styles.presetBtnTextActivo,
                 ]}
               >
-                Últimos {d} días
+                {d}d
               </Text>
             </TouchableOpacity>
           ))}
 
+          {/* Botón Calendario Rango Personalizado */}
+          <TouchableOpacity
+            style={[styles.presetBtn, presetActivo === 0 && styles.presetBtnActivo]}
+            onPress={() => setShowCustomRangeModal(true)}
+            activeOpacity={0.7}
+            accessibilityLabel="Filtrar por rango de fechas en calendario"
+          >
+            <View style={styles.customPresetContent}>
+              <FontAwesome
+                name="calendar"
+                size={11}
+                color={presetActivo === 0 ? theme.colors.primary : theme.colors.textMuted}
+              />
+              <Text
+                style={[
+                  styles.presetBtnText,
+                  presetActivo === 0 && styles.presetBtnTextActivo,
+                ]}
+              >
+                Rango
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* Botón Exportar PDF */}
           <TouchableOpacity
             style={styles.pdfBtn}
             onPress={() => setShowPdfModal(true)}
             activeOpacity={0.7}
             accessibilityLabel="Exportar rango a PDF"
           >
-            <FontAwesome name="file-pdf-o" size={14} color={theme.colors.white} />
+            <FontAwesome name="file-pdf-o" size={13} color={theme.colors.white} />
             <Text style={styles.pdfBtnText}>PDF</Text>
           </TouchableOpacity>
+        </View>
+
+        {/* Indicador del rango actual */}
+        <View style={styles.rangoBanner}>
+          <FontAwesome name="calendar-check-o" size={13} color={theme.colors.primary} />
+          <Text style={styles.rangoBannerText}>
+            {formatearFechaCorta(desde)} ➔ {formatearFechaCorta(hasta)}
+          </Text>
+          <View style={styles.rangoDiasBadge}>
+            <Text style={styles.rangoDiasBadgeText}>{dias.length} días</Text>
+          </View>
         </View>
 
         {/* Tarjeta de métricas agregadas */}
@@ -108,11 +159,26 @@ export const HistoricoView: React.FC<HistoricoViewProps> = ({
         )}
       </ScrollView>
 
+      {/* Calendario para rango del histórico */}
+      <CalendarModal
+        visible={showCustomRangeModal}
+        modo="range"
+        titulo="Filtrar Histórico"
+        rangoSeleccionado={{ desde, hasta }}
+        onSeleccionarRango={aplicarRangoPersonalizado}
+        onClose={() => setShowCustomRangeModal(false)}
+      />
+
+      {/* Exportar PDF del rango actual */}
       <ExportarPdfModal
-        visible={showPdfModal}
+        visible={modalPdfVisible}
         userId={userId}
         nombreUsuario={nombreUsuario}
-        onClose={() => setShowPdfModal(false)}
+        rangoInicial={{ desde, hasta }}
+        onClose={() => {
+          setShowPdfModal(false)
+          onCerrarPdfModalExterno?.()
+        }}
       />
     </View>
   )
@@ -168,6 +234,39 @@ const styles = StyleSheet.create({
     color: theme.colors.white,
     fontSize: 12,
     fontWeight: '700',
+  },
+  customPresetContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  rangoBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.radius.sm,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: 8,
+    marginBottom: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  rangoBannerText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: theme.colors.text,
+  },
+  rangoDiasBadge: {
+    backgroundColor: theme.colors.primarySoft,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  rangoDiasBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: theme.colors.primary,
   },
   metricsCard: {
     backgroundColor: theme.colors.card,

@@ -8,10 +8,13 @@ import {
   Animated,
   KeyboardAvoidingView,
   Platform,
+  PanResponder,
   StyleSheet,
 } from 'react-native'
+import { FontAwesome } from '@expo/vector-icons'
 import { Header } from '../common/Header'
 import { DateBar } from '../common/DateBar'
+import { CalendarModal } from '../common/CalendarModal'
 import { ComidaCard } from './ComidaCard'
 import { AguaCard } from './AguaCard'
 import { PesoCard } from './PesoCard'
@@ -38,6 +41,7 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
 }) => {
   const [showPdfModal, setShowPdfModal] = useState(false)
   const [showBulkModal, setShowBulkModal] = useState(false)
+  const [showCalendarModal, setShowCalendarModal] = useState(false)
 
   const {
     fecha,
@@ -45,6 +49,7 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
     datosAnterior,
     cargando,
     guardando,
+    estadoGuardado,
     cambiarDia,
     irAHoy,
     establecerFecha,
@@ -57,6 +62,29 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
   const fadeAnim = useRef(new Animated.Value(1)).current
   const slideAnim = useRef(new Animated.Value(0)).current
   const prevFechaRef = useRef(fecha)
+
+  // Gestor de deslizamiento (Swipe horizontal para cambiar de día)
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_evt, gestureState) => {
+        const { dx, dy } = gestureState
+        // Solo capturar si es claramente horizontal para no bloquear el scroll vertical
+        return Math.abs(dx) > 30 && Math.abs(dx) > Math.abs(dy) * 2
+      },
+      onPanResponderRelease: (_evt, gestureState) => {
+        const { dx, vx } = gestureState
+        // Deslizar izquierda ➔ Día siguiente (+1)
+        if (dx < -60 || (dx < -25 && vx < -0.4)) {
+          void cambiarDia(1)
+        }
+        // Deslizar derecha ➔ Día anterior (-1)
+        else if (dx > 60 || (dx > 25 && vx > 0.4)) {
+          void cambiarDia(-1)
+        }
+      },
+    }),
+  ).current
 
   useEffect(() => {
     if (prevFechaRef.current !== fecha) {
@@ -95,12 +123,12 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
 
   useEffect(() => {
     if (fechaSeleccionada && fechaSeleccionada !== fecha) {
-      establecerFecha(fechaSeleccionada)
+      void establecerFecha(fechaSeleccionada)
     }
   }, [fechaSeleccionada, fecha, establecerFecha])
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} {...panResponder.panHandlers}>
       <Header
         usuario={usuario}
         onLogout={onLogout}
@@ -111,8 +139,10 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
       <DateBar
         fecha={fecha}
         cargando={cargando}
+        estadoGuardado={estadoGuardado}
         onCambiarDia={cambiarDia}
         onIrAHoy={irAHoy}
+        onAbrirCalendario={() => setShowCalendarModal(true)}
       />
 
       {cargando && Object.keys(datos).length === 0 ? (
@@ -132,62 +162,88 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
             keyboardDismissMode="on-drag"
             automaticallyAdjustKeyboardInsets={true}
           >
-          <Animated.View style={{ opacity: fadeAnim, transform: [{ translateX: slideAnim }] }}>
-          {COMIDAS.map(comida => {
-            const valor = (datos[comida.clave] as string) || ''
-            const valorAnterior = (datosAnterior?.[comida.clave] as string) || ''
-            const fuera = !!datos[comida.claveFuera]
+            <Animated.View style={{ opacity: fadeAnim, transform: [{ translateX: slideAnim }] }}>
+              {COMIDAS.map(comida => {
+                const valor = (datos[comida.clave] as string) || ''
+                const valorAnterior = (datosAnterior?.[comida.clave] as string) || ''
+                const fuera = !!datos[comida.claveFuera]
 
-            return (
-              <ComidaCard
-                key={comida.clave}
-                comida={comida}
-                valor={valor}
-                valorAnterior={valorAnterior}
-                fuera={fuera}
-                analizando={analizando}
-                onActualizarTexto={texto => actualizarCampo(comida.clave, texto)}
-                onToggleFuera={() => actualizarCampo(comida.claveFuera, !fuera)}
-                onTomarFoto={() => {
-                  tomarFotoOSeleccionar(textoDescrito => {
-                    const textoActual = (datos[comida.clave] as string) || ''
-                    const nuevo = textoActual ? `${textoActual}\n${textoDescrito}` : textoDescrito
-                    actualizarCampo(comida.clave, nuevo)
-                  })
-                }}
+                return (
+                  <ComidaCard
+                    key={comida.clave}
+                    comida={comida}
+                    valor={valor}
+                    valorAnterior={valorAnterior}
+                    fuera={fuera}
+                    analizando={analizando}
+                    onActualizarTexto={txt => actualizarCampo(comida.clave, txt)}
+                    onToggleFuera={() => actualizarCampo(comida.claveFuera, !fuera)}
+                    onTomarFoto={() => {
+                      tomarFotoOSeleccionar(textoDescrito => {
+                        const textoActual = (datos[comida.clave] as string) || ''
+                        const nuevo = textoActual ? `${textoActual}\n${textoDescrito}` : textoDescrito
+                        actualizarCampo(comida.clave, nuevo)
+                      })
+                    }}
+                  />
+                )
+              })}
+
+              <AguaCard
+                valor={(datos.agua as string) || ''}
+                onCambiar={val => actualizarCampo('agua', val)}
               />
-            )
-          })}
 
-          <AguaCard
-            valor={(datos.agua as string) || ''}
-            onCambiar={val => actualizarCampo('agua', val)}
-          />
+              <PesoCard
+                peso={(datos.peso as string) || ''}
+                ejercicio={(datos.ejercicio as string) || ''}
+                onCambiarPeso={val => actualizarCampo('peso', val)}
+                onCambiarEjercicio={val => actualizarCampo('ejercicio', val)}
+              />
 
-          <PesoCard
-            peso={(datos.peso as string) || ''}
-            ejercicio={(datos.ejercicio as string) || ''}
-            onCambiarPeso={val => actualizarCampo('peso', val)}
-            onCambiarEjercicio={val => actualizarCampo('ejercicio', val)}
-          />
+              <TouchableOpacity
+                style={[styles.saveBtn, guardando && styles.saveBtnDisabled]}
+                onPress={guardar}
+                disabled={guardando}
+                activeOpacity={0.8}
+              >
+                {guardando ? (
+                  <View style={styles.saveBtnContent}>
+                    <ActivityIndicator color={theme.colors.white} size="small" />
+                    <Text style={styles.saveBtnText}>Guardando cambios...</Text>
+                  </View>
+                ) : estadoGuardado === 'guardado' ? (
+                  <View style={styles.saveBtnContent}>
+                    <FontAwesome name="check-circle" size={16} color={theme.colors.white} />
+                    <Text style={styles.saveBtnText}>Cambios guardados</Text>
+                  </View>
+                ) : (
+                  <View style={styles.saveBtnContent}>
+                    <FontAwesome name="floppy-o" size={16} color={theme.colors.white} />
+                    <Text style={styles.saveBtnText}>Guardar cambios</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.saveBtn, guardando && styles.saveBtnDisabled]}
-              onPress={guardar}
-              disabled={guardando}
-              activeOpacity={0.8}
-            >
-              {guardando ? (
-                <ActivityIndicator color={theme.colors.white} />
-              ) : (
-                <Text style={styles.saveBtnText}>Guardar cambios</Text>
-              )}
-            </TouchableOpacity>
-          </Animated.View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    )}
+              <Text style={styles.autoSaveNotice}>
+                Tus datos se guardan automáticamente al escribir o cambiar de día.
+              </Text>
+            </Animated.View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      )}
 
+      {/* Selector de Fecha Rápido (Modal Calendario) */}
+      <CalendarModal
+        visible={showCalendarModal}
+        modo="single"
+        fechaSeleccionada={fecha}
+        titulo="Ir a un día"
+        onSeleccionarFecha={f => void establecerFecha(f)}
+        onClose={() => setShowCalendarModal(false)}
+      />
+
+      {/* Exportar Resumen PDF */}
       <ExportarPdfModal
         visible={showPdfModal}
         userId={usuario.uid}
@@ -195,11 +251,12 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
         onClose={() => setShowPdfModal(false)}
       />
 
+      {/* Subida Múltiple con IA */}
       <BulkUploadModal
         visible={showBulkModal}
         userId={usuario.uid}
         onClose={() => setShowBulkModal(false)}
-        onCompletado={() => establecerFecha(fecha)}
+        onCompletado={() => void establecerFecha(fecha)}
       />
     </View>
   )
@@ -213,34 +270,53 @@ const styles = StyleSheet.create({
   keyboardAvoid: {
     flex: 1,
   },
+  scrollContent: {
+    padding: theme.spacing.md,
+    paddingBottom: theme.spacing.xxl,
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: theme.spacing.xl,
   },
   loadingText: {
-    marginTop: theme.spacing.sm,
-    color: theme.colors.textMuted,
+    marginTop: theme.spacing.md,
     fontSize: 14,
-  },
-  scrollContent: {
-    padding: theme.spacing.md,
-    paddingBottom: 160,
+    color: theme.colors.textMuted,
   },
   saveBtn: {
     backgroundColor: theme.colors.primary,
     borderRadius: theme.radius.md,
     paddingVertical: theme.spacing.md,
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: theme.spacing.sm,
     elevation: 2,
+    shadowColor: theme.colors.primaryDark,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
   },
   saveBtnDisabled: {
     opacity: 0.7,
   },
+  saveBtnContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   saveBtnText: {
     color: theme.colors.white,
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
+  },
+  autoSaveNotice: {
+    fontSize: 11,
+    color: theme.colors.textMuted,
+    textAlign: 'center',
+    marginTop: theme.spacing.sm,
+    marginBottom: theme.spacing.lg,
+    fontStyle: 'italic',
   },
 })
