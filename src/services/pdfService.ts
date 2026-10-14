@@ -1,6 +1,10 @@
 import * as Print from 'expo-print'
 import * as Sharing from 'expo-sharing'
-import { formatearDiaMes, generarListaDias } from '../utils/fechas'
+import {
+  formatearFechaPdf,
+  formatearFechaEspanolaCompleta,
+  generarListaDias,
+} from '../utils/fechas'
 import { cargarRango } from './registroService'
 import type { Registro } from '../types'
 
@@ -30,7 +34,7 @@ export function construirHtmlReporte(
   const filasHtml = dias
     .map(fecha => {
       const reg = registrosPorDia[fecha] || {}
-      const etiquetaDia = formatearDiaMes(fecha)
+      const infoDia = formatearFechaPdf(fecha)
 
       const desayuno = formatearCeldaComida(reg.desayuno, reg.desayunoFuera)
       const mediaManana = formatearCeldaComida(reg.mediaManana, reg.mediaMananaFuera)
@@ -46,7 +50,10 @@ export function construirHtmlReporte(
 
       return `
         <tr>
-          <td class="col-dia"><strong>${etiquetaDia}</strong></td>
+          <td class="col-dia">
+            <span class="dia-nombre">${infoDia.diaSemana}</span><br/>
+            <span class="dia-fecha">${infoDia.fechaNumero}</span>
+          </td>
           <td>${desayuno}</td>
           <td>${mediaManana}</td>
           <td>${comida}</td>
@@ -117,7 +124,15 @@ export function construirHtmlReporte(
         }
         .col-dia {
           width: 9%;
-          text-transform: capitalize;
+        }
+        .dia-nombre {
+          font-weight: 700;
+          color: #1b5e20;
+          font-size: 8pt;
+        }
+        .dia-fecha {
+          font-size: 7.5pt;
+          color: #555555;
         }
         .col-centro {
           text-align: center;
@@ -128,7 +143,7 @@ export function construirHtmlReporte(
     <body>
       <div class="header">
         <h1>🥗 Diario Nutricional — ${nombre}</h1>
-        <div class="meta">Período: <strong>${desde}</strong> al <strong>${hasta}</strong></div>
+        <div class="meta">Período: <strong>${formatearFechaEspanolaCompleta(desde)}</strong> al <strong>${formatearFechaEspanolaCompleta(hasta)}</strong></div>
       </div>
 
       <table>

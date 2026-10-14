@@ -51,6 +51,27 @@ export function formatearFechaCorta(fechaStr: string): string {
   }
 }
 
+export function formatearFechaEspanolaCompleta(fechaStr: string): string {
+  try {
+    const d = parseISO(fechaStr)
+    return format(d, "d 'de' MMMM 'de' yyyy", { locale: es })
+  } catch {
+    return fechaStr
+  }
+}
+
+export function formatearFechaPdf(fechaStr: string): { diaSemana: string; fechaNumero: string } {
+  try {
+    const d = parseISO(fechaStr)
+    const diaSem = format(d, 'EEEE', { locale: es })
+    const fechaNum = format(d, 'dd/MM/yyyy')
+    const diaCapitalizado = diaSem.charAt(0).toUpperCase() + diaSem.slice(1)
+    return { diaSemana: diaCapitalizado, fechaNumero: fechaNum }
+  } catch {
+    return { diaSemana: fechaStr, fechaNumero: '' }
+  }
+}
+
 export function generarListaDias(desdeStr: string, hastaStr: string): string[] {
   try {
     const dInicio = parseISO(desdeStr)

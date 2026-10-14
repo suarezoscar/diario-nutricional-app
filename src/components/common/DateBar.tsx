@@ -149,8 +149,10 @@ const styles = StyleSheet.create({
   subRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 8,
-    marginTop: 3,
+    height: 22,
+    marginTop: 4,
   },
   todayBadge: {
     paddingHorizontal: theme.spacing.sm,

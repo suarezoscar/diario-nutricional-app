@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   PanResponder,
+  Easing,
   StyleSheet,
 } from 'react-native'
 import { FontAwesome } from '@expo/vector-icons'
@@ -91,35 +92,25 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
       const dir = fecha > prevFechaRef.current ? 1 : -1
       prevFechaRef.current = fecha
 
-      fadeAnim.setValue(0.5)
-      slideAnim.setValue(dir * 18)
+      fadeAnim.setValue(0.35)
+      slideAnim.setValue(dir * 28)
 
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
-          duration: 180,
+          duration: 240,
+          easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
-        Animated.spring(slideAnim, {
+        Animated.timing(slideAnim, {
           toValue: 0,
-          friction: 8,
-          tension: 70,
+          duration: 240,
+          easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
-      ]).start(() => {
-        fadeAnim.setValue(1)
-        slideAnim.setValue(0)
-      })
+      ]).start()
     }
   }, [fecha, fadeAnim, slideAnim])
-
-  // Failsafe: asegurar que la opacidad siempre sea 1 al terminar de cargar
-  useEffect(() => {
-    if (!cargando) {
-      fadeAnim.setValue(1)
-      slideAnim.setValue(0)
-    }
-  }, [cargando, fadeAnim, slideAnim])
 
   useEffect(() => {
     if (fechaSeleccionada && fechaSeleccionada !== fecha) {
