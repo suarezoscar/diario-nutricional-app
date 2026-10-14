@@ -51,13 +51,6 @@ export const DateBar: React.FC<DateBarProps> = ({
               style={styles.calendarIcon}
             />
             <Text style={styles.dateText}>{formatearFechaLarga(fecha)}</Text>
-            {cargando && (
-              <ActivityIndicator
-                size="small"
-                color={theme.colors.primary}
-                style={styles.spinner}
-              />
-            )}
             <FontAwesome
               name="caret-down"
               size={12}
@@ -136,9 +129,6 @@ const styles = StyleSheet.create({
   },
   caretIcon: {
     marginLeft: 2,
-  },
-  spinner: {
-    marginLeft: 4,
   },
   dateText: {
     fontSize: 15,

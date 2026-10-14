@@ -3,10 +3,16 @@ import { Alert } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import { describirPlatoConBase64 } from '../services/iaService'
 
+/**
+ * Hook para gestionar la captura o selección de fotos de platos y su análisis con IA.
+ * Permite identificar individualmente qué comida está siendo analizada para mostrar
+ * un skeleton o estado de carga solo en dicha comida.
+ */
 export function useFotoPlato() {
-  const [analizando, setAnalizando] = useState(false)
+  const [comidaAnalizando, setComidaAnalizando] = useState<string | null>(null)
 
   const procesarFoto = async (
+    comidaClave: string,
     onResultado: (texto: string) => void,
     fuente: 'camara' | 'galeria',
   ) => {
@@ -50,26 +56,26 @@ export function useFotoPlato() {
       const base64 = asset.base64
       const mimeType = asset.mimeType || 'image/jpeg'
 
-      setAnalizando(true)
+      setComidaAnalizando(comidaClave)
       const descripcion = await describirPlatoConBase64(base64, mimeType)
       onResultado(descripcion)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error al analizar la fotografía'
       Alert.alert('Error IA', msg)
     } finally {
-      setAnalizando(false)
+      setComidaAnalizando(null)
     }
   }
 
   const tomarFotoOSeleccionar = useCallback(
-    (onResultado: (texto: string) => void) => {
+    (comidaClave: string, onResultado: (texto: string) => void) => {
       Alert.alert(
         'Foto del plato (IA)',
         '¿Cómo deseas añadir la foto?',
         [
           { text: 'Cancelar', style: 'cancel' },
-          { text: 'Galería', onPress: () => void procesarFoto(onResultado, 'galeria') },
-          { text: 'Cámara', onPress: () => void procesarFoto(onResultado, 'camara') },
+          { text: 'Galería', onPress: () => void procesarFoto(comidaClave, onResultado, 'galeria') },
+          { text: 'Cámara', onPress: () => void procesarFoto(comidaClave, onResultado, 'camara') },
         ],
         { cancelable: true },
       )
@@ -78,7 +84,8 @@ export function useFotoPlato() {
   )
 
   return {
-    analizando,
+    analizando: Boolean(comidaAnalizando),
+    comidaAnalizando,
     tomarFotoOSeleccionar,
   }
 }

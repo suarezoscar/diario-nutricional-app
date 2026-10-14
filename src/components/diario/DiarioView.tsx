@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Animated,
   KeyboardAvoidingView,
+  Keyboard,
   Platform,
   PanResponder,
   Easing,
@@ -19,6 +20,7 @@ import { CalendarModal } from '../common/CalendarModal'
 import { ComidaCard } from './ComidaCard'
 import { AguaCard } from './AguaCard'
 import { PesoCard } from './PesoCard'
+import { DiarioSkeleton } from './DiarioSkeleton'
 import { ExportarPdfModal } from './ExportarPdfModal'
 import { BulkUploadModal } from './BulkUploadModal'
 import { useDiario } from '../../hooks/useDiario'
@@ -43,6 +45,9 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
   const [showPdfModal, setShowPdfModal] = useState(false)
   const [showBulkModal, setShowBulkModal] = useState(false)
   const [showCalendarModal, setShowCalendarModal] = useState(false)
+  const [keyboardHeight, setKeyboardHeight] = useState(0)
+
+  const scrollViewRef = useRef<ScrollView>(null)
 
   const {
     fecha,
@@ -58,11 +63,36 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
     guardar,
   } = useDiario(usuario.uid)
 
-  const { analizando, tomarFotoOSeleccionar } = useFotoPlato()
+  const { comidaAnalizando, tomarFotoOSeleccionar } = useFotoPlato()
 
   const fadeAnim = useRef(new Animated.Value(1)).current
   const slideAnim = useRef(new Animated.Value(0)).current
   const prevFechaRef = useRef(fecha)
+
+  // Manejo de eventos de teclado para ajustar dinámicamente el scroll y evitar solapamientos
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow'
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide'
+
+    const showSub = Keyboard.addListener(showEvent, (e) => {
+      setKeyboardHeight(e.endCoordinates.height)
+    })
+    const hideSub = Keyboard.addListener(hideEvent, () => {
+      setKeyboardHeight(0)
+    })
+
+    return () => {
+      showSub.remove()
+      hideSub.remove()
+    }
+  }, [])
+
+  // Auto-scroll hacia el fondo cuando se enfoca peso o ejercicio para que el teclado no lo tape
+  const handleFocusPeso = () => {
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true })
+    }, 160)
+  }
 
   // Gestor de deslizamiento (Swipe horizontal para cambiar de día)
   const panResponder = useRef(
@@ -137,27 +167,33 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
       />
 
       {cargando && Object.keys(datos).length === 0 ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={styles.loadingText}>Cargando diario...</Text>
-        </View>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <DiarioSkeleton />
+        </ScrollView>
       ) : (
         <KeyboardAvoidingView
           style={styles.keyboardAvoid}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
           <ScrollView
-            contentContainerStyle={styles.scrollContent}
+            ref={scrollViewRef}
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingBottom: keyboardHeight > 0 ? keyboardHeight + 80 : theme.spacing.xxl },
+            ]}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
-            automaticallyAdjustKeyboardInsets={true}
           >
             <Animated.View style={{ opacity: fadeAnim, transform: [{ translateX: slideAnim }] }}>
               {COMIDAS.map(comida => {
                 const valor = (datos[comida.clave] as string) || ''
                 const valorAnterior = (datosAnterior?.[comida.clave] as string) || ''
                 const fuera = !!datos[comida.claveFuera]
+                const estaAnalizando = comidaAnalizando === comida.clave
 
                 return (
                   <ComidaCard
@@ -166,11 +202,11 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
                     valor={valor}
                     valorAnterior={valorAnterior}
                     fuera={fuera}
-                    analizando={analizando}
+                    analizando={estaAnalizando}
                     onActualizarTexto={txt => actualizarCampo(comida.clave, txt)}
                     onToggleFuera={() => actualizarCampo(comida.claveFuera, !fuera)}
                     onTomarFoto={() => {
-                      tomarFotoOSeleccionar(textoDescrito => {
+                      tomarFotoOSeleccionar(comida.clave, textoDescrito => {
                         const textoActual = (datos[comida.clave] as string) || ''
                         const nuevo = textoActual ? `${textoActual}\n${textoDescrito}` : textoDescrito
                         actualizarCampo(comida.clave, nuevo)
@@ -190,6 +226,7 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
                 ejercicio={(datos.ejercicio as string) || ''}
                 onCambiarPeso={val => actualizarCampo('peso', val)}
                 onCambiarEjercicio={val => actualizarCampo('ejercicio', val)}
+                onFocusInput={handleFocusPeso}
               />
 
               <TouchableOpacity
@@ -264,17 +301,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: theme.spacing.md,
     paddingBottom: theme.spacing.xxl,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: theme.spacing.xl,
-  },
-  loadingText: {
-    marginTop: theme.spacing.md,
-    fontSize: 14,
-    color: theme.colors.textMuted,
   },
   saveBtn: {
     backgroundColor: theme.colors.primary,

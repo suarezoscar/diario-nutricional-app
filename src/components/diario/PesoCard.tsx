@@ -9,6 +9,7 @@ interface PesoCardProps {
   ejercicio: string
   onCambiarPeso: (valor: string) => void
   onCambiarEjercicio: (valor: string) => void
+  onFocusInput?: () => void
 }
 
 export const PesoCard: React.FC<PesoCardProps> = ({
@@ -16,8 +17,14 @@ export const PesoCard: React.FC<PesoCardProps> = ({
   ejercicio,
   onCambiarPeso,
   onCambiarEjercicio,
+  onFocusInput,
 }) => {
   const [focusedField, setFocusedField] = useState<'peso' | 'ejercicio' | null>(null)
+
+  const handleFocus = (campo: 'peso' | 'ejercicio') => {
+    setFocusedField(campo)
+    onFocusInput?.()
+  }
 
   return (
     <Card>
@@ -34,7 +41,7 @@ export const PesoCard: React.FC<PesoCardProps> = ({
             keyboardType="decimal-pad"
             value={peso}
             onChangeText={onCambiarPeso}
-            onFocus={() => setFocusedField('peso')}
+            onFocus={() => handleFocus('peso')}
             onBlur={() => setFocusedField(null)}
           />
         </View>
@@ -50,7 +57,7 @@ export const PesoCard: React.FC<PesoCardProps> = ({
             placeholderTextColor={theme.colors.textMuted}
             value={ejercicio}
             onChangeText={onCambiarEjercicio}
-            onFocus={() => setFocusedField('ejercicio')}
+            onFocus={() => handleFocus('ejercicio')}
             onBlur={() => setFocusedField(null)}
           />
         </View>
