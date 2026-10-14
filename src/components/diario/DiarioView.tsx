@@ -35,6 +35,7 @@ import type { UsuarioAutenticado } from '../../types'
 interface DiarioViewProps {
   usuario: UsuarioAutenticado
   fechaSeleccionada?: string
+  onLimpiarFechaSeleccionada?: () => void
   accionWidget?: { clave: string; accion: 'foto' | 'texto'; timestamp: number }
   onLogout: () => void
   onVerificarActualizacion?: () => void
@@ -43,6 +44,7 @@ interface DiarioViewProps {
 export const DiarioView: React.FC<DiarioViewProps> = ({
   usuario,
   fechaSeleccionada,
+  onLimpiarFechaSeleccionada,
   accionWidget,
   onLogout,
   onVerificarActualizacion,
@@ -67,7 +69,7 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
     establecerFecha,
     actualizarCampo,
     guardar,
-  } = useDiario(usuario.uid)
+  } = useDiario(usuario.uid, fechaSeleccionada)
 
   const { comidaAnalizando, tomarFotoOSeleccionar } = useFotoPlato()
 
@@ -195,10 +197,17 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
   }, [fecha, fadeAnim, slideAnim])
 
   useEffect(() => {
-    if (fechaSeleccionada && fechaSeleccionada !== fecha) {
-      void establecerFecha(fechaSeleccionada)
+    if (fechaSeleccionada) {
+      if (fechaSeleccionada !== fecha) {
+        establecerFecha(fechaSeleccionada)
+      }
+      onLimpiarFechaSeleccionada?.()
     }
-  }, [fechaSeleccionada, fecha, establecerFecha])
+  }, [fechaSeleccionada, fecha, establecerFecha, onLimpiarFechaSeleccionada])
+
+  // El día se considera en estado de carga activa si useDiario está consultando Firestore
+  // o si los datos actuales en memoria aún corresponden a otra fecha diferente.
+  const estaCargandoDia = cargando || !datos.fecha || datos.fecha !== fecha
 
   return (
     <View
@@ -214,14 +223,14 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
       />
       <DateBar
         fecha={fecha}
-        cargando={cargando}
+        cargando={estaCargandoDia}
         estadoGuardado={estadoGuardado}
         onCambiarDia={cambiarDia}
         onIrAHoy={irAHoy}
         onAbrirCalendario={() => setShowCalendarModal(true)}
       />
 
-      {cargando && Object.keys(datos).length === 0 ? (
+      {estaCargandoDia ? (
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
@@ -255,7 +264,7 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
 
                 return (
                   <View
-                    key={comida.clave}
+                    key={`${comida.clave}_${fecha}`}
                     onLayout={e => {
                       const y = e.nativeEvent.layout.y
                       cardLayoutsRef.current[comida.clave] = y
@@ -287,11 +296,13 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
               })}
 
               <AguaCard
+                key={`agua_${fecha}`}
                 valor={(datos.agua as string) || ''}
                 onCambiar={val => actualizarCampo('agua', val)}
               />
 
               <EjercicioCard
+                key={`ejercicio_${fecha}`}
                 ejercicio={(datos.ejercicio as string) || ''}
                 onCambiarEjercicio={val => actualizarCampo('ejercicio', val)}
                 onFocusInput={handleFocusEjercicio}

@@ -95,6 +95,7 @@ export const MainScreen: React.FC<MainScreenProps> = ({
           <DiarioView
             usuario={usuario}
             fechaSeleccionada={fechaSeleccionada}
+            onLimpiarFechaSeleccionada={() => setFechaSeleccionada(undefined)}
             accionWidget={accionWidget}
             onLogout={onLogout}
             onVerificarActualizacion={onVerificarActualizacion}
