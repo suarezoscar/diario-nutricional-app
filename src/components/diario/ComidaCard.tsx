@@ -9,6 +9,7 @@ import {
 } from 'react-native'
 import { FontAwesome } from '@expo/vector-icons'
 import { Card } from '../common/Card'
+import { useTheme } from '../../context/ThemeContext'
 import { theme } from '../../utils/theme'
 import { MAX_CARACTERES_COMIDA } from '../../config/constants'
 import type { DefinicionComida } from '../../config/comidas'
@@ -30,6 +31,7 @@ interface ComidaCardProps {
  * analiza la foto del plato seleccionado.
  */
 const InputSkeletonIa: React.FC = () => {
+  const { colors } = useTheme()
   const pulseAnim = useRef(new Animated.Value(0.4)).current
 
   useEffect(() => {
@@ -52,13 +54,24 @@ const InputSkeletonIa: React.FC = () => {
   }, [pulseAnim])
 
   return (
-    <Animated.View style={[styles.skeletonContainer, { opacity: pulseAnim }]}>
+    <Animated.View
+      style={[
+        styles.skeletonContainer,
+        {
+          backgroundColor: colors.primarySoft,
+          borderColor: colors.primaryLight,
+          opacity: pulseAnim,
+        },
+      ]}
+    >
       <View style={styles.skeletonHeader}>
-        <FontAwesome name="magic" size={13} color={theme.colors.primary} />
-        <Text style={styles.skeletonTitle}>Identificando plato con IA...</Text>
+        <FontAwesome name="magic" size={13} color={colors.primary} />
+        <Text style={[styles.skeletonTitle, { color: colors.primary }]}>
+          Identificando plato con IA...
+        </Text>
       </View>
-      <View style={[styles.skeletonLine, { width: '85%' }]} />
-      <View style={[styles.skeletonLine, { width: '55%' }]} />
+      <View style={[styles.skeletonLine, { backgroundColor: colors.border, width: '85%' }]} />
+      <View style={[styles.skeletonLine, { backgroundColor: colors.border, width: '55%' }]} />
     </Animated.View>
   )
 }
@@ -74,23 +87,36 @@ export const ComidaCard: React.FC<ComidaCardProps> = ({
   onToggleFuera,
   onTomarFoto,
 }) => {
+  const { colors } = useTheme()
   const [isFocused, setIsFocused] = useState(false)
 
   return (
-    <Card style={esActual ? styles.cardActual : undefined}>
+    <Card
+      style={
+        esActual
+          ? [
+              styles.cardActual,
+              {
+                borderColor: colors.primary,
+                backgroundColor: colors.primaryUltraSoft,
+              },
+            ]
+          : undefined
+      }
+    >
       <View style={styles.header}>
         <View style={styles.titleWrap}>
           <FontAwesome
             name={comida.icono as keyof typeof FontAwesome.glyphMap}
             size={16}
-            color={theme.colors.primary}
+            color={colors.primary}
             style={styles.icon}
           />
-          <Text style={styles.title}>{comida.titulo}</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{comida.titulo}</Text>
           {esActual && (
-            <View style={styles.actualBadge}>
-              <FontAwesome name="clock-o" size={10} color={theme.colors.primary} />
-              <Text style={styles.actualBadgeText}>En curso</Text>
+            <View style={[styles.actualBadge, { backgroundColor: colors.primarySoft }]}>
+              <FontAwesome name="clock-o" size={10} color={colors.primary} />
+              <Text style={[styles.actualBadgeText, { color: colors.primary }]}>En curso</Text>
             </View>
           )}
         </View>
@@ -98,22 +124,35 @@ export const ComidaCard: React.FC<ComidaCardProps> = ({
         <View style={styles.actions}>
           {!!valorAnterior && valorAnterior.trim().length > 0 && (
             <TouchableOpacity
-              style={styles.ayerBtn}
+              style={[
+                styles.ayerBtn,
+                { backgroundColor: colors.primarySoft, borderColor: colors.primaryLight },
+              ]}
               onPress={() => onActualizarTexto(valorAnterior)}
               activeOpacity={0.7}
               accessibilityLabel="Copiar comida del día anterior"
             >
-              <FontAwesome name="history" size={11} color={theme.colors.primary} style={styles.ayerIcon} />
-              <Text style={styles.ayerBtnText}>Ayer</Text>
+              <FontAwesome name="history" size={11} color={colors.primary} style={styles.ayerIcon} />
+              <Text style={[styles.ayerBtnText, { color: colors.primary }]}>Ayer</Text>
             </TouchableOpacity>
           )}
 
           <TouchableOpacity
-            style={[styles.fueraBtn, fuera && styles.fueraBtnActivo]}
+            style={[
+              styles.fueraBtn,
+              { backgroundColor: colors.background, borderColor: colors.border },
+              fuera && { backgroundColor: colors.primarySoft, borderColor: colors.primaryLight },
+            ]}
             onPress={onToggleFuera}
             activeOpacity={0.7}
           >
-            <Text style={[styles.fueraBtnText, fuera && styles.fueraBtnTextActivo]}>
+            <Text
+              style={[
+                styles.fueraBtnText,
+                { color: colors.textMuted },
+                fuera && { color: colors.primary, fontWeight: '700' },
+              ]}
+            >
               {fuera ? '✓ Fuera' : 'Fuera'}
             </Text>
           </TouchableOpacity>
@@ -129,7 +168,7 @@ export const ComidaCard: React.FC<ComidaCardProps> = ({
             <FontAwesome
               name="camera"
               size={16}
-              color={analizando ? theme.colors.textMuted : theme.colors.primary}
+              color={analizando ? colors.textMuted : colors.primary}
             />
           </TouchableOpacity>
         </View>
@@ -139,10 +178,21 @@ export const ComidaCard: React.FC<ComidaCardProps> = ({
         <InputSkeletonIa />
       ) : (
         <TextInput
-          style={[styles.input, isFocused && styles.inputFocused]}
+          style={[
+            styles.input,
+            {
+              backgroundColor: colors.background,
+              borderColor: colors.border,
+              color: colors.text,
+            },
+            isFocused && {
+              borderColor: colors.borderFocus,
+              backgroundColor: colors.focusSoft,
+            },
+          ]}
           multiline
           placeholder={comida.placeholder}
-          placeholderTextColor={theme.colors.textMuted}
+          placeholderTextColor={colors.textMuted}
           value={valor}
           onChangeText={onActualizarTexto}
           maxLength={MAX_CARACTERES_COMIDA}
@@ -152,7 +202,7 @@ export const ComidaCard: React.FC<ComidaCardProps> = ({
       )}
 
       <View style={styles.footer}>
-        <Text style={styles.countText}>
+        <Text style={[styles.countText, { color: colors.textMuted }]}>
           {valor.length}/{MAX_CARACTERES_COMIDA}
         </Text>
       </View>
@@ -177,7 +227,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: '700',
-    color: theme.colors.text,
   },
   actions: {
     flexDirection: 'row',
@@ -190,9 +239,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.sm,
     paddingVertical: 3,
     borderRadius: theme.radius.sm,
-    backgroundColor: theme.colors.primarySoft,
     borderWidth: 1,
-    borderColor: theme.colors.primaryLight,
   },
   ayerIcon: {
     marginRight: 4,
@@ -200,27 +247,15 @@ const styles = StyleSheet.create({
   ayerBtnText: {
     fontSize: 11,
     fontWeight: '700',
-    color: theme.colors.primary,
   },
   fueraBtn: {
     paddingHorizontal: theme.spacing.sm,
     paddingVertical: 3,
     borderRadius: theme.radius.sm,
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.background,
-  },
-  fueraBtnActivo: {
-    backgroundColor: theme.colors.primarySoft,
-    borderColor: theme.colors.primaryLight,
   },
   fueraBtnText: {
     fontSize: 12,
-    color: theme.colors.textMuted,
-  },
-  fueraBtnTextActivo: {
-    color: theme.colors.primary,
-    fontWeight: '600',
   },
   camBtn: {
     padding: theme.spacing.xs,
@@ -228,32 +263,18 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1.5,
-    borderColor: theme.colors.border,
     borderRadius: theme.radius.sm,
     padding: theme.spacing.sm,
     fontSize: 14,
-    color: theme.colors.text,
-    backgroundColor: theme.colors.background,
     minHeight: 64,
     textAlignVertical: 'top',
-  },
-  inputFocused: {
-    borderColor: theme.colors.borderFocus,
-    backgroundColor: theme.colors.focusSoft,
-    elevation: 2,
-    shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
   },
   skeletonContainer: {
     minHeight: 64,
     borderWidth: 1.5,
-    borderColor: theme.colors.primaryLight,
     borderStyle: 'dashed',
     borderRadius: theme.radius.sm,
     padding: theme.spacing.sm,
-    backgroundColor: theme.colors.primarySoft,
     justifyContent: 'center',
     gap: 8,
   },
@@ -266,12 +287,10 @@ const styles = StyleSheet.create({
   skeletonTitle: {
     fontSize: 12,
     fontWeight: '600',
-    color: theme.colors.primary,
   },
   skeletonLine: {
     height: 10,
     borderRadius: 4,
-    backgroundColor: theme.colors.border,
   },
   footer: {
     alignItems: 'flex-end',
@@ -279,12 +298,9 @@ const styles = StyleSheet.create({
   },
   countText: {
     fontSize: 11,
-    color: theme.colors.textMuted,
   },
   cardActual: {
-    borderColor: theme.colors.primary,
     borderWidth: 1.5,
-    backgroundColor: theme.colors.primaryUltraSoft,
     elevation: 3,
     shadowColor: theme.colors.primaryDark,
     shadowOffset: { width: 0, height: 2 },
@@ -295,7 +311,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: theme.colors.primarySoft,
     paddingHorizontal: theme.spacing.sm,
     paddingVertical: 2,
     borderRadius: theme.radius.full,
@@ -304,6 +319,5 @@ const styles = StyleSheet.create({
   actualBadgeText: {
     fontSize: 10,
     fontWeight: '700',
-    color: theme.colors.primary,
   },
 })

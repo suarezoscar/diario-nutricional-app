@@ -9,6 +9,7 @@ import {
   StyleSheet,
 } from 'react-native'
 import { FontAwesome } from '@expo/vector-icons'
+import { useTheme } from '../../context/ThemeContext'
 import { theme } from '../../utils/theme'
 import type { InfoActualizacion } from '../../services/updateService'
 
@@ -33,33 +34,35 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
   onCerrar,
   onAbrirNavegador,
 }) => {
+  const { colors } = useTheme()
+
   if (!visible || !info) return null
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCerrar}>
       <View style={styles.overlay}>
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: colors.card }]}>
           {/* Header */}
           <View style={styles.header}>
-            <View style={styles.iconCircle}>
-              <FontAwesome name="arrow-circle-up" size={28} color={theme.colors.primary} />
+            <View style={[styles.iconCircle, { backgroundColor: colors.primarySoft }]}>
+              <FontAwesome name="arrow-circle-up" size={28} color={colors.primary} />
             </View>
             <View style={styles.headerText}>
-              <Text style={styles.title}>Actualización disponible</Text>
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{info.versionNueva}</Text>
+              <Text style={[styles.title, { color: colors.text }]}>Actualización disponible</Text>
+              <View style={[styles.badge, { backgroundColor: colors.primarySoft }]}>
+                <Text style={[styles.badgeText, { color: colors.primary }]}>{info.versionNueva}</Text>
               </View>
             </View>
           </View>
 
           {/* Notas de la versión */}
           {info.notas ? (
-            <ScrollView style={styles.notesContainer} showsVerticalScrollIndicator={false}>
-              <Text style={styles.notesLabel}>Novedades:</Text>
-              <Text style={styles.notesText}>{info.notas}</Text>
+            <ScrollView style={[styles.notesContainer, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
+              <Text style={[styles.notesLabel, { color: colors.textMuted }]}>Novedades:</Text>
+              <Text style={[styles.notesText, { color: colors.text }]}>{info.notas}</Text>
             </ScrollView>
           ) : (
-            <Text style={styles.description}>
+            <Text style={[styles.description, { color: colors.textMuted }]}>
               Hay una nueva versión disponible con mejoras de rendimiento y corrección de errores.
             </Text>
           )}
@@ -68,15 +71,15 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
           {descargando && (
             <View style={styles.progressSection}>
               <View style={styles.progressHeader}>
-                <Text style={styles.progressLabel}>Descargando actualización...</Text>
-                <Text style={styles.progressPercent}>{progreso}%</Text>
+                <Text style={[styles.progressLabel, { color: colors.text }]}>Descargando actualización...</Text>
+                <Text style={[styles.progressPercent, { color: colors.primary }]}>{progreso}%</Text>
               </View>
-              <View style={styles.progressBarTrack}>
-                <View style={[styles.progressBarFill, { width: `${progreso}%` }]} />
+              <View style={[styles.progressBarTrack, { backgroundColor: colors.border }]}>
+                <View style={[styles.progressBarFill, { backgroundColor: colors.primary, width: `${progreso}%` }]} />
               </View>
               <View style={styles.statusRow}>
-                <ActivityIndicator size="small" color={theme.colors.primary} />
-                <Text style={styles.statusText}>
+                <ActivityIndicator size="small" color={colors.primary} />
+                <Text style={[styles.statusText, { color: colors.textMuted }]}>
                   {progreso >= 100
                     ? 'Iniciando instalador...'
                     : 'Descargando paquete de actualización...'}
@@ -86,29 +89,33 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
           )}
 
           {error && (
-            <View style={styles.errorBox}>
-              <FontAwesome name="exclamation-circle" size={16} color={theme.colors.error} />
-              <Text style={styles.errorText}>{error}</Text>
+            <View style={[styles.errorBox, { backgroundColor: colors.errorSoft }]}>
+              <FontAwesome name="exclamation-circle" size={16} color={colors.error} />
+              <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
             </View>
           )}
 
           {/* Botones de acción */}
           <View style={styles.actions}>
             {descargando ? (
-              <Text style={styles.autoInstallNotice}>
+              <Text style={[styles.autoInstallNotice, { color: colors.textMuted }]}>
                 El instalador de Android se abrirá automáticamente en tu pantalla.
               </Text>
             ) : (
               <>
                 <TouchableOpacity
-                  style={[styles.primaryButton, error ? styles.retryButton : null]}
+                  style={[
+                    styles.primaryButton,
+                    { backgroundColor: colors.primary },
+                    error ? { backgroundColor: colors.primaryLight } : null,
+                  ]}
                   onPress={onInstalar}
                   activeOpacity={0.8}
                 >
                   <FontAwesome
                     name={error ? 'refresh' : 'download'}
                     size={16}
-                    color={theme.colors.white}
+                    color="#ffffff"
                   />
                   <Text style={styles.primaryButtonText}>
                     {error ? 'Reintentar instalación' : 'Instalar ahora'}
@@ -117,12 +124,14 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
 
                 {error ? (
                   <TouchableOpacity
-                    style={styles.secondaryButton}
+                    style={[styles.secondaryButton, { borderColor: colors.primary }]}
                     onPress={onAbrirNavegador}
                     activeOpacity={0.7}
                   >
-                    <FontAwesome name="external-link" size={14} color={theme.colors.primary} />
-                    <Text style={styles.secondaryButtonText}>Descargar desde el navegador</Text>
+                    <FontAwesome name="external-link" size={14} color={colors.primary} />
+                    <Text style={[styles.secondaryButtonText, { color: colors.primary }]}>
+                      Descargar desde el navegador
+                    </Text>
                   </TouchableOpacity>
                 ) : null}
 
@@ -131,7 +140,7 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
                   onPress={onCerrar}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.cancelButtonText}>Más tarde</Text>
+                  <Text style={[styles.cancelButtonText, { color: colors.textMuted }]}>Más tarde</Text>
                 </TouchableOpacity>
               </>
             )}

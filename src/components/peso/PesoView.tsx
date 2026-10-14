@@ -15,6 +15,7 @@ import { CalendarModal } from '../common/CalendarModal'
 import { WeightChart } from './WeightChart'
 import { usePesoHistorial } from '../../hooks/usePesoHistorial'
 import { hoy, formatearFechaLarga, formatearFechaCorta } from '../../utils/fechas'
+import { useTheme } from '../../context/ThemeContext'
 import { theme } from '../../utils/theme'
 
 interface PesoViewProps {
@@ -28,6 +29,7 @@ interface PesoViewProps {
  * el peso para cualquier día seleccionado (por defecto hoy).
  */
 export const PesoView: React.FC<PesoViewProps> = ({ userId, onSeleccionarDia }) => {
+  const { colors } = useTheme()
   const { chartData, estadisticas, pesos, cargando, guardando, guardar, borrar } =
     usePesoHistorial(userId)
 
@@ -60,6 +62,7 @@ export const PesoView: React.FC<PesoViewProps> = ({ userId, onSeleccionarDia }) 
   return (
     <>
       <ScrollView
+        style={{ backgroundColor: colors.background }}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
@@ -68,30 +71,35 @@ export const PesoView: React.FC<PesoViewProps> = ({ userId, onSeleccionarDia }) 
       >
         {/* Tarjeta de métricas */}
         {estadisticas && (
-          <Card style={styles.statsCard}>
+          <Card
+            style={[
+              styles.statsCard,
+              { backgroundColor: colors.primarySoft, borderColor: colors.primaryLight },
+            ]}
+          >
             <View style={styles.statsRow}>
               <View style={styles.statBox}>
-                <Text style={styles.statLabel}>ÚLTIMO PESO</Text>
-                <Text style={styles.statVal}>{estadisticas.ultimoPeso} kg</Text>
+                <Text style={[styles.statLabel, { color: colors.primary }]}>ÚLTIMO PESO</Text>
+                <Text style={[styles.statVal, { color: colors.text }]}>{estadisticas.ultimoPeso} kg</Text>
               </View>
               <View style={styles.statBox}>
-                <Text style={styles.statLabel}>VARIACIÓN</Text>
+                <Text style={[styles.statLabel, { color: colors.primary }]}>VARIACIÓN</Text>
                 <Text
                   style={[
                     styles.statVal,
                     estadisticas.diferencia < 0
-                      ? styles.statValDown
+                      ? { color: colors.primary }
                       : estadisticas.diferencia > 0
-                      ? styles.statValUp
-                      : null,
+                      ? { color: colors.error }
+                      : { color: colors.text },
                   ]}
                 >
                   {estadisticas.diferencia > 0 ? `+${estadisticas.diferencia}` : estadisticas.diferencia} kg
                 </Text>
               </View>
               <View style={styles.statBox}>
-                <Text style={styles.statLabel}>MÍN / MÁX</Text>
-                <Text style={styles.statValSmall}>
+                <Text style={[styles.statLabel, { color: colors.primary }]}>MÍN / MÁX</Text>
+                <Text style={[styles.statValSmall, { color: colors.textMuted }]}>
                   {estadisticas.min} / {estadisticas.max}
                 </Text>
               </View>
@@ -102,11 +110,11 @@ export const PesoView: React.FC<PesoViewProps> = ({ userId, onSeleccionarDia }) 
         {/* Gráfica de evolución */}
         <Card>
           <View style={styles.cardHeader}>
-            <FontAwesome name="line-chart" size={16} color={theme.colors.primary} style={styles.headerIcon} />
-            <Text style={styles.cardTitle}>Evolución de peso</Text>
+            <FontAwesome name="line-chart" size={16} color={colors.primary} style={styles.headerIcon} />
+            <Text style={[styles.cardTitle, { color: colors.text }]}>Evolución de peso</Text>
           </View>
           {cargando ? (
-            <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginVertical: 20 }} />
+            <ActivityIndicator size="small" color={colors.primary} style={{ marginVertical: 20 }} />
           ) : (
             <WeightChart data={chartData} />
           )}
@@ -115,47 +123,53 @@ export const PesoView: React.FC<PesoViewProps> = ({ userId, onSeleccionarDia }) 
         {/* Formulario de registro con selector de día */}
         <Card>
           <View style={styles.cardHeader}>
-            <FontAwesome name="plus-circle" size={16} color={theme.colors.primary} style={styles.headerIcon} />
-            <Text style={styles.cardTitle}>Registrar peso</Text>
+            <FontAwesome name="plus-circle" size={16} color={colors.primary} style={styles.headerIcon} />
+            <Text style={[styles.cardTitle, { color: colors.text }]}>Registrar peso</Text>
           </View>
 
           {/* Selector de fecha para el registro */}
-          <View style={styles.dateSelectorSection}>
-            <Text style={styles.dateSelectorLabel}>Fecha del registro:</Text>
+          <View style={[styles.dateSelectorSection, { borderBottomColor: colors.border }]}>
+            <Text style={[styles.dateSelectorLabel, { color: colors.textMuted }]}>Fecha del registro:</Text>
             <View style={styles.dateSelectorRow}>
               <TouchableOpacity
-                style={styles.datePickerBtn}
+                style={[
+                  styles.datePickerBtn,
+                  { backgroundColor: colors.background, borderColor: colors.border },
+                ]}
                 onPress={() => setShowCalendarModal(true)}
                 activeOpacity={0.7}
                 accessibilityLabel="Seleccionar día para registrar peso"
               >
-                <FontAwesome name="calendar-o" size={14} color={theme.colors.primary} style={styles.calendarIcon} />
-                <Text style={styles.datePickerBtnText}>
+                <FontAwesome name="calendar-o" size={14} color={colors.primary} style={styles.calendarIcon} />
+                <Text style={[styles.datePickerBtnText, { color: colors.text }]}>
                   {fechaPeso === hoy()
                     ? `Hoy (${formatearFechaCorta(fechaPeso)})`
                     : formatearFechaLarga(fechaPeso)}
                 </Text>
-                <FontAwesome name="caret-down" size={12} color={theme.colors.textMuted} style={styles.caretIcon} />
+                <FontAwesome name="caret-down" size={12} color={colors.textMuted} style={styles.caretIcon} />
               </TouchableOpacity>
 
               {fechaPeso !== hoy() && (
                 <TouchableOpacity
-                  style={styles.todayQuickBtn}
+                  style={[
+                    styles.todayQuickBtn,
+                    { backgroundColor: colors.primarySoft, borderColor: colors.primaryLight },
+                  ]}
                   onPress={() => setFechaPeso(hoy())}
                   activeOpacity={0.7}
                   accessibilityLabel="Volver a la fecha de hoy"
                 >
-                  <Text style={styles.todayQuickBtnText}>Ir a Hoy</Text>
+                  <Text style={[styles.todayQuickBtnText, { color: colors.primary }]}>Ir a Hoy</Text>
                 </TouchableOpacity>
               )}
             </View>
 
             {pesos[fechaPeso] !== undefined && (
-              <View style={styles.existingNotice}>
-                <FontAwesome name="info-circle" size={12} color={theme.colors.primary} style={{ marginRight: 6 }} />
-                <Text style={styles.existingNoticeText}>
+              <View style={[styles.existingNotice, { backgroundColor: colors.primarySoft }]}>
+                <FontAwesome name="info-circle" size={12} color={colors.primary} style={{ marginRight: 6 }} />
+                <Text style={[styles.existingNoticeText, { color: colors.text }]}>
                   Registrado ese día:{' '}
-                  <Text style={styles.existingNoticeBold}>{pesos[fechaPeso]} kg</Text> (al guardar se actualizará)
+                  <Text style={[styles.existingNoticeBold, { color: colors.primaryDark }]}>{pesos[fechaPeso]} kg</Text> (al guardar se actualizará)
                 </Text>
               </View>
             )}
@@ -163,9 +177,20 @@ export const PesoView: React.FC<PesoViewProps> = ({ userId, onSeleccionarDia }) 
 
           <View style={styles.formRow}>
             <TextInput
-              style={[styles.input, isFocused && styles.inputFocused]}
+              style={[
+                styles.input,
+                {
+                  backgroundColor: colors.background,
+                  borderColor: colors.border,
+                  color: colors.text,
+                },
+                isFocused && {
+                  borderColor: colors.borderFocus,
+                  backgroundColor: colors.focusSoft,
+                },
+              ]}
               placeholder={pesos[fechaPeso] !== undefined ? `Actual: ${pesos[fechaPeso]}` : 'Ej: 72.5'}
-              placeholderTextColor={theme.colors.textMuted}
+              placeholderTextColor={colors.textMuted}
               keyboardType="decimal-pad"
               value={nuevoPeso}
               onChangeText={setNuevoPeso}
@@ -173,13 +198,13 @@ export const PesoView: React.FC<PesoViewProps> = ({ userId, onSeleccionarDia }) 
               onBlur={() => setIsFocused(false)}
             />
             <TouchableOpacity
-              style={[styles.saveBtn, guardando && styles.saveBtnDisabled]}
+              style={[styles.saveBtn, { backgroundColor: colors.primary }, guardando && styles.saveBtnDisabled]}
               onPress={handleGuardar}
               disabled={guardando}
               activeOpacity={0.7}
             >
               {guardando ? (
-                <ActivityIndicator color={theme.colors.white} size="small" />
+                <ActivityIndicator color="#ffffff" size="small" />
               ) : (
                 <Text style={styles.saveBtnText}>Guardar</Text>
               )}
@@ -190,23 +215,25 @@ export const PesoView: React.FC<PesoViewProps> = ({ userId, onSeleccionarDia }) 
         {/* Historial cronológico inverso */}
         <Card>
           <View style={styles.cardHeader}>
-            <FontAwesome name="history" size={16} color={theme.colors.primary} style={styles.headerIcon} />
-            <Text style={styles.cardTitle}>Historial ({chartData.length})</Text>
+            <FontAwesome name="history" size={16} color={colors.primary} style={styles.headerIcon} />
+            <Text style={[styles.cardTitle, { color: colors.text }]}>Historial ({chartData.length})</Text>
           </View>
 
           {chartData.length === 0 && !cargando && (
-            <Text style={styles.emptyText}>No hay registros de peso guardados todavía.</Text>
+            <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+              No hay registros de peso guardados todavía.
+            </Text>
           )}
 
           {[...chartData].reverse().map(item => (
-            <View key={item.fecha} style={styles.historyRow}>
+            <View key={item.fecha} style={[styles.historyRow, { borderBottomColor: colors.border }]}>
               <TouchableOpacity
                 style={styles.historyInfo}
                 onPress={() => onSeleccionarDia?.(item.fecha)}
                 activeOpacity={onSeleccionarDia ? 0.7 : 1}
               >
-                <Text style={styles.historyDate}>{formatearFechaLarga(item.fecha)}</Text>
-                <Text style={styles.historyWeight}>{item.peso} kg</Text>
+                <Text style={[styles.historyDate, { color: colors.text }]}>{formatearFechaLarga(item.fecha)}</Text>
+                <Text style={[styles.historyWeight, { color: colors.primary }]}>{item.peso} kg</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -215,7 +242,7 @@ export const PesoView: React.FC<PesoViewProps> = ({ userId, onSeleccionarDia }) 
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 activeOpacity={0.7}
               >
-                <FontAwesome name="trash-o" size={15} color={theme.colors.error} />
+                <FontAwesome name="trash-o" size={15} color={colors.error} />
               </TouchableOpacity>
             </View>
           ))}
@@ -244,8 +271,7 @@ const styles = StyleSheet.create({
     paddingBottom: 160,
   },
   statsCard: {
-    backgroundColor: theme.colors.primarySoft,
-    borderColor: theme.colors.primaryLight,
+    borderWidth: 1,
   },
   statsRow: {
     flexDirection: 'row',
@@ -258,24 +284,15 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: 10,
     fontWeight: '700',
-    color: theme.colors.primary,
     marginBottom: 4,
   },
   statVal: {
     fontSize: 16,
     fontWeight: '800',
-    color: theme.colors.text,
-  },
-  statValDown: {
-    color: theme.colors.primary,
-  },
-  statValUp: {
-    color: theme.colors.error,
   },
   statValSmall: {
     fontSize: 14,
     fontWeight: '700',
-    color: theme.colors.textMuted,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -288,18 +305,15 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: theme.colors.text,
   },
   dateSelectorSection: {
     marginBottom: theme.spacing.md,
     paddingBottom: theme.spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
   },
   dateSelectorLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: theme.colors.textMuted,
     marginBottom: 6,
   },
   dateSelectorRow: {
@@ -310,9 +324,7 @@ const styles = StyleSheet.create({
   datePickerBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.colors.background,
     borderWidth: 1.5,
-    borderColor: theme.colors.border,
     borderRadius: theme.radius.sm,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: 8,
@@ -324,7 +336,6 @@ const styles = StyleSheet.create({
   datePickerBtnText: {
     fontSize: 13,
     fontWeight: '600',
-    color: theme.colors.text,
     textTransform: 'capitalize',
   },
   caretIcon: {
@@ -333,32 +344,26 @@ const styles = StyleSheet.create({
   todayQuickBtn: {
     paddingHorizontal: theme.spacing.md,
     paddingVertical: 6,
-    backgroundColor: theme.colors.primarySoft,
     borderRadius: theme.radius.full,
     borderWidth: 1,
-    borderColor: theme.colors.primaryLight,
   },
   todayQuickBtnText: {
     fontSize: 11,
     fontWeight: '700',
-    color: theme.colors.primary,
   },
   existingNotice: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 8,
-    backgroundColor: theme.colors.primarySoft,
     paddingHorizontal: theme.spacing.sm,
     paddingVertical: 4,
     borderRadius: theme.radius.sm,
   },
   existingNoticeText: {
     fontSize: 12,
-    color: theme.colors.text,
   },
   existingNoticeBold: {
     fontWeight: '700',
-    color: theme.colors.primaryDark,
   },
   formRow: {
     flexDirection: 'row',
@@ -367,18 +372,10 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     borderWidth: 1.5,
-    borderColor: theme.colors.border,
     borderRadius: theme.radius.sm,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
     fontSize: 15,
-    color: theme.colors.text,
-    backgroundColor: theme.colors.background,
-  },
-  inputFocused: {
-    borderColor: theme.colors.borderFocus,
-    backgroundColor: theme.colors.white,
-    elevation: 2,
   },
   saveBtn: {
     backgroundColor: theme.colors.primary,
@@ -397,7 +394,6 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 13,
-    color: theme.colors.textMuted,
     fontStyle: 'italic',
     textAlign: 'center',
     marginVertical: theme.spacing.sm,
@@ -408,7 +404,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: theme.spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
   },
   historyInfo: {
     flex: 1,
@@ -418,13 +413,11 @@ const styles = StyleSheet.create({
   },
   historyDate: {
     fontSize: 13,
-    color: theme.colors.text,
     textTransform: 'capitalize',
   },
   historyWeight: {
     fontSize: 14,
     fontWeight: '700',
-    color: theme.colors.primary,
   },
   deleteBtn: {
     padding: theme.spacing.xs,

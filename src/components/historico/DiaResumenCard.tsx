@@ -4,6 +4,7 @@ import { FontAwesome } from '@expo/vector-icons'
 import { Card } from '../common/Card'
 import { COMIDAS } from '../../config/comidas'
 import { formatearFechaLarga, hoy } from '../../utils/fechas'
+import { useTheme } from '../../context/ThemeContext'
 import { theme } from '../../utils/theme'
 import type { DiaRangoResumen } from '../../hooks/useHistorico'
 
@@ -21,6 +22,7 @@ const COMIDAS_INFO: { clave: string; label: string; fueraClave: string }[] = [
 ]
 
 export const DiaResumenCard: React.FC<DiaResumenCardProps> = ({ dia, onEditar }) => {
+  const { colors, esOscuro } = useTheme()
   const { fecha, datos } = dia
   const esHoy = fecha === hoy()
   const [desplegado, setDesplegado] = useState(false)
@@ -30,45 +32,48 @@ export const DiaResumenCard: React.FC<DiaResumenCardProps> = ({ dia, onEditar })
   const tienePeso = !!datos.peso
   const sinDatos = !tieneComidas && !tieneAgua && !tienePeso
 
+  const fueraBg = esOscuro ? '#3a2208' : '#fff3e0'
+  const fueraColor = esOscuro ? '#ffb74d' : '#e65100'
+
   return (
-    <Card style={esHoy ? styles.cardHoy : undefined}>
+    <Card style={esHoy ? [styles.cardHoy, { borderColor: colors.primaryLight }] : undefined}>
       <TouchableOpacity
         onPress={() => !sinDatos && setDesplegado(prev => !prev)}
         activeOpacity={sinDatos ? 1 : 0.75}
       >
         <View style={styles.header}>
           <View style={styles.dateWrap}>
-            <Text style={[styles.dateText, esHoy && styles.dateTextHoy]}>
+            <Text style={[styles.dateText, { color: colors.text }, esHoy && { color: colors.primary }]}>
               {formatearFechaLarga(fecha)}
             </Text>
             {esHoy && (
-              <View style={styles.badgeHoy}>
-                <Text style={styles.badgeHoyText}>Hoy</Text>
+              <View style={[styles.badgeHoy, { backgroundColor: colors.primarySoft }]}>
+                <Text style={[styles.badgeHoyText, { color: colors.primary }]}>Hoy</Text>
               </View>
             )}
             {!sinDatos && (
               <FontAwesome
                 name={desplegado ? 'chevron-up' : 'chevron-down'}
                 size={11}
-                color={theme.colors.textMuted}
+                color={colors.textMuted}
                 style={styles.chevronIcon}
               />
             )}
           </View>
 
           <TouchableOpacity
-            style={styles.editBtn}
+            style={[styles.editBtn, { backgroundColor: colors.background }]}
             onPress={() => onEditar(fecha)}
             activeOpacity={0.7}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <FontAwesome name="pencil" size={13} color={theme.colors.primary} />
-            <Text style={styles.editBtnText}>Editar</Text>
+            <FontAwesome name="pencil" size={13} color={colors.primary} />
+            <Text style={[styles.editBtnText, { color: colors.primary }]}>Editar</Text>
           </TouchableOpacity>
         </View>
 
         {sinDatos ? (
-          <Text style={styles.emptyText}>Sin registros este día.</Text>
+          <Text style={[styles.emptyText, { color: colors.textMuted }]}>Sin registros este día.</Text>
         ) : (
           <View style={styles.content}>
             {/* Fila de comidas (pills) */}
@@ -83,15 +88,17 @@ export const DiaResumenCard: React.FC<DiaResumenCardProps> = ({ dia, onEditar })
                     key={c.clave}
                     style={[
                       styles.mealPill,
-                      registrado && styles.mealPillActive,
-                      fuera && styles.mealPillFuera,
+                      { backgroundColor: colors.background },
+                      registrado && { backgroundColor: colors.primarySoft },
+                      fuera && { backgroundColor: fueraBg },
                     ]}
                   >
                     <Text
                       style={[
                         styles.mealPillText,
-                        registrado && styles.mealPillTextActive,
-                        fuera && styles.mealPillTextFuera,
+                        { color: colors.textMuted },
+                        registrado && { color: colors.primary, fontWeight: '700' },
+                        fuera && { color: fueraColor, fontWeight: '700' },
                       ]}
                     >
                       {c.label} {fuera ? '★' : ''}
@@ -105,22 +112,22 @@ export const DiaResumenCard: React.FC<DiaResumenCardProps> = ({ dia, onEditar })
             <View style={styles.footerRow}>
               {tieneAgua && (
                 <View style={styles.metricItem}>
-                  <FontAwesome name="tint" size={12} color={theme.colors.water} />
-                  <Text style={styles.metricText}>{datos.agua} L</Text>
+                  <FontAwesome name="tint" size={12} color={colors.water} />
+                  <Text style={[styles.metricText, { color: colors.textMuted }]}>{datos.agua} L</Text>
                 </View>
               )}
 
               {tienePeso && (
                 <View style={styles.metricItem}>
-                  <FontAwesome name="dashboard" size={12} color={theme.colors.primary} />
-                  <Text style={styles.metricText}>{datos.peso} kg</Text>
+                  <FontAwesome name="dashboard" size={12} color={colors.primary} />
+                  <Text style={[styles.metricText, { color: colors.textMuted }]}>{datos.peso} kg</Text>
                 </View>
               )}
 
               {!!datos.ejercicio && (
                 <View style={styles.metricItem}>
-                  <FontAwesome name="heartbeat" size={12} color={theme.colors.primary} />
-                  <Text style={styles.metricText} numberOfLines={1}>
+                  <FontAwesome name="heartbeat" size={12} color={colors.primary} />
+                  <Text style={[styles.metricText, { color: colors.textMuted }]} numberOfLines={1}>
                     {datos.ejercicio as string}
                   </Text>
                 </View>
@@ -133,61 +140,67 @@ export const DiaResumenCard: React.FC<DiaResumenCardProps> = ({ dia, onEditar })
       {/* Detalle Desplegado Readonly */}
       {desplegado && !sinDatos && (
         <View style={styles.detalleContainer}>
-          <View style={styles.detalleDivider} />
+          <View style={[styles.detalleDivider, { backgroundColor: colors.border }]} />
           {COMIDAS.map(c => {
             const texto = (datos[c.clave] as string)?.trim()
             const fuera = !!datos[c.claveFuera]
             if (!texto && !fuera) return null
 
             return (
-              <View key={c.clave} style={styles.comidaItem}>
+              <View
+                key={c.clave}
+                style={[
+                  styles.comidaItem,
+                  { backgroundColor: colors.background, borderColor: colors.border },
+                ]}
+              >
                 <View style={styles.comidaHeader}>
                   <View style={styles.comidaTituloWrap}>
                     <FontAwesome
                       name={c.icono as any}
                       size={13}
-                      color={theme.colors.primary}
+                      color={colors.primary}
                     />
-                    <Text style={styles.comidaTitulo}>{c.titulo}</Text>
+                    <Text style={[styles.comidaTitulo, { color: colors.primary }]}>{c.titulo}</Text>
                   </View>
                   {fuera && (
-                    <View style={styles.fueraBadge}>
-                      <Text style={styles.fueraBadgeText}>Fuera</Text>
+                    <View style={[styles.fueraBadge, { backgroundColor: fueraBg }]}>
+                      <Text style={[styles.fueraBadgeText, { color: fueraColor }]}>Fuera</Text>
                     </View>
                   )}
                 </View>
                 {texto ? (
-                  <Text style={styles.comidaTexto}>{texto}</Text>
+                  <Text style={[styles.comidaTexto, { color: colors.text }]}>{texto}</Text>
                 ) : (
-                  <Text style={styles.comidaVaciaText}>Comida fuera sin notas</Text>
+                  <Text style={[styles.comidaVaciaText, { color: colors.textMuted }]}>Comida fuera sin notas</Text>
                 )}
               </View>
             )
           })}
 
           {(tieneAgua || tienePeso || !!datos.ejercicio) && (
-            <View style={styles.extraDetalles}>
+            <View style={[styles.extraDetalles, { borderTopColor: colors.border }]}>
               {tieneAgua && (
                 <View style={styles.extraItem}>
-                  <FontAwesome name="tint" size={12} color={theme.colors.water} />
-                  <Text style={styles.extraText}>
-                    Agua: <Text style={styles.extraBold}>{datos.agua} L</Text>
+                  <FontAwesome name="tint" size={12} color={colors.water} />
+                  <Text style={[styles.extraText, { color: colors.textMuted }]}>
+                    Agua: <Text style={[styles.extraBold, { color: colors.text }]}>{datos.agua} L</Text>
                   </Text>
                 </View>
               )}
               {tienePeso && (
                 <View style={styles.extraItem}>
-                  <FontAwesome name="dashboard" size={12} color={theme.colors.primary} />
-                  <Text style={styles.extraText}>
-                    Peso: <Text style={styles.extraBold}>{datos.peso} kg</Text>
+                  <FontAwesome name="dashboard" size={12} color={colors.primary} />
+                  <Text style={[styles.extraText, { color: colors.textMuted }]}>
+                    Peso: <Text style={[styles.extraBold, { color: colors.text }]}>{datos.peso} kg</Text>
                   </Text>
                 </View>
               )}
               {!!datos.ejercicio && (
                 <View style={styles.extraItem}>
-                  <FontAwesome name="heartbeat" size={12} color={theme.colors.primary} />
-                  <Text style={styles.extraText}>
-                    Ejercicio: <Text style={styles.extraBold}>{datos.ejercicio as string}</Text>
+                  <FontAwesome name="heartbeat" size={12} color={colors.primary} />
+                  <Text style={[styles.extraText, { color: colors.textMuted }]}>
+                    Ejercicio: <Text style={[styles.extraBold, { color: colors.text }]}>{datos.ejercicio as string}</Text>
                   </Text>
                 </View>
               )}

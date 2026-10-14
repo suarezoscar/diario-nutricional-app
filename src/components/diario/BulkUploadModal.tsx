@@ -17,6 +17,7 @@ import { FontAwesome } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useBulkProcessor } from '../../hooks/useBulkProcessor'
 import { CalendarModal } from '../common/CalendarModal'
+import { useTheme } from '../../context/ThemeContext'
 import { formatearFechaCorta } from '../../utils/fechas'
 import { theme } from '../../utils/theme'
 import type { ClaveComida } from '../../types'
@@ -43,6 +44,7 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
   onCompletado,
 }) => {
   const insets = useSafeAreaInsets()
+  const { colors, esOscuro } = useTheme()
   const topPadding = Math.max(
     insets.top,
     Platform.OS === 'android' ? (RNStatusBar.currentHeight || 24) : 0,
@@ -89,15 +91,15 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
       onRequestClose={handleCerrar}
       statusBarTranslucent={true}
     >
-      <RNStatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
-      <View style={styles.container}>
-        <View style={[styles.header, { paddingTop: topPadding + 6 }]}>
+      <RNStatusBar barStyle={esOscuro ? 'light-content' : 'dark-content'} backgroundColor="transparent" translucent />
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.header, { paddingTop: topPadding + 6, backgroundColor: colors.card, borderBottomColor: colors.border }]}>
           <View style={styles.headerTitleWrap}>
-            <FontAwesome name="camera-retro" size={18} color={theme.colors.primary} />
-            <Text style={styles.headerTitle}>Subida múltiple (IA)</Text>
+            <FontAwesome name="camera-retro" size={18} color={colors.primary} />
+            <Text style={[styles.headerTitle, { color: colors.text }]}>Subida múltiple (IA)</Text>
           </View>
           <TouchableOpacity onPress={handleCerrar} style={styles.closeBtn} activeOpacity={0.7}>
-            <FontAwesome name="times" size={18} color={theme.colors.textMuted} />
+            <FontAwesome name="times" size={18} color={colors.textMuted} />
           </TouchableOpacity>
         </View>
 
@@ -109,59 +111,59 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
           automaticallyAdjustKeyboardInsets={true}
         >
           <TouchableOpacity
-            style={styles.pickerBtn}
+            style={[styles.pickerBtn, { backgroundColor: colors.card, borderColor: colors.primaryLight }]}
             onPress={seleccionarFotos}
             activeOpacity={0.7}
           >
-            <FontAwesome name="plus-circle" size={18} color={theme.colors.primary} />
-            <Text style={styles.pickerBtnText}>Seleccionar fotos de la galería</Text>
+            <FontAwesome name="plus-circle" size={18} color={colors.primary} />
+            <Text style={[styles.pickerBtnText, { color: colors.primary }]}>Seleccionar fotos de la galería</Text>
           </TouchableOpacity>
 
           {procesando && (
-            <View style={styles.analyzingBanner}>
-              <ActivityIndicator size="small" color={theme.colors.primary} />
-              <Text style={styles.analyzingText}>Analizando platos con IA...</Text>
+            <View style={[styles.analyzingBanner, { backgroundColor: colors.primarySoft }]}>
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={[styles.analyzingText, { color: colors.primary }]}>Analizando platos con IA...</Text>
             </View>
           )}
 
           {items.map(item => (
-            <View key={item.id} style={styles.itemCard}>
+            <View key={item.id} style={[styles.itemCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={styles.itemHeader}>
                 <Image source={{ uri: item.uri }} style={styles.thumb} />
                 <View style={styles.itemInfo}>
                   <View style={styles.metaRow}>
                     {/* Botón táctil para cambiar la fecha manualmente */}
                     <TouchableOpacity
-                      style={styles.dateBadge}
+                      style={[styles.dateBadge, { backgroundColor: colors.background, borderColor: colors.primaryLight }]}
                       onPress={() => setItemEditandoFecha({ id: item.id, fecha: item.fecha })}
                       activeOpacity={0.7}
                       accessibilityLabel="Cambiar día asignado a la foto"
                     >
-                      <FontAwesome name="calendar" size={11} color={theme.colors.primary} />
-                      <Text style={styles.dateBadgeText}>
+                      <FontAwesome name="calendar" size={11} color={colors.primary} />
+                      <Text style={[styles.dateBadgeText, { color: colors.primary }]}>
                         {formatearFechaCorta(item.fecha)}
                         {item.horaFormateada ? ` (${item.horaFormateada})` : ''}
                       </Text>
-                      <FontAwesome name="pencil" size={10} color={theme.colors.textMuted} />
+                      <FontAwesome name="pencil" size={10} color={colors.textMuted} />
                     </TouchableOpacity>
 
                     {/* Estado del análisis IA */}
                     {item.estado === 'analizando' && (
                       <View style={styles.statusPill}>
-                        <ActivityIndicator size="small" color={theme.colors.primary} />
-                        <Text style={styles.statusText}>Analizando...</Text>
+                        <ActivityIndicator size="small" color={colors.primary} />
+                        <Text style={[styles.statusText, { color: colors.textMuted }]}>Analizando...</Text>
                       </View>
                     )}
                     {item.estado === 'listo' && (
-                      <View style={[styles.statusPill, styles.statusPillOk]}>
-                        <FontAwesome name="check" size={10} color={theme.colors.primary} />
-                        <Text style={[styles.statusText, styles.statusTextOk]}>Listo</Text>
+                      <View style={[styles.statusPill, styles.statusPillOk, { backgroundColor: colors.primarySoft }]}>
+                        <FontAwesome name="check" size={10} color={colors.primary} />
+                        <Text style={[styles.statusText, styles.statusTextOk, { color: colors.primary }]}>Listo</Text>
                       </View>
                     )}
                     {item.estado === 'error' && (
-                      <View style={[styles.statusPill, styles.statusPillErr]}>
-                        <FontAwesome name="exclamation-triangle" size={10} color={theme.colors.error} />
-                        <Text style={[styles.statusText, styles.statusTextErr]}>Error</Text>
+                      <View style={[styles.statusPill, styles.statusPillErr, { backgroundColor: colors.errorSoft }]}>
+                        <FontAwesome name="exclamation-triangle" size={10} color={colors.error} />
+                        <Text style={[styles.statusText, styles.statusTextErr, { color: colors.error }]}>Error</Text>
                       </View>
                     )}
                   </View>
@@ -173,11 +175,21 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
                       return (
                         <TouchableOpacity
                           key={op.clave}
-                          style={[styles.mealBtn, activo && styles.mealBtnActivo]}
+                          style={[
+                            styles.mealBtn,
+                            { backgroundColor: colors.background },
+                            activo && { backgroundColor: colors.primarySoft },
+                          ]}
                           onPress={() => actualizarItem(item.id, { comidaClave: op.clave })}
                           activeOpacity={0.7}
                         >
-                          <Text style={[styles.mealBtnText, activo && styles.mealBtnTextActivo]}>
+                          <Text
+                            style={[
+                              styles.mealBtnText,
+                              { color: colors.textMuted },
+                              activo && { color: colors.primary, fontWeight: '700' },
+                            ]}
+                          >
                             {op.label}
                           </Text>
                         </TouchableOpacity>
@@ -193,15 +205,15 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
                   activeOpacity={0.7}
                   accessibilityLabel="Eliminar foto"
                 >
-                  <FontAwesome name="trash-o" size={16} color={theme.colors.error} />
+                  <FontAwesome name="trash-o" size={16} color={colors.error} />
                 </TouchableOpacity>
               </View>
 
               <TextInput
-                style={styles.descInput}
+                style={[styles.descInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
                 multiline
                 placeholder="Descripción del plato generada por IA..."
-                placeholderTextColor={theme.colors.textMuted}
+                placeholderTextColor={colors.textMuted}
                 value={item.descripcion}
                 onChangeText={txt => actualizarItem(item.id, { descripcion: txt })}
               />
@@ -210,15 +222,15 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
         </ScrollView>
 
         {items.length > 0 && (
-          <View style={styles.footer}>
+          <View style={[styles.footer, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
             <TouchableOpacity
-              style={[styles.guardarBtn, guardando && styles.guardarBtnDisabled]}
+              style={[styles.guardarBtn, { backgroundColor: colors.primary }, guardando && styles.guardarBtnDisabled]}
               onPress={handleGuardar}
               disabled={guardando}
               activeOpacity={0.8}
             >
               {guardando ? (
-                <ActivityIndicator color={theme.colors.white} />
+                <ActivityIndicator color="#ffffff" />
               ) : (
                 <Text style={styles.guardarBtnText}>
                   Guardar en mi diario ({items.filter(i => i.descripcion.trim().length > 0).length})

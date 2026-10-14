@@ -13,6 +13,7 @@ import { DiaResumenCard } from './DiaResumenCard'
 import { ExportarPdfModal } from '../diario/ExportarPdfModal'
 import { CalendarModal } from '../common/CalendarModal'
 import { useHistorico } from '../../hooks/useHistorico'
+import { useTheme } from '../../context/ThemeContext'
 import { formatearFechaCorta } from '../../utils/fechas'
 import { theme } from '../../utils/theme'
 
@@ -31,6 +32,7 @@ export const HistoricoView: React.FC<HistoricoViewProps> = ({
   showPdfModalExterno,
   onCerrarPdfModalExterno,
 }) => {
+  const { colors } = useTheme()
   const { desde, hasta, dias, metricas, cargando, establecerPreset, setDesde, setHasta } =
     useHistorico(userId)
   const [showPdfModal, setShowPdfModal] = useState(false)
@@ -51,7 +53,7 @@ export const HistoricoView: React.FC<HistoricoViewProps> = ({
   const modalPdfVisible = showPdfModal || !!showPdfModalExterno
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -61,14 +63,19 @@ export const HistoricoView: React.FC<HistoricoViewProps> = ({
           {[7, 14, 30].map(d => (
             <TouchableOpacity
               key={d}
-              style={[styles.presetBtn, presetActivo === d && styles.presetBtnActivo]}
+              style={[
+                styles.presetBtn,
+                { backgroundColor: colors.card, borderColor: colors.border },
+                presetActivo === d && { backgroundColor: colors.primarySoft, borderColor: colors.primaryLight },
+              ]}
               onPress={() => cambiarPreset(d)}
               activeOpacity={0.7}
             >
               <Text
                 style={[
                   styles.presetBtnText,
-                  presetActivo === d && styles.presetBtnTextActivo,
+                  { color: colors.textMuted },
+                  presetActivo === d && { color: colors.primary, fontWeight: '700' },
                 ]}
               >
                 {d}d
@@ -78,7 +85,11 @@ export const HistoricoView: React.FC<HistoricoViewProps> = ({
 
           {/* Botón Calendario Rango Personalizado */}
           <TouchableOpacity
-            style={[styles.presetBtn, presetActivo === 0 && styles.presetBtnActivo]}
+            style={[
+              styles.presetBtn,
+              { backgroundColor: colors.card, borderColor: colors.border },
+              presetActivo === 0 && { backgroundColor: colors.primarySoft, borderColor: colors.primaryLight },
+            ]}
             onPress={() => setShowCustomRangeModal(true)}
             activeOpacity={0.7}
             accessibilityLabel="Filtrar por rango de fechas en calendario"
@@ -87,12 +98,13 @@ export const HistoricoView: React.FC<HistoricoViewProps> = ({
               <FontAwesome
                 name="calendar"
                 size={11}
-                color={presetActivo === 0 ? theme.colors.primary : theme.colors.textMuted}
+                color={presetActivo === 0 ? colors.primary : colors.textMuted}
               />
               <Text
                 style={[
                   styles.presetBtnText,
-                  presetActivo === 0 && styles.presetBtnTextActivo,
+                  { color: colors.textMuted },
+                  presetActivo === 0 && { color: colors.primary, fontWeight: '700' },
                 ]}
               >
                 Rango
@@ -102,24 +114,24 @@ export const HistoricoView: React.FC<HistoricoViewProps> = ({
 
           {/* Botón Exportar PDF */}
           <TouchableOpacity
-            style={styles.pdfBtn}
+            style={[styles.pdfBtn, { backgroundColor: colors.primary }]}
             onPress={() => setShowPdfModal(true)}
             activeOpacity={0.7}
             accessibilityLabel="Exportar rango a PDF"
           >
-            <FontAwesome name="file-pdf-o" size={13} color={theme.colors.white} />
+            <FontAwesome name="file-pdf-o" size={13} color="#ffffff" />
             <Text style={styles.pdfBtnText}>PDF</Text>
           </TouchableOpacity>
         </View>
 
         {/* Indicador del rango actual */}
-        <View style={styles.rangoBanner}>
-          <FontAwesome name="calendar-check-o" size={13} color={theme.colors.primary} />
-          <Text style={styles.rangoBannerText}>
+        <View style={[styles.rangoBanner, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <FontAwesome name="calendar-check-o" size={13} color={colors.primary} />
+          <Text style={[styles.rangoBannerText, { color: colors.text }]}>
             {formatearFechaCorta(desde)} ➔ {formatearFechaCorta(hasta)}
           </Text>
-          <View style={styles.rangoDiasBadge}>
-            <Text style={styles.rangoDiasBadgeText}>{dias.length} días</Text>
+          <View style={[styles.rangoDiasBadge, { backgroundColor: colors.primarySoft }]}>
+            <Text style={[styles.rangoDiasBadgeText, { color: colors.primary }]}>{dias.length} días</Text>
           </View>
         </View>
 
@@ -127,28 +139,28 @@ export const HistoricoView: React.FC<HistoricoViewProps> = ({
         <Card style={styles.metricsCard}>
           <View style={styles.metricsRow}>
             <View style={styles.metricBox}>
-              <Text style={styles.metricVal}>
+              <Text style={[styles.metricVal, { color: colors.primary }]}>
                 {metricas.diasConDatos}/{metricas.totalDias}
               </Text>
-              <Text style={styles.metricLabel}>DÍAS REGISTRADOS</Text>
+              <Text style={[styles.metricLabel, { color: colors.textMuted }]}>DÍAS REGISTRADOS</Text>
             </View>
 
             <View style={styles.metricBox}>
-              <Text style={styles.metricVal}>{metricas.mediaAgua} L</Text>
-              <Text style={styles.metricLabel}>MEDIA AGUA/DÍA</Text>
+              <Text style={[styles.metricVal, { color: colors.primary }]}>{metricas.mediaAgua} L</Text>
+              <Text style={[styles.metricLabel, { color: colors.textMuted }]}>MEDIA AGUA/DÍA</Text>
             </View>
 
             <View style={styles.metricBox}>
-              <Text style={styles.metricVal}>{metricas.comidasFuera}</Text>
-              <Text style={styles.metricLabel}>COMIDAS FUERA</Text>
+              <Text style={[styles.metricVal, { color: colors.primary }]}>{metricas.comidasFuera}</Text>
+              <Text style={[styles.metricLabel, { color: colors.textMuted }]}>COMIDAS FUERA</Text>
             </View>
           </View>
         </Card>
 
         {cargando ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={theme.colors.primary} />
-            <Text style={styles.loadingText}>Cargando histórico...</Text>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={[styles.loadingText, { color: colors.textMuted }]}>Cargando histórico...</Text>
           </View>
         ) : (
           <View style={styles.listContainer}>
@@ -269,7 +281,6 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
   },
   metricsCard: {
-    backgroundColor: theme.colors.card,
     marginBottom: theme.spacing.md,
   },
   metricsRow: {

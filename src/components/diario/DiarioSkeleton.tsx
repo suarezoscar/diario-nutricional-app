@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import { View, Animated, StyleSheet } from 'react-native'
+import { useTheme } from '../../context/ThemeContext'
 import { theme } from '../../utils/theme'
 
 /**
@@ -7,6 +8,7 @@ import { theme } from '../../utils/theme'
  * se cargan los datos del diario de un día, reemplazando spinners invasivos.
  */
 export const DiarioSkeleton: React.FC = () => {
+  const { colors } = useTheme()
   const pulseAnim = useRef(new Animated.Value(0.4)).current
 
   useEffect(() => {
@@ -34,52 +36,68 @@ export const DiarioSkeleton: React.FC = () => {
   return (
     <View style={styles.container}>
       {comidasPlaceholder.map((item) => (
-        <Animated.View key={item} style={[styles.card, { opacity: pulseAnim }]}>
+        <Animated.View
+          key={item}
+          style={[
+            styles.card,
+            { backgroundColor: colors.card, borderColor: colors.border, opacity: pulseAnim },
+          ]}
+        >
           {/* Cabecera de la tarjeta: icono + título y botones */}
           <View style={styles.header}>
             <View style={styles.headerLeft}>
-              <View style={styles.iconPlaceholder} />
-              <View style={styles.titlePlaceholder} />
+              <View style={[styles.iconPlaceholder, { backgroundColor: colors.primarySoft }]} />
+              <View style={[styles.titlePlaceholder, { backgroundColor: colors.border }]} />
             </View>
             <View style={styles.headerRight}>
-              <View style={styles.buttonPlaceholder} />
-              <View style={styles.camButtonPlaceholder} />
+              <View style={[styles.buttonPlaceholder, { backgroundColor: colors.border }]} />
+              <View style={[styles.camButtonPlaceholder, { backgroundColor: colors.primarySoft }]} />
             </View>
           </View>
 
           {/* Bloque simulador del TextInput */}
-          <View style={styles.inputPlaceholder}>
-            <View style={[styles.linePlaceholder, { width: '80%' }]} />
-            <View style={[styles.linePlaceholder, { width: '45%' }]} />
+          <View style={[styles.inputPlaceholder, { backgroundColor: colors.background }]}>
+            <View style={[styles.linePlaceholder, { backgroundColor: colors.border, width: '80%' }]} />
+            <View style={[styles.linePlaceholder, { backgroundColor: colors.border, width: '45%' }]} />
           </View>
         </Animated.View>
       ))}
 
       {/* Tarjeta de Agua simulada */}
-      <Animated.View style={[styles.card, { opacity: pulseAnim }]}>
+      <Animated.View
+        style={[
+          styles.card,
+          { backgroundColor: colors.card, borderColor: colors.border, opacity: pulseAnim },
+        ]}
+      >
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <View style={styles.iconPlaceholder} />
-            <View style={[styles.titlePlaceholder, { width: 90 }]} />
+            <View style={[styles.iconPlaceholder, { backgroundColor: colors.primarySoft }]} />
+            <View style={[styles.titlePlaceholder, { backgroundColor: colors.border, width: 90 }]} />
           </View>
         </View>
         <View style={styles.aguaRow}>
           {[1, 2, 3, 4, 5, 6, 7, 8].map((vaso) => (
-            <View key={vaso} style={styles.vasoPlaceholder} />
+            <View key={vaso} style={[styles.vasoPlaceholder, { backgroundColor: colors.primarySoft }]} />
           ))}
         </View>
       </Animated.View>
 
       {/* Tarjeta de Ejercicio simulada */}
-      <Animated.View style={[styles.card, { opacity: pulseAnim }]}>
+      <Animated.View
+        style={[
+          styles.card,
+          { backgroundColor: colors.card, borderColor: colors.border, opacity: pulseAnim },
+        ]}
+      >
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <View style={styles.iconPlaceholder} />
-            <View style={[styles.titlePlaceholder, { width: 140 }]} />
+            <View style={[styles.iconPlaceholder, { backgroundColor: colors.primarySoft }]} />
+            <View style={[styles.titlePlaceholder, { backgroundColor: colors.border, width: 140 }]} />
           </View>
         </View>
-        <View style={styles.inputPlaceholder}>
-          <View style={[styles.linePlaceholder, { width: '65%' }]} />
+        <View style={[styles.inputPlaceholder, { backgroundColor: colors.background }]}>
+          <View style={[styles.linePlaceholder, { backgroundColor: colors.border, width: '65%' }]} />
         </View>
       </Animated.View>
     </View>

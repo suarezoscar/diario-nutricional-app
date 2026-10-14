@@ -9,6 +9,7 @@ import {
   StyleSheet,
 } from 'react-native'
 import { FontAwesome } from '@expo/vector-icons'
+import { useTheme } from '../../context/ThemeContext'
 import { theme } from '../../utils/theme'
 import { hoy, desplazarDia, formatearFechaCorta, inicioYFinMesActual } from '../../utils/fechas'
 import { exportarPDFPorRango } from '../../services/pdfService'
@@ -29,6 +30,7 @@ export const ExportarPdfModal: React.FC<ExportarPdfModalProps> = ({
   rangoInicial,
   onClose,
 }) => {
+  const { colors } = useTheme()
   const fechaHoy = hoy()
   const [desde, setDesde] = useState(rangoInicial?.desde || desplazarDia(fechaHoy, -6))
   const [hasta, setHasta] = useState(rangoInicial?.hasta || fechaHoy)
@@ -84,72 +86,88 @@ export const ExportarPdfModal: React.FC<ExportarPdfModalProps> = ({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: colors.card }]}>
           <View style={styles.header}>
             <View style={styles.titleWrap}>
-              <FontAwesome name="file-pdf-o" size={20} color={theme.colors.primary} style={styles.icon} />
-              <Text style={styles.title}>Exportar Resumen PDF</Text>
+              <FontAwesome name="file-pdf-o" size={20} color={colors.primary} style={styles.icon} />
+              <Text style={[styles.title, { color: colors.text }]}>Exportar Resumen PDF</Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
-              <FontAwesome name="times" size={18} color={theme.colors.textMuted} />
+              <FontAwesome name="times" size={18} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.subtitle}>
+          <Text style={[styles.subtitle, { color: colors.textMuted }]}>
             Genera un documento PDF profesional con todas tus comidas, agua y ejercicio en formato horizontal.
           </Text>
 
-          <Text style={styles.labelRango}>Atajos rápidos:</Text>
+          <Text style={[styles.labelRango, { color: colors.text }]}>Atajos rápidos:</Text>
           <View style={styles.pillsRow}>
-            <TouchableOpacity style={styles.pill} onPress={() => aplicarRangoRapido(7)} activeOpacity={0.7}>
-              <Text style={styles.pillText}>7 días</Text>
+            <TouchableOpacity
+              style={[styles.pill, { backgroundColor: colors.primarySoft }]}
+              onPress={() => aplicarRangoRapido(7)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.pillText, { color: colors.primary }]}>7 días</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.pill} onPress={() => aplicarRangoRapido(14)} activeOpacity={0.7}>
-              <Text style={styles.pillText}>14 días</Text>
+            <TouchableOpacity
+              style={[styles.pill, { backgroundColor: colors.primarySoft }]}
+              onPress={() => aplicarRangoRapido(14)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.pillText, { color: colors.primary }]}>14 días</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.pill} onPress={() => aplicarRangoRapido(30)} activeOpacity={0.7}>
-              <Text style={styles.pillText}>30 días</Text>
+            <TouchableOpacity
+              style={[styles.pill, { backgroundColor: colors.primarySoft }]}
+              onPress={() => aplicarRangoRapido(30)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.pillText, { color: colors.primary }]}>30 días</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.pill} onPress={aplicarMesActual} activeOpacity={0.7}>
-              <Text style={styles.pillText}>Este mes</Text>
+            <TouchableOpacity
+              style={[styles.pill, { backgroundColor: colors.primarySoft }]}
+              onPress={aplicarMesActual}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.pillText, { color: colors.primary }]}>Este mes</Text>
             </TouchableOpacity>
           </View>
 
           {/* Selector de Rango Interactivo con Calendario */}
-          <Text style={styles.labelRango}>Rango de fechas a incluir:</Text>
+          <Text style={[styles.labelRango, { color: colors.text }]}>Rango de fechas a incluir:</Text>
           <TouchableOpacity
-            style={styles.dateSelectorBox}
+            style={[styles.dateSelectorBox, { backgroundColor: colors.background, borderColor: colors.border }]}
             onPress={() => setShowCalendar(true)}
             activeOpacity={0.75}
             accessibilityLabel="Abrir calendario para seleccionar rango de fechas"
           >
             <View style={styles.dateSelectorLeft}>
-              <View style={styles.calendarIconCircle}>
-                <FontAwesome name="calendar" size={18} color={theme.colors.primary} />
+              <View style={[styles.calendarIconCircle, { backgroundColor: colors.primarySoft }]}>
+                <FontAwesome name="calendar" size={18} color={colors.primary} />
               </View>
               <View style={styles.dateSelectorTexts}>
-                <Text style={styles.dateSelectorRange}>
+                <Text style={[styles.dateSelectorRange, { color: colors.text }]}>
                   {formatearFechaCorta(desde)} ➔ {formatearFechaCorta(hasta)}
                 </Text>
-                <Text style={styles.dateSelectorHint}>Toca para cambiar en el calendario</Text>
+                <Text style={[styles.dateSelectorHint, { color: colors.textMuted }]}>Toca para cambiar en el calendario</Text>
               </View>
             </View>
-            <View style={styles.dateSelectorBadge}>
-              <Text style={styles.dateSelectorBadgeText}>{calcularDias()} días</Text>
+            <View style={[styles.dateSelectorBadge, { backgroundColor: colors.primarySoft }]}>
+              <Text style={[styles.dateSelectorBadgeText, { color: colors.primary }]}>{calcularDias()} días</Text>
             </View>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.exportBtn, generando && styles.exportBtnDisabled]}
+            style={[styles.exportBtn, { backgroundColor: colors.primary }, generando && styles.exportBtnDisabled]}
             onPress={handleExportar}
             disabled={generando}
             activeOpacity={0.8}
           >
             {generando ? (
-              <ActivityIndicator color={theme.colors.white} />
+              <ActivityIndicator color="#ffffff" />
             ) : (
               <View style={styles.btnContent}>
-                <FontAwesome name="share-alt" size={16} color={theme.colors.white} style={styles.btnIcon} />
+                <FontAwesome name="share-alt" size={16} color="#ffffff" style={styles.btnIcon} />
                 <Text style={styles.exportBtnText}>Generar y Compartir PDF</Text>
               </View>
             )}

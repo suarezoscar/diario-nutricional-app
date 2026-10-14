@@ -2,6 +2,7 @@ import React from 'react'
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import { FontAwesome } from '@expo/vector-icons'
 import { Card } from '../common/Card'
+import { useTheme } from '../../context/ThemeContext'
 import { theme } from '../../utils/theme'
 
 interface AguaCardProps {
@@ -10,6 +11,7 @@ interface AguaCardProps {
 }
 
 export const AguaCard: React.FC<AguaCardProps> = ({ valor, onCambiar }) => {
+  const { colors } = useTheme()
   const litros = parseFloat(valor) || 0
 
   const sumar = (delta: number) => {
@@ -21,24 +23,48 @@ export const AguaCard: React.FC<AguaCardProps> = ({ valor, onCambiar }) => {
     <Card>
       <View style={styles.header}>
         <View style={styles.titleWrap}>
-          <FontAwesome name="tint" size={16} color={theme.colors.water} style={styles.icon} />
-          <Text style={styles.title}>Agua consumida</Text>
+          <FontAwesome name="tint" size={16} color={colors.water} style={styles.icon} />
+          <Text style={[styles.title, { color: colors.text }]}>Agua consumida</Text>
         </View>
-        <Text style={styles.litrosText}>{litros.toFixed(2)} L</Text>
+        <Text style={[styles.litrosText, { color: colors.water }]}>{litros.toFixed(2)} L</Text>
       </View>
 
       <View style={styles.stepper}>
-        <TouchableOpacity style={styles.btn} onPress={() => sumar(-1)} activeOpacity={0.65}>
-          <Text style={styles.btnText}>-1L</Text>
+        <TouchableOpacity
+          style={[styles.btn, { backgroundColor: colors.background, borderColor: colors.border }]}
+          onPress={() => sumar(-1)}
+          activeOpacity={0.65}
+        >
+          <Text style={[styles.btnText, { color: colors.text }]}>-1L</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.btn} onPress={() => sumar(-0.5)} activeOpacity={0.65}>
-          <Text style={styles.btnText}>-0.5L</Text>
+        <TouchableOpacity
+          style={[styles.btn, { backgroundColor: colors.background, borderColor: colors.border }]}
+          onPress={() => sumar(-0.5)}
+          activeOpacity={0.65}
+        >
+          <Text style={[styles.btnText, { color: colors.text }]}>-0.5L</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.btn, styles.btnPlus]} onPress={() => sumar(0.5)} activeOpacity={0.65}>
-          <Text style={[styles.btnText, styles.btnPlusText]}>+0.5L</Text>
+        <TouchableOpacity
+          style={[
+            styles.btn,
+            styles.btnPlus,
+            { backgroundColor: colors.waterSoft, borderColor: colors.water },
+          ]}
+          onPress={() => sumar(0.5)}
+          activeOpacity={0.65}
+        >
+          <Text style={[styles.btnText, styles.btnPlusText, { color: colors.water }]}>+0.5L</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.btn, styles.btnPlus]} onPress={() => sumar(1)} activeOpacity={0.65}>
-          <Text style={[styles.btnText, styles.btnPlusText]}>+1L</Text>
+        <TouchableOpacity
+          style={[
+            styles.btn,
+            styles.btnPlus,
+            { backgroundColor: colors.waterSoft, borderColor: colors.water },
+          ]}
+          onPress={() => sumar(1)}
+          activeOpacity={0.65}
+        >
+          <Text style={[styles.btnText, styles.btnPlusText, { color: colors.water }]}>+1L</Text>
         </TouchableOpacity>
       </View>
     </Card>
@@ -62,12 +88,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: '700',
-    color: theme.colors.text,
   },
   litrosText: {
     fontSize: 16,
     fontWeight: '700',
-    color: theme.colors.water,
   },
   stepper: {
     flexDirection: 'row',
@@ -77,22 +101,14 @@ const styles = StyleSheet.create({
   btn: {
     flex: 1,
     paddingVertical: theme.spacing.sm,
-    backgroundColor: theme.colors.background,
     borderRadius: theme.radius.sm,
     borderWidth: 1,
-    borderColor: theme.colors.border,
     alignItems: 'center',
   },
   btnText: {
     fontSize: 12,
     fontWeight: '600',
-    color: theme.colors.text,
   },
-  btnPlus: {
-    backgroundColor: theme.colors.waterSoft,
-    borderColor: theme.colors.water,
-  },
-  btnPlusText: {
-    color: theme.colors.water,
-  },
+  btnPlus: {},
+  btnPlusText: {},
 })

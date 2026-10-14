@@ -28,6 +28,7 @@ import { useFotoPlato } from '../../hooks/useFotoPlato'
 import { COMIDAS } from '../../config/comidas'
 import { hoy, obtenerComidaActual } from '../../utils/fechas'
 import { cargarConfiguracion, type HorariosConfig } from '../../services/configService'
+import { useTheme } from '../../context/ThemeContext'
 import { theme } from '../../utils/theme'
 import type { UsuarioAutenticado } from '../../types'
 
@@ -46,6 +47,7 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
   onLogout,
   onVerificarActualizacion,
 }) => {
+  const { colors } = useTheme()
   const [showPdfModal, setShowPdfModal] = useState(false)
   const [showBulkModal, setShowBulkModal] = useState(false)
   const [showCalendarModal, setShowCalendarModal] = useState(false)
@@ -181,7 +183,10 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
   }, [fechaSeleccionada, fecha, establecerFecha])
 
   return (
-    <View style={styles.container} {...panResponder.panHandlers}>
+    <View
+      style={[styles.container, { backgroundColor: colors.background }]}
+      {...panResponder.panHandlers}
+    >
       <Header
         usuario={usuario}
         onLogout={onLogout}
@@ -284,7 +289,7 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
                 )}
               </TouchableOpacity>
 
-              <Text style={styles.autoSaveNotice}>
+              <Text style={[styles.autoSaveNotice, { color: colors.textMuted }]}>
                 Tus datos se guardan automáticamente al escribir o cambiar de día.
               </Text>
             </Animated.View>

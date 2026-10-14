@@ -10,6 +10,7 @@ import {
   Platform,
 } from 'react-native'
 import { FontAwesome } from '@expo/vector-icons'
+import { useTheme } from '../../context/ThemeContext'
 import { theme } from '../../utils/theme'
 
 interface LoginViewProps {
@@ -17,6 +18,7 @@ interface LoginViewProps {
 }
 
 export const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
+  const { colors } = useTheme()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [cargando, setCargando] = useState(false)
@@ -42,28 +44,28 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={styles.card}>
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <View style={styles.header}>
-          <FontAwesome name="leaf" size={32} color={theme.colors.primary} style={styles.logo} />
-          <Text style={styles.title}>Diario Nutricional</Text>
-          <Text style={styles.subtitle}>Inicia sesión con tu cuenta</Text>
+          <FontAwesome name="leaf" size={32} color={colors.primary} style={styles.logo} />
+          <Text style={[styles.title, { color: colors.primary }]}>Diario Nutricional</Text>
+          <Text style={[styles.subtitle, { color: colors.textMuted }]}>Inicia sesión con tu cuenta</Text>
         </View>
 
         {error && (
-          <View style={styles.errorBox}>
-            <Text style={styles.errorText}>{error}</Text>
+          <View style={[styles.errorBox, { backgroundColor: colors.errorSoft }]}>
+            <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
           </View>
         )}
 
         <View style={styles.field}>
-          <Text style={styles.label}>Correo electrónico</Text>
+          <Text style={[styles.label, { color: colors.text }]}>Correo electrónico</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
             placeholder="tu@email.com"
-            placeholderTextColor={theme.colors.textMuted}
+            placeholderTextColor={colors.textMuted}
             keyboardType="email-address"
             autoCapitalize="none"
             value={email}
@@ -72,11 +74,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>Contraseña</Text>
+          <Text style={[styles.label, { color: colors.text }]}>Contraseña</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
             placeholder="••••••••"
-            placeholderTextColor={theme.colors.textMuted}
+            placeholderTextColor={colors.textMuted}
             secureTextEntry
             value={password}
             onChangeText={setPassword}
@@ -84,12 +86,12 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
         </View>
 
         <TouchableOpacity
-          style={[styles.button, cargando && styles.buttonDisabled]}
+          style={[styles.button, { backgroundColor: colors.primary }, cargando && styles.buttonDisabled]}
           onPress={handleSubmit}
           disabled={cargando}
         >
           {cargando ? (
-            <ActivityIndicator color={theme.colors.white} />
+            <ActivityIndicator color="#ffffff" />
           ) : (
             <Text style={styles.buttonText}>Iniciar sesión</Text>
           )}

@@ -2,6 +2,7 @@ import React from 'react'
 import { View, Text, TouchableOpacity, StyleSheet, Platform, StatusBar as RNStatusBar } from 'react-native'
 import { FontAwesome } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useTheme } from '../../context/ThemeContext'
 import { theme } from '../../utils/theme'
 import { APP_VERSION } from '../../config/constants'
 import type { UsuarioAutenticado } from '../../types'
@@ -21,6 +22,7 @@ export const Header: React.FC<HeaderProps> = ({
   onAbrirSubidaMultiple,
   onVerificarActualizacion,
 }) => {
+  const { colors } = useTheme()
   const insets = useSafeAreaInsets()
   const topPadding = Math.max(
     insets.top,
@@ -29,11 +31,27 @@ export const Header: React.FC<HeaderProps> = ({
   )
 
   return (
-    <View style={[styles.container, { paddingTop: topPadding + 6 }]}>
+    <View
+      style={[
+        styles.container,
+        {
+          paddingTop: topPadding + 6,
+          backgroundColor: colors.card,
+          borderBottomColor: colors.border,
+        },
+      ]}
+    >
       <View style={styles.titleRow}>
-        <FontAwesome name="leaf" size={20} color={theme.colors.primary} style={styles.icon} />
-        <Text style={styles.title}>Diario</Text>
-        <Text style={styles.versionBadge}>v{APP_VERSION}</Text>
+        <FontAwesome name="leaf" size={20} color={colors.primary} style={styles.icon} />
+        <Text style={[styles.title, { color: colors.primary }]}>Diario</Text>
+        <Text
+          style={[
+            styles.versionBadge,
+            { color: colors.primary, backgroundColor: colors.primarySoft },
+          ]}
+        >
+          v{APP_VERSION}
+        </Text>
       </View>
 
       <View style={styles.userRow}>
@@ -44,7 +62,7 @@ export const Header: React.FC<HeaderProps> = ({
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             accessibilityLabel="Subida múltiple de fotos con IA"
           >
-            <FontAwesome name="camera-retro" size={17} color={theme.colors.primary} />
+            <FontAwesome name="camera-retro" size={17} color={colors.primary} />
           </TouchableOpacity>
         )}
 
@@ -55,7 +73,7 @@ export const Header: React.FC<HeaderProps> = ({
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             accessibilityLabel="Exportar resumen PDF"
           >
-            <FontAwesome name="file-pdf-o" size={17} color={theme.colors.primary} />
+            <FontAwesome name="file-pdf-o" size={17} color={colors.primary} />
           </TouchableOpacity>
         )}
 
@@ -66,11 +84,11 @@ export const Header: React.FC<HeaderProps> = ({
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             accessibilityLabel="Buscar actualizaciones"
           >
-            <FontAwesome name="cloud-download" size={17} color={theme.colors.textMuted} />
+            <FontAwesome name="cloud-download" size={17} color={colors.textMuted} />
           </TouchableOpacity>
         )}
 
-        <Text style={styles.email} numberOfLines={1}>
+        <Text style={[styles.email, { color: colors.textMuted }]} numberOfLines={1}>
           {usuario.displayName || usuario.email}
         </Text>
 
@@ -80,7 +98,7 @@ export const Header: React.FC<HeaderProps> = ({
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           accessibilityLabel="Cerrar sesión"
         >
-          <FontAwesome name="sign-out" size={18} color={theme.colors.textMuted} />
+          <FontAwesome name="sign-out" size={18} color={colors.textMuted} />
         </TouchableOpacity>
       </View>
     </View>
@@ -91,9 +109,7 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: theme.spacing.md,
     paddingBottom: theme.spacing.sm,
-    backgroundColor: theme.colors.card,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -108,14 +124,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: theme.colors.primary,
   },
   versionBadge: {
     marginLeft: 6,
     fontSize: 10,
     fontWeight: '700',
-    color: theme.colors.primary,
-    backgroundColor: theme.colors.primarySoft,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: theme.radius.sm,
@@ -131,7 +144,6 @@ const styles = StyleSheet.create({
   },
   email: {
     fontSize: 12,
-    color: theme.colors.textMuted,
     maxWidth: 90,
   },
 })

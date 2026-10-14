@@ -7,6 +7,7 @@ import {
   StyleSheet,
 } from 'react-native'
 import { FontAwesome } from '@expo/vector-icons'
+import { useTheme } from '../../context/ThemeContext'
 import { theme } from '../../utils/theme'
 import {
   hoy,
@@ -47,6 +48,7 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
   onSeleccionarRango,
   onClose,
 }) => {
+  const { colors } = useTheme()
   const fechaHoy = hoy()
   const [fechaMesRef, setFechaMesRef] = useState<Date>(() => new Date())
   const [rangoInterno, setRangoInterno] = useState<RangoFechas>(() => ({
@@ -141,48 +143,64 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: colors.card }]}>
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.titleWrap}>
-              <FontAwesome name="calendar" size={18} color={theme.colors.primary} style={styles.titleIcon} />
-              <Text style={styles.title}>
+              <FontAwesome name="calendar" size={18} color={colors.primary} style={styles.titleIcon} />
+              <Text style={[styles.title, { color: colors.text }]}>
                 {titulo || (modo === 'single' ? 'Seleccionar día' : 'Rango de fechas')}
               </Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
-              <FontAwesome name="times" size={18} color={theme.colors.textMuted} />
+              <FontAwesome name="times" size={18} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
 
           {/* Atajos de rango rápido en modo 'range' */}
           {modo === 'range' && (
             <View style={styles.presetsRow}>
-              <TouchableOpacity style={styles.pill} onPress={() => aplicarPreset(7)} activeOpacity={0.7}>
-                <Text style={styles.pillText}>7d</Text>
+              <TouchableOpacity
+                style={[styles.pill, { backgroundColor: colors.primarySoft }]}
+                onPress={() => aplicarPreset(7)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.pillText, { color: colors.primary }]}>7d</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.pill} onPress={() => aplicarPreset(14)} activeOpacity={0.7}>
-                <Text style={styles.pillText}>14d</Text>
+              <TouchableOpacity
+                style={[styles.pill, { backgroundColor: colors.primarySoft }]}
+                onPress={() => aplicarPreset(14)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.pillText, { color: colors.primary }]}>14d</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.pill} onPress={() => aplicarPreset(30)} activeOpacity={0.7}>
-                <Text style={styles.pillText}>30d</Text>
+              <TouchableOpacity
+                style={[styles.pill, { backgroundColor: colors.primarySoft }]}
+                onPress={() => aplicarPreset(30)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.pillText, { color: colors.primary }]}>30d</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.pill} onPress={aplicarPresetMes} activeOpacity={0.7}>
-                <Text style={styles.pillText}>Este mes</Text>
+              <TouchableOpacity
+                style={[styles.pill, { backgroundColor: colors.primarySoft }]}
+                onPress={aplicarPresetMes}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.pillText, { color: colors.primary }]}>Este mes</Text>
               </TouchableOpacity>
             </View>
           )}
 
           {/* Resumen del rango seleccionado */}
           {modo === 'range' && (
-            <View style={styles.rangeSummary}>
-              <Text style={styles.rangeText}>
+            <View style={[styles.rangeSummary, { backgroundColor: colors.background, borderColor: colors.border }]}>
+              <Text style={[styles.rangeText, { color: colors.text }]}>
                 {rangoInterno.desde ? formatearFechaCorta(rangoInterno.desde) : '—'} ➔{' '}
                 {rangoInterno.hasta ? formatearFechaCorta(rangoInterno.hasta) : 'Selecciona fin'}
               </Text>
               {!!rangoInterno.hasta && (
-                <View style={styles.rangeBadge}>
-                  <Text style={styles.rangeBadgeText}>{calcularDiasEnRango()} días</Text>
+                <View style={[styles.rangeBadge, { backgroundColor: colors.primarySoft }]}>
+                  <Text style={[styles.rangeBadgeText, { color: colors.primary }]}>{calcularDiasEnRango()} días</Text>
                 </View>
               )}
             </View>
@@ -190,19 +208,27 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
 
           {/* Navegación del mes */}
           <View style={styles.monthNav}>
-            <TouchableOpacity style={styles.navBtn} onPress={() => cambiarMes(-1)} activeOpacity={0.6}>
-              <FontAwesome name="chevron-left" size={14} color={theme.colors.text} />
+            <TouchableOpacity
+              style={[styles.navBtn, { backgroundColor: colors.background }]}
+              onPress={() => cambiarMes(-1)}
+              activeOpacity={0.6}
+            >
+              <FontAwesome name="chevron-left" size={14} color={colors.text} />
             </TouchableOpacity>
-            <Text style={styles.monthTitle}>{mesAnioTexto}</Text>
-            <TouchableOpacity style={styles.navBtn} onPress={() => cambiarMes(1)} activeOpacity={0.6}>
-              <FontAwesome name="chevron-right" size={14} color={theme.colors.text} />
+            <Text style={[styles.monthTitle, { color: colors.text }]}>{mesAnioTexto}</Text>
+            <TouchableOpacity
+              style={[styles.navBtn, { backgroundColor: colors.background }]}
+              onPress={() => cambiarMes(1)}
+              activeOpacity={0.6}
+            >
+              <FontAwesome name="chevron-right" size={14} color={colors.text} />
             </TouchableOpacity>
           </View>
 
           {/* Días de la semana */}
           <View style={styles.weekDaysRow}>
             {DIAS_SEMANA.map((d, i) => (
-              <Text key={i} style={styles.weekDayText}>
+              <Text key={i} style={[styles.weekDayText, { color: colors.textMuted }]}>
                 {d}
               </Text>
             ))}
@@ -226,17 +252,16 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
                   key={dia.fecha}
                   style={[
                     styles.dayCell,
-                    enRango && styles.dayCellInRange,
-                    esInicioRango && rangoInterno.hasta && styles.dayCellStartRange,
-                    esFinRango && styles.dayCellEndRange,
+                    enRango && { backgroundColor: colors.primarySoft },
+                    esInicioRango && rangoInterno.hasta && [styles.dayCellStartRange, { backgroundColor: colors.primarySoft }],
+                    esFinRango && [styles.dayCellEndRange, { backgroundColor: colors.primarySoft }],
                   ]}
                 >
                   <TouchableOpacity
                     style={[
                       styles.dayButton,
-                      esSingle && styles.dayButtonSelected,
-                      (esInicioRango || esFinRango) && styles.dayButtonSelected,
-                      dia.esHoy && !esSingle && !esInicioRango && !esFinRango && styles.dayButtonToday,
+                      (esSingle || esInicioRango || esFinRango) && { backgroundColor: colors.primary },
+                      dia.esHoy && !esSingle && !esInicioRango && !esFinRango && [styles.dayButtonToday, { borderColor: colors.primaryLight }],
                     ]}
                     onPress={() => handlePressDia(dia)}
                     activeOpacity={0.7}
@@ -244,9 +269,10 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
                     <Text
                       style={[
                         styles.dayNumber,
-                        !dia.enMesActual && styles.dayNumberDim,
-                        (esSingle || esInicioRango || esFinRango) && styles.dayNumberSelected,
-                        dia.esHoy && !esSingle && !esInicioRango && !esFinRango && styles.dayNumberToday,
+                        { color: colors.text },
+                        !dia.enMesActual && { color: colors.textMuted, opacity: 0.35 },
+                        (esSingle || esInicioRango || esFinRango) && { color: '#ffffff', fontWeight: '700' },
+                        dia.esHoy && !esSingle && !esInicioRango && !esFinRango && { color: colors.primary, fontWeight: '700' },
                       ]}
                     >
                       {dia.numero}
@@ -261,18 +287,18 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
           {modo === 'range' && (
             <View style={styles.footer}>
               <TouchableOpacity
-                style={styles.cancelBtn}
+                style={[styles.cancelBtn, { borderColor: colors.border }]}
                 onPress={onClose}
                 activeOpacity={0.7}
               >
-                <Text style={styles.cancelBtnText}>Cancelar</Text>
+                <Text style={[styles.cancelBtnText, { color: colors.textMuted }]}>Cancelar</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.applyBtn}
+                style={[styles.applyBtn, { backgroundColor: colors.primary }]}
                 onPress={handleConfirmarRango}
                 activeOpacity={0.8}
               >
-                <FontAwesome name="check" size={14} color={theme.colors.white} style={styles.btnIcon} />
+                <FontAwesome name="check" size={14} color="#ffffff" style={styles.btnIcon} />
                 <Text style={styles.applyBtnText}>Aplicar rango</Text>
               </TouchableOpacity>
             </View>

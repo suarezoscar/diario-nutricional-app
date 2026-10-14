@@ -10,6 +10,7 @@ import Svg, {
   Circle,
   Text as SvgText,
 } from 'react-native-svg'
+import { useTheme } from '../../context/ThemeContext'
 import { theme } from '../../utils/theme'
 import type { PuntoPeso } from '../../types'
 
@@ -18,10 +19,14 @@ interface WeightChartProps {
 }
 
 export const WeightChart: React.FC<WeightChartProps> = ({ data }) => {
+  const { colors } = useTheme()
+
   if (!data || data.length === 0) {
     return (
       <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>Sin datos suficientes para la gráfica.</Text>
+        <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+          Sin datos suficientes para la gráfica.
+        </Text>
       </View>
     )
   }
@@ -67,12 +72,12 @@ export const WeightChart: React.FC<WeightChartProps> = ({ data }) => {
   const xLabels = data.filter((_, i) => i % step === 0 || i === data.length - 1)
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.card }]}>
       <Svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H}>
         <Defs>
           <LinearGradient id="pesoGrad" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0%" stopColor={theme.colors.primaryLight} stopOpacity="0.35" />
-            <Stop offset="100%" stopColor={theme.colors.primaryLight} stopOpacity="0.0" />
+            <Stop offset="0%" stopColor={colors.primaryLight} stopOpacity="0.35" />
+            <Stop offset="100%" stopColor={colors.primaryLight} stopOpacity="0.0" />
           </LinearGradient>
         </Defs>
 
@@ -84,7 +89,7 @@ export const WeightChart: React.FC<WeightChartProps> = ({ data }) => {
               y1={g.y}
               x2={W - PAD_R}
               y2={g.y}
-              stroke={theme.colors.border}
+              stroke={colors.border}
               strokeDasharray="4 4"
               strokeWidth="1"
             />
@@ -92,7 +97,7 @@ export const WeightChart: React.FC<WeightChartProps> = ({ data }) => {
               x={PAD_L - 6}
               y={g.y + 3}
               fontSize="10"
-              fill={theme.colors.textMuted}
+              fill={colors.textMuted}
               textAnchor="end"
             >
               {g.label}
@@ -105,7 +110,7 @@ export const WeightChart: React.FC<WeightChartProps> = ({ data }) => {
         <Polyline
           points={points}
           fill="none"
-          stroke={theme.colors.primary}
+          stroke={colors.primary}
           strokeWidth="2.5"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -118,8 +123,8 @@ export const WeightChart: React.FC<WeightChartProps> = ({ data }) => {
             cx={scaleX(i)}
             cy={scaleY(d.peso)}
             r="3.5"
-            fill={theme.colors.white}
-            stroke={theme.colors.primary}
+            fill={colors.card}
+            stroke={colors.primary}
             strokeWidth="2"
           />
         ))}
@@ -135,7 +140,7 @@ export const WeightChart: React.FC<WeightChartProps> = ({ data }) => {
               x={scaleX(idx)}
               y={H - 4}
               fontSize="10"
-              fill={theme.colors.textMuted}
+              fill={colors.textMuted}
               textAnchor="middle"
             >
               {fechaCorta}
@@ -149,7 +154,6 @@ export const WeightChart: React.FC<WeightChartProps> = ({ data }) => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: theme.colors.card,
     borderRadius: theme.radius.md,
     paddingVertical: theme.spacing.sm,
     alignItems: 'center',
@@ -161,6 +165,5 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 13,
-    color: theme.colors.textMuted,
   },
 })

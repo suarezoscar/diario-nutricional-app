@@ -2,17 +2,17 @@
   "expo": {
     "name": "Diario Nutricional",
     "slug": "diario-nutricional-app",
-    "version": "1.0.16",
+    "version": "1.0.17",
     "scheme": "diarionutricional",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "package": "com.oscar.diarionutricional",
-      "versionCode": 17,
+      "versionCode": 18,
       "permissions": [
         "REQUEST_INSTALL_PACKAGES"
       ],

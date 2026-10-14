@@ -104,6 +104,7 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
 
   return (
     <ScrollView
+      style={{ backgroundColor: colors.background }}
       contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={false}
     >
@@ -198,14 +199,14 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
                     <Text style={[styles.timeLabel, { color: colors.textMuted }]}>Inicio</Text>
                     <View style={styles.stepperRow}>
                       <TouchableOpacity
-                        style={[styles.miniBtn, { borderColor: colors.border }]}
+                        style={[styles.miniBtn, { borderColor: colors.border, backgroundColor: colors.background }]}
                         onPress={() => modificarHorario(c.clave, 'inicio', -30)}
                       >
                         <Text style={[styles.miniBtnText, { color: colors.text }]}>-</Text>
                       </TouchableOpacity>
                       <Text style={[styles.timeValue, { color: colors.text }]}>{h.inicio}</Text>
                       <TouchableOpacity
-                        style={[styles.miniBtn, { borderColor: colors.border }]}
+                        style={[styles.miniBtn, { borderColor: colors.border, backgroundColor: colors.background }]}
                         onPress={() => modificarHorario(c.clave, 'inicio', 30)}
                       >
                         <Text style={[styles.miniBtnText, { color: colors.text }]}>+</Text>
@@ -220,14 +221,14 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
                     <Text style={[styles.timeLabel, { color: colors.textMuted }]}>Fin</Text>
                     <View style={styles.stepperRow}>
                       <TouchableOpacity
-                        style={[styles.miniBtn, { borderColor: colors.border }]}
+                        style={[styles.miniBtn, { borderColor: colors.border, backgroundColor: colors.background }]}
                         onPress={() => modificarHorario(c.clave, 'fin', -30)}
                       >
                         <Text style={[styles.miniBtnText, { color: colors.text }]}>-</Text>
                       </TouchableOpacity>
                       <Text style={[styles.timeValue, { color: colors.text }]}>{h.fin}</Text>
                       <TouchableOpacity
-                        style={[styles.miniBtn, { borderColor: colors.border }]}
+                        style={[styles.miniBtn, { borderColor: colors.border, backgroundColor: colors.background }]}
                         onPress={() => modificarHorario(c.clave, 'fin', 30)}
                       >
                         <Text style={[styles.miniBtnText, { color: colors.text }]}>+</Text>
@@ -241,7 +242,7 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
         </View>
 
         <TouchableOpacity
-          style={[styles.resetBtn, { borderColor: colors.border }]}
+          style={[styles.resetBtn, { borderColor: colors.border, backgroundColor: colors.background }]}
           onPress={restablecerValoresPorDefecto}
           activeOpacity={0.7}
         >
@@ -267,11 +268,11 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
         </Text>
 
         <View style={styles.notificationPreviewRow}>
-          <Text style={[styles.previewItemText, { color: colors.textMuted }]}>Recordatorios de comidas</Text>
+          <Text style={[styles.previewItemText, { color: colors.text }]}>Recordatorios de comidas</Text>
           <Text style={[styles.previewDisabledText, { color: colors.textMuted }]}>Desactivado</Text>
         </View>
         <View style={styles.notificationPreviewRow}>
-          <Text style={[styles.previewItemText, { color: colors.textMuted }]}>Recordatorio de hidratación</Text>
+          <Text style={[styles.previewItemText, { color: colors.text }]}>Recordatorio de hidratación</Text>
           <Text style={[styles.previewDisabledText, { color: colors.textMuted }]}>Desactivado</Text>
         </View>
       </Card>
@@ -298,7 +299,7 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
         <View style={styles.actionsColumn}>
           {onVerificarActualizacion && (
             <TouchableOpacity
-              style={[styles.updateCheckBtn, { borderColor: colors.border }]}
+              style={[styles.updateCheckBtn, { borderColor: colors.border, backgroundColor: colors.background }]}
               onPress={onVerificarActualizacion}
               activeOpacity={0.7}
             >
@@ -310,12 +311,18 @@ export const AjustesView: React.FC<AjustesViewProps> = ({
           )}
 
           <TouchableOpacity
-            style={styles.logoutBtn}
+            style={[
+              styles.logoutBtn,
+              {
+                backgroundColor: colors.errorSoft,
+                borderColor: esOscuro ? '#4a2020' : '#ffcdd2',
+              },
+            ]}
             onPress={onLogout}
             activeOpacity={0.7}
           >
-            <FontAwesome name="sign-out" size={14} color={theme.colors.error} style={{ marginRight: 6 }} />
-            <Text style={styles.logoutBtnText}>Cerrar sesión</Text>
+            <FontAwesome name="sign-out" size={14} color={colors.error} style={{ marginRight: 6 }} />
+            <Text style={[styles.logoutBtnText, { color: colors.error }]}>Cerrar sesión</Text>
           </TouchableOpacity>
         </View>
       </Card>

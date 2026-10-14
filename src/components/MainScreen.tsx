@@ -6,6 +6,7 @@ import { DiarioView } from './diario/DiarioView'
 import { HistoricoView } from './historico/HistoricoView'
 import { PesoView } from './peso/PesoView'
 import { AjustesView } from './ajustes/AjustesView'
+import { useTheme } from '../context/ThemeContext'
 import { theme } from '../utils/theme'
 import { hoy } from '../utils/fechas'
 import * as Linking from 'expo-linking'
@@ -55,13 +56,15 @@ export const MainScreen: React.FC<MainScreenProps> = ({
     return () => sub.remove()
   }, [])
 
+  const { colors } = useTheme()
+
   const irADiaEnDiario = (fecha: string) => {
     setFechaSeleccionada(fecha)
     setTabActiva('diario')
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.content}>
         {tabActiva === 'diario' && (
           <DiarioView

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet, Platform, Keyboard } from 'react-native'
 import { FontAwesome } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useTheme } from '../../context/ThemeContext'
 import { theme } from '../../utils/theme'
 import type { TabPrincipal } from '../../types'
 
@@ -24,6 +25,7 @@ const ITEMS: ItemTab[] = [
 ]
 
 export const BottomNav: React.FC<BottomNavProps> = ({ tabActiva, onCambiarTab }) => {
+  const { colors } = useTheme()
   const insets = useSafeAreaInsets()
   const bottomPadding = Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 12)
   const [tecladoVisible, setTecladoVisible] = useState(false)
@@ -46,7 +48,16 @@ export const BottomNav: React.FC<BottomNavProps> = ({ tabActiva, onCambiarTab })
   }
 
   return (
-    <View style={[styles.container, { paddingBottom: bottomPadding }]}>
+    <View
+      style={[
+        styles.container,
+        {
+          paddingBottom: bottomPadding,
+          backgroundColor: colors.card,
+          borderTopColor: colors.border,
+        },
+      ]}
+    >
       {ITEMS.map(item => {
         const activo = tabActiva === item.id
         return (
@@ -57,14 +68,25 @@ export const BottomNav: React.FC<BottomNavProps> = ({ tabActiva, onCambiarTab })
             activeOpacity={0.7}
             accessibilityLabel={`Pestaña ${item.titulo}`}
           >
-            <View style={[styles.iconWrap, activo && styles.iconWrapActivo]}>
+            <View
+              style={[
+                styles.iconWrap,
+                activo && { backgroundColor: colors.primarySoft },
+              ]}
+            >
               <FontAwesome
                 name={item.icono}
                 size={18}
-                color={activo ? theme.colors.primary : theme.colors.textMuted}
+                color={activo ? colors.primary : colors.textMuted}
               />
             </View>
-            <Text style={[styles.tabText, activo && styles.tabTextActivo]}>
+            <Text
+              style={[
+                styles.tabText,
+                { color: colors.textMuted },
+                activo && { color: colors.primary, fontWeight: '700' },
+              ]}
+            >
               {item.titulo}
             </Text>
           </TouchableOpacity>
@@ -77,9 +99,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ tabActiva, onCambiarTab })
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    backgroundColor: theme.colors.card,
     borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
     paddingTop: theme.spacing.xs,
     elevation: 8,
     shadowColor: theme.colors.primaryDark,
@@ -98,17 +118,9 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: theme.radius.full,
   },
-  iconWrapActivo: {
-    backgroundColor: theme.colors.primarySoft,
-  },
   tabText: {
     fontSize: 11,
-    color: theme.colors.textMuted,
     fontWeight: '500',
     marginTop: 2,
-  },
-  tabTextActivo: {
-    color: theme.colors.primary,
-    fontWeight: '700',
   },
 })
