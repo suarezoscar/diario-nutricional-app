@@ -70,17 +70,16 @@ export const DiarioSkeleton: React.FC = () => {
         </View>
       </Animated.View>
 
-      {/* Tarjeta de Peso / Ejercicio simulada */}
+      {/* Tarjeta de Ejercicio simulada */}
       <Animated.View style={[styles.card, { opacity: pulseAnim }]}>
-        <View style={styles.pesoRow}>
-          <View style={styles.pesoHalf}>
-            <View style={[styles.titlePlaceholder, { width: 70, marginBottom: 8 }]} />
-            <View style={styles.miniInputPlaceholder} />
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <View style={styles.iconPlaceholder} />
+            <View style={[styles.titlePlaceholder, { width: 140 }]} />
           </View>
-          <View style={styles.pesoHalf}>
-            <View style={[styles.titlePlaceholder, { width: 65, marginBottom: 8 }]} />
-            <View style={styles.miniInputPlaceholder} />
-          </View>
+        </View>
+        <View style={styles.inputPlaceholder}>
+          <View style={[styles.linePlaceholder, { width: '65%' }]} />
         </View>
       </Animated.View>
     </View>
@@ -163,17 +162,5 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 6,
     backgroundColor: theme.colors.primarySoft,
-  },
-  pesoRow: {
-    flexDirection: 'row',
-    gap: theme.spacing.md,
-  },
-  pesoHalf: {
-    flex: 1,
-  },
-  miniInputPlaceholder: {
-    height: 36,
-    borderRadius: theme.radius.sm,
-    backgroundColor: theme.colors.background,
   },
 })

@@ -19,7 +19,7 @@ import { DateBar } from '../common/DateBar'
 import { CalendarModal } from '../common/CalendarModal'
 import { ComidaCard } from './ComidaCard'
 import { AguaCard } from './AguaCard'
-import { PesoCard } from './PesoCard'
+import { EjercicioCard } from './EjercicioCard'
 import { DiarioSkeleton } from './DiarioSkeleton'
 import { ExportarPdfModal } from './ExportarPdfModal'
 import { BulkUploadModal } from './BulkUploadModal'
@@ -87,8 +87,8 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
     }
   }, [])
 
-  // Auto-scroll hacia el fondo cuando se enfoca peso o ejercicio para que el teclado no lo tape
-  const handleFocusPeso = () => {
+  // Auto-scroll hacia el fondo cuando se enfoca ejercicio para que el teclado no lo tape
+  const handleFocusEjercicio = () => {
     setTimeout(() => {
       scrollViewRef.current?.scrollToEnd({ animated: true })
     }, 160)
@@ -221,12 +221,10 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
                 onCambiar={val => actualizarCampo('agua', val)}
               />
 
-              <PesoCard
-                peso={(datos.peso as string) || ''}
+              <EjercicioCard
                 ejercicio={(datos.ejercicio as string) || ''}
-                onCambiarPeso={val => actualizarCampo('peso', val)}
                 onCambiarEjercicio={val => actualizarCampo('ejercicio', val)}
-                onFocusInput={handleFocusPeso}
+                onFocusInput={handleFocusEjercicio}
               />
 
               <TouchableOpacity
