@@ -3,8 +3,22 @@ import { hoy, desplazarDia } from '../utils/fechas'
 import { cargarDia, guardarDia } from '../services/registroService'
 import type { Registro } from '../types'
 
+/**
+ * Estado del ciclo de guardado en segundo plano.
+ */
 export type EstadoGuardado = 'al_dia' | 'guardando' | 'guardado' | 'error'
 
+/**
+ * Custom Hook que encapsula la lógica de negocio completa del diario nutricional:
+ * - Carga asíncrona del día actual y día anterior para comparativa.
+ * - Autoguardado debounced (1200ms) al escribir en cualquier campo.
+ * - Vaciado forzado (*auto-flush*) de cambios pendientes antes de cambiar de fecha o desmontar.
+ * - Transición de días (`cambiarDia`, `irAHoy`, `establecerFecha`).
+ *
+ * @param userId - Identificador único del usuario autenticado.
+ * @param fechaInicial - Fecha opcional inicial en formato `YYYY-MM-DD` (por defecto hoy).
+ * @returns Objeto con el estado reactivo del diario y manejadores de acción.
+ */
 export function useDiario(userId: string, fechaInicial?: string) {
   const [fecha, setFecha] = useState<string>(fechaInicial || hoy())
   const [datos, setDatos] = useState<Partial<Registro>>({})

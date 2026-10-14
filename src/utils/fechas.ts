@@ -14,25 +14,48 @@ import {
 } from 'date-fns'
 import { es } from 'date-fns/locale'
 
+/**
+ * Obtiene la fecha actual en la zona horaria local formateada como `YYYY-MM-DD`.
+ *
+ * @returns Cadena de fecha en formato ISO simple `YYYY-MM-DD`.
+ */
 export function hoy(): string {
   return format(new Date(), 'yyyy-MM-dd')
 }
 
+/**
+ * Desplaza una fecha determinada un número relativo de días hacia adelante o hacia atrás.
+ *
+ * @param fechaStr - Fecha base en formato `YYYY-MM-DD`.
+ * @param delta - Número de días a sumar (positivo) o restar (negativo).
+ * @returns Nueva fecha calculada en formato `YYYY-MM-DD`.
+ */
 export function desplazarDia(fechaStr: string, delta: number): string {
   const d = parseISO(fechaStr)
   return format(addDays(d, delta), 'yyyy-MM-dd')
 }
 
+/**
+ * Formatea una fecha a representación textual larga en español (ej. "miércoles, 14 de octubre").
+ *
+ * @param fechaStr - Fecha en formato `YYYY-MM-DD`.
+ * @returns Texto legible con el día de la semana y el mes en español.
+ */
 export function formatearFechaLarga(fechaStr: string): string {
   try {
     const d = parseISO(fechaStr)
-    // Ej: "miércoles, 14 de octubre"
     return format(d, "EEEE, d 'de' MMMM", { locale: es })
   } catch {
     return fechaStr
   }
 }
 
+/**
+ * Formatea una fecha al estilo abreviado día/mes con nombre del día (ej. "mié. 14/10").
+ *
+ * @param fechaStr - Fecha en formato `YYYY-MM-DD`.
+ * @returns Cadena con abreviatura del día y números `dd/MM`.
+ */
 export function formatearDiaMes(fechaStr: string): string {
   try {
     const d = parseISO(fechaStr)
@@ -42,6 +65,12 @@ export function formatearDiaMes(fechaStr: string): string {
   }
 }
 
+/**
+ * Formatea una fecha a estilo corto legible (ej. "14 de oct").
+ *
+ * @param fechaStr - Fecha en formato `YYYY-MM-DD`.
+ * @returns Cadena corta con día y mes abreviado.
+ */
 export function formatearFechaCorta(fechaStr: string): string {
   try {
     const d = parseISO(fechaStr)
@@ -51,6 +80,12 @@ export function formatearFechaCorta(fechaStr: string): string {
   }
 }
 
+/**
+ * Formatea una fecha a su representación formal española completa para informes (ej. "14 de octubre de 2026").
+ *
+ * @param fechaStr - Fecha en formato `YYYY-MM-DD`.
+ * @returns Cadena con día, mes completo y año.
+ */
 export function formatearFechaEspanolaCompleta(fechaStr: string): string {
   try {
     const d = parseISO(fechaStr)
@@ -60,6 +95,12 @@ export function formatearFechaEspanolaCompleta(fechaStr: string): string {
   }
 }
 
+/**
+ * Desglosa y formatea una fecha específicamente para las cabeceras de columnas del reporte PDF.
+ *
+ * @param fechaStr - Fecha en formato `YYYY-MM-DD`.
+ * @returns Objeto con el nombre del día de la semana capitalizado y la fecha numérica `dd/MM/yyyy`.
+ */
 export function formatearFechaPdf(fechaStr: string): { diaSemana: string; fechaNumero: string } {
   try {
     const d = parseISO(fechaStr)
@@ -72,6 +113,13 @@ export function formatearFechaPdf(fechaStr: string): { diaSemana: string; fechaN
   }
 }
 
+/**
+ * Genera un arreglo cronológico de fechas en formato `YYYY-MM-DD` comprendidas entre `desde` y `hasta`.
+ *
+ * @param desdeStr - Fecha de inicio del intervalo (`YYYY-MM-DD`).
+ * @param hastaStr - Fecha de fin del intervalo (`YYYY-MM-DD`).
+ * @returns Array con todas las fechas consecutivas del intervalo.
+ */
 export function generarListaDias(desdeStr: string, hastaStr: string): string[] {
   try {
     const dInicio = parseISO(desdeStr)
@@ -99,6 +147,12 @@ export interface DiaGrid {
   esHoy: boolean
 }
 
+/**
+ * Devuelve el nombre del mes y año capitalizado (ej. "Octubre 2026") para el título del calendario.
+ *
+ * @param fecha - Objeto Date del mes a representar.
+ * @returns Cadena capitalizada con mes y año.
+ */
 export function obtenerMesAnio(fecha: Date): string {
   try {
     const texto = format(fecha, 'MMMM yyyy', { locale: es })
@@ -108,10 +162,23 @@ export function obtenerMesAnio(fecha: Date): string {
   }
 }
 
+/**
+ * Desplaza una fecha de referencia un número entero de meses.
+ *
+ * @param fecha - Fecha de partida.
+ * @param delta - Número de meses a sumar o restar.
+ * @returns Nuevo objeto Date resultante.
+ */
 export function desplazarMes(fecha: Date, delta: number): Date {
   return delta > 0 ? addMonths(fecha, delta) : subMonths(fecha, Math.abs(delta))
 }
 
+/**
+ * Calcula la cuadrícula completa de días para renderizar un calendario mensual con semanas de lunes a domingo.
+ *
+ * @param fechaRef - Fecha que define el mes a visualizar.
+ * @returns Array de objetos `DiaGrid` listos para renderizar en filas semanales de 7 días.
+ */
 export function obtenerDiasMesGrid(fechaRef: Date): DiaGrid[] {
   const inicioMes = startOfMonth(fechaRef)
   const finMes = endOfMonth(fechaRef)
@@ -132,6 +199,11 @@ export function obtenerDiasMesGrid(fechaRef: Date): DiaGrid[] {
   })
 }
 
+/**
+ * Obtiene el rango exacto de inicio y fin del mes actual.
+ *
+ * @returns Objeto con las cadenas `desde` y `hasta` en formato `YYYY-MM-DD`.
+ */
 export function inicioYFinMesActual(): { desde: string; hasta: string } {
   const ahora = new Date()
   return {
@@ -141,12 +213,19 @@ export function inicioYFinMesActual(): { desde: string; hasta: string } {
 }
 
 /**
- * Asigna una comida según la hora y minuto del día:
+ * Determina y clasifica la casilla de comida correspondiente según la hora y minuto del día.
+ *
+ * @remarks
+ * Rangos establecidos:
  * - 06:00 a 10:59: Desayuno
  * - 11:00 a 13:29: Media mañana
  * - 13:30 a 16:59: Comida
  * - 17:00 a 19:59: Merienda
  * - 20:00 a 05:59: Cena
+ *
+ * @param hora - Hora del día (0 a 23).
+ * @param minuto - Minuto de la hora (0 a 59). Por defecto 0.
+ * @returns La clave de comida (`desayuno`, `mediaManana`, `comida`, `merienda`, `cena`).
  */
 export function asignarComidaPorHora(hora: number, minuto: number = 0): import('../types').ClaveComida {
   const tiempoMinutos = hora * 60 + minuto
@@ -173,6 +252,19 @@ export interface InfoFechaFoto {
   horaFormateada: string
 }
 
+/**
+ * Extrae la fecha y hora de captura de un elemento fotográfico inspeccionando múltiples fuentes con fallback seguro.
+ *
+ * @remarks
+ * Prioridad de resolución:
+ * 1. Metadatos EXIF (`DateTimeOriginal`, `DateTimeDigitized`, `DateTime`).
+ * 2. Patrones temporales en el nombre de archivo (cámaras Android/iOS, capturas, WhatsApp).
+ * 3. Fecha de modificación en el sistema de archivos local (`expo-file-system`).
+ * 4. Fecha y hora actuales como último recurso de seguridad.
+ *
+ * @param asset - Objeto con la URI, nombre de archivo opcional y metadatos EXIF opcionales.
+ * @returns Promesa que resuelve a la fecha (`YYYY-MM-DD`), hora numérica, minuto y hora formateada (`HH:mm`).
+ */
 export async function extraerFechaYHoraDeFoto(asset: {
   uri: string
   fileName?: string | null

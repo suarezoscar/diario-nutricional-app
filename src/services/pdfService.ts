@@ -24,12 +24,29 @@ function formatearCeldaComida(texto?: string, fuera?: boolean): string {
   return limpio
 }
 
+/**
+ * Construye el documento HTML5 completo para el reporte en formato A4 apaisado (landscape).
+ *
+ * @remarks
+ * Características del reporte:
+ * - Omite completamente el campo de peso conforme a las pautas de privacidad y foco del usuario.
+ * - Incluye columna exclusiva de Ejercicio.
+ * - Resalta visualmente las comidas realizadas fuera de casa con la etiqueta `[FUERA]`.
+ * - Formatea las fechas del período y cabeceras en español estándar.
+ *
+ * @param nombre - Nombre legible del usuario para el título.
+ * @param desde - Fecha de inicio del reporte (`YYYY-MM-DD`).
+ * @param hasta - Fecha de fin del reporte (`YYYY-MM-DD`).
+ * @param dias - Array con la lista de fechas consecutivas a incluir.
+ * @param registrosPorDia - Diccionario con los registros nutricionales por fecha.
+ * @returns Cadena con el código HTML5 completo listo para imprimir en PDF.
+ */
 export function construirHtmlReporte(
   nombre: string,
   desde: string,
   hasta: string,
   dias: string[],
-  registrosPorDia: Record<string, Registro>,
+  registrosPorDia: Record<string, Partial<Registro>>,
 ): string {
   const filasHtml = dias
     .map(fecha => {
@@ -168,6 +185,13 @@ export function construirHtmlReporte(
   `
 }
 
+/**
+ * Genera el documento PDF a partir de los datos en Firestore para el rango solicitado
+ * y abre el diálogo nativo de compartir (`expo-sharing`) en el dispositivo móvil.
+ *
+ * @param parametros - Objeto con `userId`, `nombre`, `desde` y `hasta`.
+ * @returns Promesa que resuelve una vez abierto el diálogo nativo de compartir.
+ */
 export async function exportarPDFPorRango({
   userId,
   nombre,

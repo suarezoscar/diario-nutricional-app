@@ -40,6 +40,12 @@ jobs:
       - name: Instalar dependencias
         run: pnpm install --frozen-lockfile
 
+      - name: Verificar Tipos TypeScript
+        run: pnpm run typecheck
+
+      - name: Ejecutar Tests Unitarios Vitales
+        run: pnpm test
+
       - name: Prebuild nativo Android (Expo)
         run: pnpm exec expo prebuild --platform android --clean
 
