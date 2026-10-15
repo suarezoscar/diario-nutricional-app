@@ -17,7 +17,7 @@ interface DateBarProps {
 
 export const DateBar: React.FC<DateBarProps> = React.memo(({
   fecha,
-  cargando,
+  cargando: _cargando,
   estadoGuardado,
   onCambiarDia,
   onIrAHoy,
@@ -71,34 +71,51 @@ export const DateBar: React.FC<DateBarProps> = React.memo(({
         </TouchableOpacity>
 
         <View style={styles.subRow}>
-          {!esHoy && (
+          {/* Chip central fijo: "Hoy" si estamos en el día actual, o botón "Ir a Hoy" si es otro día */}
+          {esHoy ? (
+            <View
+              style={[
+                styles.dayChip,
+                {
+                  backgroundColor: colors.primarySoft,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <View style={[styles.activeDot, { backgroundColor: colors.primary }]} />
+              <Text style={[styles.dayChipText, { color: colors.primary }]}>Hoy</Text>
+            </View>
+          ) : (
             <TouchableOpacity
-              style={[styles.todayBadge, { backgroundColor: colors.primarySoft }]}
+              style={[
+                styles.dayChip,
+                styles.dayChipButton,
+                {
+                  backgroundColor: colors.primarySoft,
+                  borderColor: colors.border,
+                },
+              ]}
               onPress={onIrAHoy}
               activeOpacity={0.7}
+              accessibilityLabel="Ir al día de hoy"
             >
-              <Text style={[styles.todayBadgeText, { color: colors.primary }]}>Ir a Hoy</Text>
+              <FontAwesome name="history" size={10} color={colors.primary} style={styles.historyIcon} />
+              <Text style={[styles.dayChipText, { color: colors.primary }]}>Ir a Hoy</Text>
             </TouchableOpacity>
           )}
 
+          {/* Indicador de estado de guardado posicionado de forma absoluta para no desplazar el chip central */}
           {estadoGuardado === 'guardando' && (
-            <View style={styles.saveBadge}>
+            <View style={styles.statusAbsolute}>
               <ActivityIndicator size="small" color={colors.primary} style={styles.miniSpinner} />
-              <Text style={[styles.saveBadgeText, { color: colors.textMuted }]}>Guardando...</Text>
+              <Text style={[styles.statusText, { color: colors.textMuted }]}>Guardando...</Text>
             </View>
           )}
 
           {estadoGuardado === 'guardado' && (
-            <View style={styles.saveBadgeSuccess}>
+            <View style={styles.statusAbsolute}>
               <FontAwesome name="check" size={10} color={colors.primary} style={styles.checkIcon} />
-              <Text style={[styles.saveBadgeSuccessText, { color: colors.primary }]}>Guardado</Text>
-            </View>
-          )}
-
-          {cargando && estadoGuardado !== 'guardando' && (
-            <View style={styles.saveBadge}>
-              <ActivityIndicator size="small" color={colors.primary} style={styles.miniSpinner} />
-              <Text style={[styles.saveBadgeText, { color: colors.textMuted }]}>Cargando...</Text>
+              <Text style={[styles.statusSuccessText, { color: colors.primary }]}>Guardado</Text>
             </View>
           )}
         </View>
@@ -131,6 +148,7 @@ const styles = StyleSheet.create({
   },
   centerSection: {
     alignItems: 'center',
+    flex: 1,
   },
   dateButton: {
     paddingVertical: 2,
@@ -157,40 +175,55 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    height: 22,
+    height: 24,
     marginTop: 4,
+    width: '100%',
+    position: 'relative',
   },
-  todayBadge: {
-    paddingHorizontal: theme.spacing.sm,
+  dayChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
     paddingVertical: 2,
     borderRadius: theme.radius.full,
+    borderWidth: 1,
+    height: 22,
   },
-  todayBadgeText: {
+  dayChipButton: {
+    // Estilo interactivo consistente
+  },
+  activeDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 5,
+  },
+  historyIcon: {
+    marginRight: 4,
+  },
+  dayChipText: {
     fontSize: 11,
     fontWeight: '600',
   },
-  saveBadge: {
+  statusAbsolute: {
+    position: 'absolute',
+    right: 4,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
   miniSpinner: {
-    transform: [{ scale: 0.7 }],
+    transform: [{ scale: 0.65 }],
   },
-  saveBadgeText: {
+  statusText: {
     fontSize: 11,
     fontStyle: 'italic',
   },
-  saveBadgeSuccess: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-  },
   checkIcon: {
-    marginRight: 1,
+    marginRight: 2,
   },
-  saveBadgeSuccessText: {
+  statusSuccessText: {
     fontSize: 11,
     fontWeight: '600',
   },
