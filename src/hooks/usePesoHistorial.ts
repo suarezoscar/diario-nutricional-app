@@ -7,6 +7,17 @@ import {
 } from '../services/pesoService'
 import type { PesosPorFecha, PuntoPeso } from '../types'
 
+/**
+ * Estadísticas consolidadas calculadas a partir del histórico de pesos.
+ */
+export interface EstadisticasPeso {
+  ultimoPeso: number
+  fechaUltimo: string
+  min: number
+  max: number
+  diferencia: number
+}
+
 export function usePesoHistorial(userId: string) {
   const [pesos, setPesos] = useState<PesosPorFecha>({})
   const [cargando, setCargando] = useState(true)

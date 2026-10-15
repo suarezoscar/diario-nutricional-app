@@ -1,0 +1,112 @@
+import { StyleSheet } from 'react-native'
+import { theme } from '../../utils/theme'
+
+/**
+ * Estilos aislados para la tarjeta de resumen de día en el histórico (DiaResumenCard).
+ */
+export const styles = StyleSheet.create({
+  cardHoy: {
+    borderColor: theme.colors.primaryLight,
+    borderWidth: 1.5,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.sm,
+  },
+  dateWrap: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  dateText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: theme.colors.text,
+    textTransform: 'capitalize',
+  },
+  badgeHoy: {
+    backgroundColor: theme.colors.primarySoft,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: theme.radius.full,
+  },
+  badgeHoyText: { fontSize: 10, fontWeight: '700', color: theme.colors.primary },
+  editBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: 2,
+    borderRadius: theme.radius.sm,
+    backgroundColor: theme.colors.background,
+  },
+  editBtnText: { fontSize: 12, fontWeight: '600', color: theme.colors.primary },
+  emptyText: {
+    fontSize: 12,
+    color: theme.colors.textMuted,
+    fontStyle: 'italic',
+  },
+  content: { gap: 6 },
+  mealsRow: { flexDirection: 'row', gap: 6 },
+  mealPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: theme.radius.sm,
+    backgroundColor: theme.colors.background,
+  },
+  mealPillText: { fontSize: 11, color: theme.colors.textMuted, fontWeight: '500' },
+  footerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+    marginTop: 4,
+  },
+  metricItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  metricText: { fontSize: 12, color: theme.colors.textMuted },
+  chevronIcon: { marginLeft: 3 },
+  detalleContainer: { marginTop: theme.spacing.xs },
+  detalleDivider: {
+    height: 1,
+    backgroundColor: theme.colors.border,
+    marginVertical: theme.spacing.sm,
+  },
+  comidaItem: {
+    backgroundColor: theme.colors.background,
+    borderRadius: theme.radius.sm,
+    padding: theme.spacing.sm,
+    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  comidaHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  comidaTituloWrap: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  comidaTitulo: { fontSize: 12, fontWeight: '700', color: theme.colors.primary },
+  fueraBadge: {
+    backgroundColor: '#fff3e0',
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 4,
+  },
+  fueraBadgeText: { fontSize: 10, fontWeight: '700', color: '#e65100' },
+  comidaTexto: { fontSize: 13, color: theme.colors.text, lineHeight: 18 },
+  comidaVaciaText: {
+    fontSize: 11,
+    color: theme.colors.textMuted,
+    fontStyle: 'italic',
+  },
+  extraDetalles: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 4,
+    paddingTop: 4,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+  },
+  extraItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  extraText: { fontSize: 12, color: theme.colors.textMuted },
+  extraBold: { fontWeight: '700', color: theme.colors.text },
+})

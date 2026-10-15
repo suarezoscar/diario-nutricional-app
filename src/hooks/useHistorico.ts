@@ -9,6 +9,16 @@ export interface DiaRangoResumen {
   datos: Partial<Registro>
 }
 
+/**
+ * Métricas agregadas correspondientes al intervalo del histórico consultado.
+ */
+export interface MetricasHistorico {
+  totalDias: number
+  diasConDatos: number
+  mediaAgua: number
+  comidasFuera: number
+}
+
 export function useHistorico(userId: string) {
   const [hasta, setHasta] = useState<string>(hoy())
   const [desde, setDesde] = useState<string>(() => desplazarDia(hoy(), -13))
