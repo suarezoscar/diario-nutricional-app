@@ -1,21 +1,13 @@
-import React, { useState } from 'react'
-import {
-  View,
-  Text,
-  Modal,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-  StyleSheet,
-} from 'react-native'
+import React, { useCallback } from 'react'
+import { View, Text, Modal, TouchableOpacity, ActivityIndicator } from 'react-native'
 import { FontAwesome } from '@expo/vector-icons'
 import { useTheme } from '../../context/ThemeContext'
-import { theme } from '../../utils/theme'
-import { hoy, desplazarDia, formatearFechaCorta, inicioYFinMesActual } from '../../utils/fechas'
-import { exportarPDFPorRango, imprimirPDFPorRango } from '../../services/pdfService'
 import { CalendarModal } from '../common/CalendarModal'
+import { styles } from './ExportarPdfModal.styles'
+import { useExportarPdf } from './hooks/useExportarPdf'
+import { ExportarPdfRangoSelector } from './components/ExportarPdfRangoSelector'
 
-interface ExportarPdfModalProps {
+export interface ExportarPdfModalProps {
   visible: boolean
   userId: string
   nombreUsuario: string
@@ -23,6 +15,13 @@ interface ExportarPdfModalProps {
   onClose: () => void
 }
 
+/**
+ * Modal para configurar y generar reportes nutricionales en formato PDF profesional.
+ * Ofrece atajos rápidos de período, selector interactivo de rango y opciones de impresión directa o compartir.
+ *
+ * @param props - Estados de visibilidad, identificación del usuario y callbacks de cierre.
+ * @returns Ventana modal interactiva con controles de exportación PDF.
+ */
 export const ExportarPdfModal: React.FC<ExportarPdfModalProps> = ({
   visible,
   userId,
@@ -31,66 +30,10 @@ export const ExportarPdfModal: React.FC<ExportarPdfModalProps> = ({
   onClose,
 }) => {
   const { colors } = useTheme()
-  const fechaHoy = hoy()
-  const [desde, setDesde] = useState(rangoInicial?.desde || desplazarDia(fechaHoy, -6))
-  const [hasta, setHasta] = useState(rangoInicial?.hasta || fechaHoy)
-  const [generando, setGenerando] = useState<'imprimir' | 'compartir' | null>(null)
-  const [showCalendar, setShowCalendar] = useState(false)
+  const p = useExportarPdf({ userId, nombreUsuario, rangoInicial, onClose })
 
-  const aplicarRangoRapido = (diasAtras: number) => {
-    setDesde(desplazarDia(fechaHoy, -diasAtras + 1))
-    setHasta(fechaHoy)
-  }
-
-  const aplicarMesActual = () => {
-    const rangoMes = inicioYFinMesActual()
-    setDesde(rangoMes.desde)
-    setHasta(rangoMes.hasta)
-  }
-
-  const calcularDias = () => {
-    if (!desde || !hasta) return 1
-    const d1 = new Date(desde).getTime()
-    const d2 = new Date(hasta).getTime()
-    return Math.round(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24)) + 1
-  }
-
-  const handleAccion = async (accion: 'imprimir' | 'compartir') => {
-    if (!desde || !hasta) {
-      Alert.alert('Fechas requeridas', 'Por favor selecciona un rango de fechas.')
-      return
-    }
-
-    if (desde > hasta) {
-      Alert.alert('Rango inválido', 'La fecha inicial no puede ser posterior a la fecha final.')
-      return
-    }
-
-    setGenerando(accion)
-    try {
-      if (accion === 'imprimir') {
-        await imprimirPDFPorRango({
-          userId,
-          nombre: nombreUsuario,
-          desde,
-          hasta,
-        })
-      } else {
-        await exportarPDFPorRango({
-          userId,
-          nombre: nombreUsuario,
-          desde,
-          hasta,
-        })
-      }
-      onClose()
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Error al procesar el PDF'
-      Alert.alert(accion === 'imprimir' ? 'Error al imprimir' : 'Error al exportar', msg)
-    } finally {
-      setGenerando(null)
-    }
-  }
+  const handleAbrirCalendario = useCallback(() => p.setShowCalendar(true), [p])
+  const handleCerrarCalendario = useCallback(() => p.setShowCalendar(false), [p])
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -101,7 +44,12 @@ export const ExportarPdfModal: React.FC<ExportarPdfModalProps> = ({
               <FontAwesome name="file-pdf-o" size={20} color={colors.primary} style={styles.icon} />
               <Text style={[styles.title, { color: colors.text }]}>Exportar Resumen PDF</Text>
             </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
+            <TouchableOpacity
+              onPress={onClose}
+              style={styles.closeBtn}
+              activeOpacity={0.7}
+              accessibilityLabel="Cerrar modal de exportación PDF"
+            >
               <FontAwesome name="times" size={18} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
@@ -110,61 +58,14 @@ export const ExportarPdfModal: React.FC<ExportarPdfModalProps> = ({
             Genera un documento PDF profesional con todas tus comidas, agua y ejercicio en formato horizontal.
           </Text>
 
-          <Text style={[styles.labelRango, { color: colors.text }]}>Atajos rápidos:</Text>
-          <View style={styles.pillsRow}>
-            <TouchableOpacity
-              style={[styles.pill, { backgroundColor: colors.primarySoft }]}
-              onPress={() => aplicarRangoRapido(7)}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.pillText, { color: colors.primary }]}>7 días</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.pill, { backgroundColor: colors.primarySoft }]}
-              onPress={() => aplicarRangoRapido(14)}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.pillText, { color: colors.primary }]}>14 días</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.pill, { backgroundColor: colors.primarySoft }]}
-              onPress={() => aplicarRangoRapido(30)}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.pillText, { color: colors.primary }]}>30 días</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.pill, { backgroundColor: colors.primarySoft }]}
-              onPress={aplicarMesActual}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.pillText, { color: colors.primary }]}>Este mes</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Selector de Rango Interactivo con Calendario */}
-          <Text style={[styles.labelRango, { color: colors.text }]}>Rango de fechas a incluir:</Text>
-          <TouchableOpacity
-            style={[styles.dateSelectorBox, { backgroundColor: colors.background, borderColor: colors.border }]}
-            onPress={() => setShowCalendar(true)}
-            activeOpacity={0.75}
-            accessibilityLabel="Abrir calendario para seleccionar rango de fechas"
-          >
-            <View style={styles.dateSelectorLeft}>
-              <View style={[styles.calendarIconCircle, { backgroundColor: colors.primarySoft }]}>
-                <FontAwesome name="calendar" size={18} color={colors.primary} />
-              </View>
-              <View style={styles.dateSelectorTexts}>
-                <Text style={[styles.dateSelectorRange, { color: colors.text }]}>
-                  {formatearFechaCorta(desde)} ➔ {formatearFechaCorta(hasta)}
-                </Text>
-                <Text style={[styles.dateSelectorHint, { color: colors.textMuted }]}>Toca para cambiar en el calendario</Text>
-              </View>
-            </View>
-            <View style={[styles.dateSelectorBadge, { backgroundColor: colors.primarySoft }]}>
-              <Text style={[styles.dateSelectorBadgeText, { color: colors.primary }]}>{calcularDias()} días</Text>
-            </View>
-          </TouchableOpacity>
+          <ExportarPdfRangoSelector
+            desde={p.desde}
+            hasta={p.hasta}
+            dias={p.calcularDias()}
+            onAplicarRapido={p.aplicarRangoRapido}
+            onAplicarMes={p.aplicarMesActual}
+            onAbrirCalendario={handleAbrirCalendario}
+          />
 
           <View style={styles.actionsRow}>
             <TouchableOpacity
@@ -172,14 +73,14 @@ export const ExportarPdfModal: React.FC<ExportarPdfModalProps> = ({
                 styles.actionBtn,
                 styles.printBtn,
                 { backgroundColor: colors.primary },
-                generando !== null && styles.actionBtnDisabled,
+                p.generando !== null && styles.actionBtnDisabled,
               ]}
-              onPress={() => handleAccion('imprimir')}
-              disabled={generando !== null}
+              onPress={() => p.handleAccion('imprimir')}
+              disabled={p.generando !== null}
               activeOpacity={0.8}
               accessibilityLabel="Imprimir reporte directamente"
             >
-              {generando === 'imprimir' ? (
+              {p.generando === 'imprimir' ? (
                 <ActivityIndicator color="#ffffff" size="small" />
               ) : (
                 <View style={styles.btnContent}>
@@ -194,14 +95,14 @@ export const ExportarPdfModal: React.FC<ExportarPdfModalProps> = ({
                 styles.actionBtn,
                 styles.shareBtn,
                 { backgroundColor: colors.primarySoft, borderColor: colors.primaryLight },
-                generando !== null && styles.actionBtnDisabled,
+                p.generando !== null && styles.actionBtnDisabled,
               ]}
-              onPress={() => handleAccion('compartir')}
-              disabled={generando !== null}
+              onPress={() => p.handleAccion('compartir')}
+              disabled={p.generando !== null}
               activeOpacity={0.8}
               accessibilityLabel="Compartir archivo PDF"
             >
-              {generando === 'compartir' ? (
+              {p.generando === 'compartir' ? (
                 <ActivityIndicator color={colors.primary} size="small" />
               ) : (
                 <View style={styles.btnContent}>
@@ -214,175 +115,14 @@ export const ExportarPdfModal: React.FC<ExportarPdfModalProps> = ({
         </View>
       </View>
 
-      {/* Selector de Rango con Calendario Modal */}
       <CalendarModal
-        visible={showCalendar}
+        visible={p.showCalendar}
         modo="range"
         titulo="Seleccionar rango para PDF"
-        rangoSeleccionado={{ desde, hasta }}
-        onSeleccionarRango={r => {
-          setDesde(r.desde)
-          setHasta(r.hasta)
-        }}
-        onClose={() => setShowCalendar(false)}
+        rangoSeleccionado={{ desde: p.desde, hasta: p.hasta }}
+        onSeleccionarRango={p.handleSeleccionarRango}
+        onClose={handleCerrarCalendario}
       />
     </Modal>
   )
 }
-
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.55)',
-    justifyContent: 'center',
-    padding: theme.spacing.lg,
-  },
-  card: {
-    backgroundColor: theme.colors.card,
-    borderRadius: theme.radius.lg,
-    padding: theme.spacing.lg,
-    elevation: 8,
-    shadowColor: theme.colors.primaryDark,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: theme.spacing.sm,
-  },
-  titleWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  icon: {
-    marginRight: theme.spacing.sm,
-  },
-  title: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: theme.colors.text,
-  },
-  closeBtn: {
-    padding: theme.spacing.xs,
-  },
-  subtitle: {
-    fontSize: 13,
-    color: theme.colors.textMuted,
-    lineHeight: 18,
-    marginBottom: theme.spacing.md,
-  },
-  labelRango: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: theme.colors.text,
-    marginBottom: theme.spacing.xs,
-  },
-  pillsRow: {
-    flexDirection: 'row',
-    gap: theme.spacing.sm,
-    marginBottom: theme.spacing.md,
-  },
-  pill: {
-    flex: 1,
-    backgroundColor: theme.colors.primarySoft,
-    paddingVertical: 6,
-    borderRadius: theme.radius.full,
-    alignItems: 'center',
-  },
-  pillText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: theme.colors.primary,
-  },
-  dateSelectorBox: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: theme.colors.background,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.radius.md,
-    padding: theme.spacing.md,
-    marginBottom: theme.spacing.lg,
-  },
-  dateSelectorLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.md,
-  },
-  calendarIconCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: theme.colors.primarySoft,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dateSelectorTexts: {
-    gap: 2,
-  },
-  dateSelectorRange: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: theme.colors.text,
-  },
-  dateSelectorHint: {
-    fontSize: 11,
-    color: theme.colors.textMuted,
-  },
-  dateSelectorBadge: {
-    backgroundColor: theme.colors.primarySoft,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: theme.radius.sm,
-  },
-  dateSelectorBadgeText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: theme.colors.primary,
-  },
-  actionsRow: {
-    flexDirection: 'row',
-    gap: theme.spacing.sm,
-  },
-  actionBtn: {
-    flex: 1,
-    borderRadius: theme.radius.md,
-    paddingVertical: theme.spacing.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  printBtn: {
-    elevation: 2,
-    shadowColor: theme.colors.primaryDark,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-  },
-  shareBtn: {
-    borderWidth: 1.5,
-  },
-  actionBtnDisabled: {
-    opacity: 0.6,
-  },
-  btnContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  btnIcon: {
-    marginRight: 6,
-  },
-  printBtnText: {
-    color: theme.colors.white,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  shareBtnText: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-})
