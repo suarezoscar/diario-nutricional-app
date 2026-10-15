@@ -31,7 +31,7 @@ import { hoy, obtenerComidaActual } from '../../utils/fechas'
 import { cargarConfiguracion, type HorariosConfig } from '../../services/configService'
 import { useTheme } from '../../context/ThemeContext'
 import { theme } from '../../utils/theme'
-import type { UsuarioAutenticado } from '../../types'
+import type { UsuarioAutenticado, Registro } from '../../types'
 
 interface DiarioViewProps {
   usuario: UsuarioAutenticado
@@ -72,18 +72,27 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
     guardar,
   } = useDiario(usuario.uid, fechaSeleccionada)
 
-  // Datos normalizados estrictamente para la fecha visualizada para evitar cualquier fuga entre días
-  const datosDia = datos.fecha === fecha ? datos : {}
-  const datosAntDia = datos.fecha === fecha ? datosAnterior : {}
+  // Solo mostrar el Skeleton en la primera carga en frío de la aplicación
+  const haCargadoInicialRef = useRef(false)
+  if (datos.fecha) {
+    haCargadoInicialRef.current = true
+  }
+  const esCargaInicial = !haCargadoInicialRef.current && (cargando || !datos.fecha)
 
-  const datosDiaRef = useRef(datosDia)
-  datosDiaRef.current = datosDia
+  const datosDiaRef = useRef<Partial<Registro>>({})
+  if (datos.fecha === fecha) {
+    datosDiaRef.current = datos
+  }
+
+  // Datos normalizados estrictamente para la fecha visualizada para evitar cualquier fuga entre días
+  const datosDia = datos.fecha === fecha ? datos : (haCargadoInicialRef.current ? datosDiaRef.current : {})
+  const datosAntDia = datos.fecha === fecha ? datosAnterior : {}
 
   const { comidaAnalizando, tomarFotoOSeleccionar } = useFotoPlato()
 
   const fadeAnim = useRef(new Animated.Value(1)).current
   const slideAnim = useRef(new Animated.Value(0)).current
-  const prevFechaRef = useRef(fecha)
+  const ultimaFechaAnimadaRef = useRef(fecha)
   const [horariosUsuario, setHorariosUsuario] = useState<HorariosConfig | undefined>(undefined)
 
   useEffect(() => {
@@ -179,42 +188,42 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
     }),
   ).current
 
-  // Manejo de la animación al cambiar de día
+  // Manejo de la animación fluida al cambiar de día (80px y 220ms con curva cúbica)
   useEffect(() => {
-    if (prevFechaRef.current !== fecha) {
-      const dir = fecha > prevFechaRef.current ? 1 : -1
-      prevFechaRef.current = fecha
+    if (datos.fecha === fecha && fecha !== ultimaFechaAnimadaRef.current) {
+      const dir = fecha > ultimaFechaAnimadaRef.current ? 1 : -1
+      ultimaFechaAnimadaRef.current = fecha
 
-      fadeAnim.setValue(0.35)
-      slideAnim.setValue(dir * 18)
+      fadeAnim.setValue(0.25)
+      slideAnim.setValue(dir * 80)
 
       const anim = Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
-          duration: 180,
+          duration: 220,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
         Animated.timing(slideAnim, {
           toValue: 0,
-          duration: 180,
+          duration: 220,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
       ])
 
-      anim.start(() => {
-        fadeAnim.setValue(1)
-        slideAnim.setValue(0)
+      anim.start(({ finished }) => {
+        if (finished) {
+          fadeAnim.setValue(1)
+          slideAnim.setValue(0)
+        }
       })
 
       return () => {
         anim.stop()
-        fadeAnim.setValue(1)
-        slideAnim.setValue(0)
       }
     }
-  }, [fecha, fadeAnim, slideAnim])
+  }, [fecha, datos.fecha, fadeAnim, slideAnim])
 
   useEffect(() => {
     if (fechaSeleccionada) {
@@ -224,18 +233,6 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
       onLimpiarFechaSeleccionada?.()
     }
   }, [fechaSeleccionada, fecha, establecerFecha, onLimpiarFechaSeleccionada])
-
-  // El día se considera en estado de carga activa si useDiario está consultando Firestore
-  // o si los datos actuales en memoria aún corresponden a otra fecha diferente.
-  const estaCargandoDia = cargando || !datos.fecha || datos.fecha !== fecha
-
-  // Garantizar que cuando la carga finalice, la opacidad siempre sea 1 y la traslación 0
-  useEffect(() => {
-    if (!estaCargandoDia) {
-      fadeAnim.setValue(1)
-      slideAnim.setValue(0)
-    }
-  }, [estaCargandoDia, fadeAnim, slideAnim])
 
   const animatedContainerStyle = useMemo(
     () => ({ opacity: fadeAnim, transform: [{ translateX: slideAnim }] }),
@@ -293,7 +290,7 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
       />
       <DateBar
         fecha={fecha}
-        cargando={estaCargandoDia}
+        cargando={esCargaInicial}
         onCambiarDia={cambiarDia}
         onIrAHoy={irAHoy}
         onAbrirCalendario={handleAbrirCalendario}
@@ -315,7 +312,7 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
           keyboardDismissMode="on-drag"
         >
           <Animated.View style={animatedContainerStyle}>
-            {estaCargandoDia ? (
+            {esCargaInicial ? (
               <DiarioSkeleton />
             ) : (
               <>

@@ -147,7 +147,8 @@ export async function programarRecordatorioFinJornada(
   datosHoy?: Partial<Registro> | null,
 ): Promise<void> {
   const id = 'recordatorio_fin_jornada'
-  const pendientes = obtenerComidasPendientes('cena', datosHoy)
+  const { hora, minuto } = parsearHoraMinuto(horaFinJornada)
+  const pendientes = obtenerComidasPendientes('cena', datosHoy, hora >= 6 ? hora : 22)
 
   // Si todas las comidas del día están anotadas, cancelamos el aviso para no molestar
   if (pendientes.length === 0) {
@@ -155,7 +156,6 @@ export async function programarRecordatorioFinJornada(
     return
   }
 
-  const { hora, minuto } = parsearHoraMinuto(horaFinJornada)
   const listaTexto = formatearListaPendientes(pendientes)
 
   await Notifications.cancelScheduledNotificationAsync(id).catch(() => {})
