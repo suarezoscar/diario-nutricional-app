@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import {
   View,
   ScrollView,
@@ -75,6 +75,9 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
   const datosDia = datos.fecha === fecha ? datos : {}
   const datosAntDia = datos.fecha === fecha ? datosAnterior : {}
 
+  const datosDiaRef = useRef(datosDia)
+  datosDiaRef.current = datosDia
+
   const { comidaAnalizando, tomarFotoOSeleccionar } = useFotoPlato()
 
   const fadeAnim = useRef(new Animated.Value(1)).current
@@ -103,7 +106,7 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
       if (accionWidget.accion === 'foto') {
         setTimeout(() => {
           tomarFotoOSeleccionar(accionWidget.clave, textoDescrito => {
-            const textoActual = (datosDia[accionWidget.clave] as string) || ''
+            const textoActual = (datosDiaRef.current[accionWidget.clave] as string) || ''
             const nuevo = textoActual ? `${textoActual}\n${textoDescrito}` : textoDescrito
             actualizarCampo(accionWidget.clave, nuevo)
           })
@@ -116,7 +119,7 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
         }
       }
     }
-  }, [accionWidget, datosDia, tomarFotoOSeleccionar, actualizarCampo])
+  }, [accionWidget, tomarFotoOSeleccionar, actualizarCampo])
 
   useEffect(() => {
     if (comidaAEnfocar && !cargando) {
@@ -233,6 +236,48 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
     }
   }, [estaCargandoDia, fadeAnim, slideAnim])
 
+  const animatedContainerStyle = useMemo(
+    () => ({ opacity: fadeAnim, transform: [{ translateX: slideAnim }] }),
+    [fadeAnim, slideAnim],
+  )
+
+  const handleTomarFotoComida = useCallback(
+    (clave: string) => {
+      tomarFotoOSeleccionar(clave, textoDescrito => {
+        const textoActual = (datosDiaRef.current[clave] as string) || ''
+        const nuevo = textoActual ? `${textoActual}\n${textoDescrito}` : textoDescrito
+        actualizarCampo(clave, nuevo)
+      })
+    },
+    [tomarFotoOSeleccionar, actualizarCampo],
+  )
+
+  const handleCambiarAgua = useCallback(
+    (val: string) => {
+      actualizarCampo('agua', val)
+    },
+    [actualizarCampo],
+  )
+
+  const handleCambiarEjercicio = useCallback(
+    (val: string) => {
+      actualizarCampo('ejercicio', val)
+    },
+    [actualizarCampo],
+  )
+
+  const handleAbrirPdf = useCallback(() => setShowPdfModal(true), [])
+  const handleCerrarPdf = useCallback(() => setShowPdfModal(false), [])
+  const handleAbrirBulk = useCallback(() => setShowBulkModal(true), [])
+  const handleCerrarBulk = useCallback(() => setShowBulkModal(false), [])
+  const handleAbrirCalendario = useCallback(() => setShowCalendarModal(true), [])
+  const handleCerrarCalendario = useCallback(() => setShowCalendarModal(false), [])
+  const handleSeleccionarFecha = useCallback(
+    (f: string) => void establecerFecha(f),
+    [establecerFecha],
+  )
+  const handleRecargarDia = useCallback(() => void establecerFecha(fecha), [establecerFecha, fecha])
+
   return (
     <View
       style={[styles.container, { backgroundColor: colors.background }]}
@@ -241,8 +286,8 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
       <Header
         usuario={usuario}
         onLogout={onLogout}
-        onAbrirPdf={() => setShowPdfModal(true)}
-        onAbrirSubidaMultiple={() => setShowBulkModal(true)}
+        onAbrirPdf={handleAbrirPdf}
+        onAbrirSubidaMultiple={handleAbrirBulk}
         onVerificarActualizacion={onVerificarActualizacion}
       />
       <DateBar
@@ -251,7 +296,7 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
         estadoGuardado={estadoGuardado}
         onCambiarDia={cambiarDia}
         onIrAHoy={irAHoy}
-        onAbrirCalendario={() => setShowCalendarModal(true)}
+        onAbrirCalendario={handleAbrirCalendario}
       />
 
       <KeyboardAvoidingView
@@ -268,7 +313,7 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >
-          <Animated.View style={{ opacity: fadeAnim, transform: [{ translateX: slideAnim }] }}>
+          <Animated.View style={animatedContainerStyle}>
             {estaCargandoDia ? (
               <DiarioSkeleton />
             ) : (
@@ -301,15 +346,8 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
                         analizando={estaAnalizando}
                         esActual={comidaActual === comida.clave}
                         debeEnfocar={debeEnfocar}
-                        onActualizarTexto={txt => actualizarCampo(comida.clave, txt)}
-                        onToggleFuera={() => actualizarCampo(comida.claveFuera, !fuera)}
-                        onTomarFoto={() => {
-                          tomarFotoOSeleccionar(comida.clave, textoDescrito => {
-                            const textoActual = (datosDia[comida.clave] as string) || ''
-                            const nuevo = textoActual ? `${textoActual}\n${textoDescrito}` : textoDescrito
-                            actualizarCampo(comida.clave, nuevo)
-                          })
-                        }}
+                        onActualizarCampo={actualizarCampo}
+                        onTomarFotoComida={handleTomarFotoComida}
                       />
                     </View>
                   )
@@ -318,13 +356,13 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
                 <AguaCard
                   key={`agua_${fecha}`}
                   valor={(datosDia.agua as string) || ''}
-                  onCambiar={val => actualizarCampo('agua', val)}
+                  onCambiar={handleCambiarAgua}
                 />
 
                 <EjercicioCard
                   key={`ejercicio_${fecha}`}
                   ejercicio={(datosDia.ejercicio as string) || ''}
-                  onCambiarEjercicio={val => actualizarCampo('ejercicio', val)}
+                  onCambiarEjercicio={handleCambiarEjercicio}
                   onFocusInput={handleFocusEjercicio}
                 />
 
@@ -367,8 +405,8 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
         modo="single"
         fechaSeleccionada={fecha}
         titulo="Ir a un día"
-        onSeleccionarFecha={f => void establecerFecha(f)}
-        onClose={() => setShowCalendarModal(false)}
+        onSeleccionarFecha={handleSeleccionarFecha}
+        onClose={handleCerrarCalendario}
       />
 
       {/* Exportar Resumen PDF */}
@@ -376,15 +414,15 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
         visible={showPdfModal}
         userId={usuario.uid}
         nombreUsuario={usuario.displayName || usuario.email || 'Usuario'}
-        onClose={() => setShowPdfModal(false)}
+        onClose={handleCerrarPdf}
       />
 
       {/* Subida Múltiple con IA */}
       <BulkUploadModal
         visible={showBulkModal}
         userId={usuario.uid}
-        onClose={() => setShowBulkModal(false)}
-        onCompletado={() => void establecerFecha(fecha)}
+        onClose={handleCerrarBulk}
+        onCompletado={handleRecargarDia}
       />
     </View>
   )

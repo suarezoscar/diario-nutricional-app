@@ -3,7 +3,7 @@ import { View, StyleSheet, type ViewProps } from 'react-native'
 import { useTheme } from '../../context/ThemeContext'
 import { theme } from '../../utils/theme'
 
-export const Card: React.FC<ViewProps> = ({ style, children, ...props }) => {
+export const Card: React.FC<ViewProps> = React.memo(({ style, children, ...props }) => {
   const { colors } = useTheme()
 
   return (
@@ -21,7 +21,7 @@ export const Card: React.FC<ViewProps> = ({ style, children, ...props }) => {
       {children}
     </View>
   )
-}
+})
 
 const styles = StyleSheet.create({
   card: {

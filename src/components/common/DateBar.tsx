@@ -15,7 +15,7 @@ interface DateBarProps {
   onAbrirCalendario?: () => void
 }
 
-export const DateBar: React.FC<DateBarProps> = ({
+export const DateBar: React.FC<DateBarProps> = React.memo(({
   fecha,
   cargando,
   estadoGuardado,
@@ -114,7 +114,7 @@ export const DateBar: React.FC<DateBarProps> = ({
       </TouchableOpacity>
     </View>
   )
-}
+})
 
 const styles = StyleSheet.create({
   container: {

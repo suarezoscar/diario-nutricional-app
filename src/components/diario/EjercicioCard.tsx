@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useCallback } from 'react'
 import { View, Text, TextInput, StyleSheet } from 'react-native'
 import { FontAwesome } from '@expo/vector-icons'
 import { Card } from '../common/Card'
@@ -14,7 +14,7 @@ interface EjercicioCardProps {
 /**
  * Tarjeta para el registro de ejercicio y actividad física del día en el Diario.
  */
-export const EjercicioCard: React.FC<EjercicioCardProps> = ({
+export const EjercicioCard: React.FC<EjercicioCardProps> = React.memo(({
   ejercicio,
   onCambiarEjercicio,
   onFocusInput,
@@ -22,10 +22,14 @@ export const EjercicioCard: React.FC<EjercicioCardProps> = ({
   const { colors } = useTheme()
   const [isFocused, setIsFocused] = useState(false)
 
-  const handleFocus = () => {
+  const handleFocus = useCallback(() => {
     setIsFocused(true)
     onFocusInput?.()
-  }
+  }, [onFocusInput])
+
+  const handleBlur = useCallback(() => {
+    setIsFocused(false)
+  }, [])
 
   return (
     <Card>
@@ -51,12 +55,12 @@ export const EjercicioCard: React.FC<EjercicioCardProps> = ({
         value={ejercicio}
         onChangeText={onCambiarEjercicio}
         onFocus={handleFocus}
-        onBlur={() => setIsFocused(false)}
+        onBlur={handleBlur}
         multiline
       />
     </Card>
   )
-}
+})
 
 const styles = StyleSheet.create({
   header: {

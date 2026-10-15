@@ -15,7 +15,9 @@ interface HeaderProps {
   onVerificarActualizacion?: () => void
 }
 
-export const Header: React.FC<HeaderProps> = ({
+const HIT_SLOP_10 = Object.freeze({ top: 10, bottom: 10, left: 10, right: 10 })
+
+export const Header: React.FC<HeaderProps> = React.memo(({
   usuario,
   onLogout,
   onAbrirPdf,
@@ -59,7 +61,7 @@ export const Header: React.FC<HeaderProps> = ({
           <TouchableOpacity
             onPress={onAbrirSubidaMultiple}
             style={styles.actionBtn}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            hitSlop={HIT_SLOP_10}
             accessibilityLabel="Subida múltiple de fotos con IA"
           >
             <FontAwesome name="camera-retro" size={17} color={colors.primary} />
@@ -70,7 +72,7 @@ export const Header: React.FC<HeaderProps> = ({
           <TouchableOpacity
             onPress={onAbrirPdf}
             style={styles.actionBtn}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            hitSlop={HIT_SLOP_10}
             accessibilityLabel="Exportar resumen PDF"
           >
             <FontAwesome name="file-pdf-o" size={17} color={colors.primary} />
@@ -81,7 +83,7 @@ export const Header: React.FC<HeaderProps> = ({
           <TouchableOpacity
             onPress={onVerificarActualizacion}
             style={styles.actionBtn}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            hitSlop={HIT_SLOP_10}
             accessibilityLabel="Buscar actualizaciones"
           >
             <FontAwesome name="cloud-download" size={17} color={colors.textMuted} />
@@ -95,7 +97,7 @@ export const Header: React.FC<HeaderProps> = ({
         <TouchableOpacity
           onPress={onLogout}
           style={styles.actionBtn}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          hitSlop={HIT_SLOP_10}
           accessibilityLabel="Cerrar sesión"
         >
           <FontAwesome name="sign-out" size={18} color={colors.textMuted} />
@@ -103,7 +105,7 @@ export const Header: React.FC<HeaderProps> = ({
       </View>
     </View>
   )
-}
+})
 
 const styles = StyleSheet.create({
   container: {

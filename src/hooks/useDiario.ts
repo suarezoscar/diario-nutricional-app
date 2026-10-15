@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { hoy, desplazarDia } from '../utils/fechas'
 import { cargarDia, guardarDia } from '../services/registroService'
 import { guardarCacheHoyYSincronizarWidget } from '../services/widgetService'
@@ -209,15 +209,16 @@ export function useDiario(userId: string, fechaInicial?: string) {
           [campo]: valor,
         }
         datosRef.current = actualizados
-        if (fechaObjetivo === hoy()) {
-          void guardarCacheHoyYSincronizarWidget(actualizados)
-          void sincronizarNotificaciones(actualizados)
-        }
         return actualizados
       })
 
       hayCambiosPendientesRef.current = true
       setEstadoGuardado('guardando')
+
+      if (resetEstadoTimerRef.current) {
+        clearTimeout(resetEstadoTimerRef.current)
+        resetEstadoTimerRef.current = null
+      }
 
       // Disparar guardado automático tras 1200ms de inactividad
       if (autoSaveTimerRef.current) {
@@ -230,18 +231,34 @@ export function useDiario(userId: string, fechaInicial?: string) {
     [userId, persistirDatos],
   )
 
-  return {
-    fecha,
-    datos,
-    datosAnterior,
-    cargando,
-    guardando,
-    estadoGuardado,
-    errorGuardado,
-    cambiarDia,
-    irAHoy,
-    establecerFecha,
-    actualizarCampo,
-    guardar,
-  }
+  return useMemo(
+    () => ({
+      fecha,
+      datos,
+      datosAnterior,
+      cargando,
+      guardando,
+      estadoGuardado,
+      errorGuardado,
+      cambiarDia,
+      irAHoy,
+      establecerFecha,
+      actualizarCampo,
+      guardar,
+    }),
+    [
+      fecha,
+      datos,
+      datosAnterior,
+      cargando,
+      guardando,
+      estadoGuardado,
+      errorGuardado,
+      cambiarDia,
+      irAHoy,
+      establecerFecha,
+      actualizarCampo,
+      guardar,
+    ],
+  )
 }

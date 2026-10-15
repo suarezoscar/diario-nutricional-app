@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import { useTheme } from '../../context/ThemeContext'
 import { theme } from '../../utils/theme'
 import { MAX_CARACTERES_COMIDA } from '../../config/constants'
 import type { DefinicionComida } from '../../config/comidas'
+import type { Registro } from '../../types'
 
 interface ComidaCardProps {
   comida: DefinicionComida
@@ -22,16 +23,20 @@ interface ComidaCardProps {
   analizando: boolean
   esActual?: boolean
   debeEnfocar?: boolean
-  onActualizarTexto: (texto: string) => void
-  onToggleFuera: () => void
-  onTomarFoto: () => void
+  onActualizarCampo?: (campo: keyof Registro, valor: string | boolean) => void
+  onTomarFotoComida?: (clave: string) => void
+  onActualizarTexto?: (texto: string) => void
+  onToggleFuera?: () => void
+  onTomarFoto?: () => void
 }
+
+const HIT_SLOP_8 = Object.freeze({ top: 8, bottom: 8, left: 8, right: 8 })
 
 /**
  * Skeleton animado que sustituye al TextInput mientras la IA
  * analiza la foto del plato seleccionado.
  */
-const InputSkeletonIa: React.FC = () => {
+const InputSkeletonIa: React.FC = React.memo(() => {
   const { colors } = useTheme()
   const pulseAnim = useRef(new Animated.Value(0.4)).current
 
@@ -75,9 +80,9 @@ const InputSkeletonIa: React.FC = () => {
       <View style={[styles.skeletonLine, { backgroundColor: colors.border, width: '55%' }]} />
     </Animated.View>
   )
-}
+})
 
-export const ComidaCard: React.FC<ComidaCardProps> = ({
+export const ComidaCard: React.FC<ComidaCardProps> = React.memo(({
   comida,
   valor,
   valorAnterior,
@@ -85,6 +90,8 @@ export const ComidaCard: React.FC<ComidaCardProps> = ({
   analizando,
   esActual,
   debeEnfocar,
+  onActualizarCampo,
+  onTomarFotoComida,
   onActualizarTexto,
   onToggleFuera,
   onTomarFoto,
@@ -92,6 +99,46 @@ export const ComidaCard: React.FC<ComidaCardProps> = ({
   const { colors } = useTheme()
   const [isFocused, setIsFocused] = useState(false)
   const inputRef = useRef<TextInput>(null)
+
+  const handleFocus = useCallback(() => setIsFocused(true), [])
+  const handleBlur = useCallback(() => setIsFocused(false), [])
+
+  const handleTexto = useCallback(
+    (txt: string) => {
+      if (onActualizarCampo) {
+        onActualizarCampo(comida.clave, txt)
+      } else {
+        onActualizarTexto?.(txt)
+      }
+    },
+    [comida.clave, onActualizarCampo, onActualizarTexto],
+  )
+
+  const handleToggle = useCallback(() => {
+    if (onActualizarCampo) {
+      onActualizarCampo(comida.claveFuera, !fuera)
+    } else {
+      onToggleFuera?.()
+    }
+  }, [comida.claveFuera, fuera, onActualizarCampo, onToggleFuera])
+
+  const handleCopiarAyer = useCallback(() => {
+    if (valorAnterior) {
+      if (onActualizarCampo) {
+        onActualizarCampo(comida.clave, valorAnterior)
+      } else {
+        onActualizarTexto?.(valorAnterior)
+      }
+    }
+  }, [comida.clave, valorAnterior, onActualizarCampo, onActualizarTexto])
+
+  const handleFoto = useCallback(() => {
+    if (onTomarFotoComida) {
+      onTomarFotoComida(comida.clave)
+    } else {
+      onTomarFoto?.()
+    }
+  }, [comida.clave, onTomarFotoComida, onTomarFoto])
 
   // Auto-enfoque inmediato y despliegue del teclado cuando se solicita (por ejemplo, desde el Widget)
   useEffect(() => {
@@ -147,7 +194,7 @@ export const ComidaCard: React.FC<ComidaCardProps> = ({
                 styles.ayerBtn,
                 { backgroundColor: colors.primarySoft, borderColor: colors.primaryLight },
               ]}
-              onPress={() => onActualizarTexto(valorAnterior)}
+              onPress={handleCopiarAyer}
               activeOpacity={0.7}
               accessibilityLabel="Copiar comida del día anterior"
             >
@@ -162,7 +209,7 @@ export const ComidaCard: React.FC<ComidaCardProps> = ({
               { backgroundColor: colors.background, borderColor: colors.border },
               fuera && { backgroundColor: colors.primarySoft, borderColor: colors.primaryLight },
             ]}
-            onPress={onToggleFuera}
+            onPress={handleToggle}
             activeOpacity={0.7}
           >
             <Text
@@ -178,9 +225,9 @@ export const ComidaCard: React.FC<ComidaCardProps> = ({
 
           <TouchableOpacity
             style={styles.camBtn}
-            onPress={onTomarFoto}
+            onPress={handleFoto}
             disabled={analizando}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            hitSlop={HIT_SLOP_8}
             activeOpacity={0.7}
             accessibilityLabel="Fotografiar plato para IA"
           >
@@ -214,10 +261,10 @@ export const ComidaCard: React.FC<ComidaCardProps> = ({
           placeholder={comida.placeholder}
           placeholderTextColor={colors.textMuted}
           value={valor}
-          onChangeText={onActualizarTexto}
+          onChangeText={handleTexto}
           maxLength={MAX_CARACTERES_COMIDA}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
         />
       )}
 
@@ -228,7 +275,7 @@ export const ComidaCard: React.FC<ComidaCardProps> = ({
       </View>
     </Card>
   )
-}
+})
 
 const styles = StyleSheet.create({
   header: {

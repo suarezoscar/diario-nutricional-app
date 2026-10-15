@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import { FontAwesome } from '@expo/vector-icons'
 import { Card } from '../common/Card'
@@ -10,14 +10,15 @@ interface AguaCardProps {
   onCambiar: (nuevoValor: string) => void
 }
 
-export const AguaCard: React.FC<AguaCardProps> = ({ valor, onCambiar }) => {
+export const AguaCard: React.FC<AguaCardProps> = React.memo(({ valor, onCambiar }) => {
   const { colors } = useTheme()
   const litros = parseFloat(valor) || 0
 
-  const sumar = (delta: number) => {
-    const nuevo = Math.max(0, +(litros + delta).toFixed(2))
+  const sumar = useCallback((delta: number) => {
+    const actual = parseFloat(valor) || 0
+    const nuevo = Math.max(0, +(actual + delta).toFixed(2))
     onCambiar(nuevo === 0 ? '' : nuevo.toString())
-  }
+  }, [valor, onCambiar])
 
   return (
     <Card>
@@ -69,7 +70,7 @@ export const AguaCard: React.FC<AguaCardProps> = ({ valor, onCambiar }) => {
       </View>
     </Card>
   )
-}
+})
 
 const styles = StyleSheet.create({
   header: {

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import Svg, {
   Defs,
@@ -18,10 +18,80 @@ interface WeightChartProps {
   data: PuntoPeso[]
 }
 
-export const WeightChart: React.FC<WeightChartProps> = ({ data }) => {
+const W = 340
+const H = 170
+const PAD_L = 38
+const PAD_R = 14
+const PAD_T = 16
+const PAD_B = 26
+const plotW = W - PAD_L - PAD_R
+const plotH = H - PAD_T - PAD_B
+
+export const WeightChart: React.FC<WeightChartProps> = React.memo(({ data }) => {
   const { colors } = useTheme()
 
-  if (!data || data.length === 0) {
+  const chartGeometry = useMemo(() => {
+    if (!data || data.length === 0) return null
+
+    const values = data.map(d => d.peso)
+    const minV = Math.min(...values)
+    const maxV = Math.max(...values)
+    const range = maxV - minV || 1
+    const yMin = minV - range * 0.2
+    const yMax = maxV + range * 0.2
+    const ySpan = yMax - yMin
+
+    const scaleX = (i: number) =>
+      PAD_L + (i / Math.max(data.length - 1, 1)) * plotW
+    const scaleY = (v: number) =>
+      PAD_T + (1 - (v - yMin) / ySpan) * plotH
+
+    // Rejilla de 4 líneas
+    const gridLines = Array.from({ length: 4 }, (_, i) => {
+      const v = yMin + (ySpan / 3) * i
+      return { y: scaleY(v), label: v.toFixed(1) }
+    })
+
+    // Coordenadas
+    const points = data.map((d, i) => `${scaleX(i)},${scaleY(d.peso)}`).join(' ')
+    const fillPoints = [
+      `${PAD_L},${scaleY(yMin)}`,
+      ...data.map((d, i) => `${scaleX(i)},${scaleY(d.peso)}`),
+      `${scaleX(data.length - 1)},${scaleY(yMin)}`,
+    ].join(' ')
+
+    // Círculos de puntos
+    const circles = data.map((d, i) => ({
+      fecha: d.fecha,
+      cx: scaleX(i),
+      cy: scaleY(d.peso),
+    }))
+
+    // Etiquetas X
+    const step = Math.max(1, Math.ceil(data.length / 5))
+    const xLabels = data
+      .map((d, idx) => ({ d, idx }))
+      .filter(({ idx }) => idx % step === 0 || idx === data.length - 1)
+      .map(({ d, idx }) => {
+        const partes = d.fecha.split('-')
+        const fechaCorta = `${partes[2]}/${partes[1]}`
+        return {
+          fecha: d.fecha,
+          x: scaleX(idx),
+          fechaCorta,
+        }
+      })
+
+    return {
+      gridLines,
+      points,
+      fillPoints,
+      circles,
+      xLabels,
+    }
+  }, [data])
+
+  if (!chartGeometry) {
     return (
       <View style={styles.emptyContainer}>
         <Text style={[styles.emptyText, { color: colors.textMuted }]}>
@@ -31,45 +101,7 @@ export const WeightChart: React.FC<WeightChartProps> = ({ data }) => {
     )
   }
 
-  const W = 340
-  const H = 170
-  const PAD_L = 38
-  const PAD_R = 14
-  const PAD_T = 16
-  const PAD_B = 26
-  const plotW = W - PAD_L - PAD_R
-  const plotH = H - PAD_T - PAD_B
-
-  const values = data.map(d => d.peso)
-  const minV = Math.min(...values)
-  const maxV = Math.max(...values)
-  const range = maxV - minV || 1
-  const yMin = minV - range * 0.2
-  const yMax = maxV + range * 0.2
-  const ySpan = yMax - yMin
-
-  const scaleX = (i: number) =>
-    PAD_L + (i / Math.max(data.length - 1, 1)) * plotW
-  const scaleY = (v: number) =>
-    PAD_T + (1 - (v - yMin) / ySpan) * plotH
-
-  // Rejilla de 4 líneas
-  const gridLines = Array.from({ length: 4 }, (_, i) => {
-    const v = yMin + (ySpan / 3) * i
-    return { y: scaleY(v), label: v.toFixed(1) }
-  })
-
-  // Coordenadas
-  const points = data.map((d, i) => `${scaleX(i)},${scaleY(d.peso)}`).join(' ')
-  const fillPoints = [
-    `${PAD_L},${scaleY(yMin)}`,
-    ...data.map((d, i) => `${scaleX(i)},${scaleY(d.peso)}`),
-    `${scaleX(data.length - 1)},${scaleY(yMin)}`,
-  ].join(' ')
-
-  // Etiquetas X
-  const step = Math.max(1, Math.ceil(data.length / 5))
-  const xLabels = data.filter((_, i) => i % step === 0 || i === data.length - 1)
+  const { gridLines, points, fillPoints, circles, xLabels } = chartGeometry
 
   return (
     <View style={[styles.container, { backgroundColor: colors.card }]}>
@@ -117,11 +149,11 @@ export const WeightChart: React.FC<WeightChartProps> = ({ data }) => {
         />
 
         {/* Puntos de datos */}
-        {data.map((d, i) => (
+        {circles.map(c => (
           <Circle
-            key={d.fecha}
-            cx={scaleX(i)}
-            cy={scaleY(d.peso)}
+            key={c.fecha}
+            cx={c.cx}
+            cy={c.cy}
             r="3.5"
             fill={colors.card}
             stroke={colors.primary}
@@ -130,27 +162,22 @@ export const WeightChart: React.FC<WeightChartProps> = ({ data }) => {
         ))}
 
         {/* Etiquetas fecha eje X */}
-        {xLabels.map(d => {
-          const idx = data.indexOf(d)
-          const partes = d.fecha.split('-')
-          const fechaCorta = `${partes[2]}/${partes[1]}`
-          return (
-            <SvgText
-              key={d.fecha}
-              x={scaleX(idx)}
-              y={H - 4}
-              fontSize="10"
-              fill={colors.textMuted}
-              textAnchor="middle"
-            >
-              {fechaCorta}
-            </SvgText>
-          )
-        })}
+        {xLabels.map(l => (
+          <SvgText
+            key={l.fecha}
+            x={l.x}
+            y={H - 4}
+            fontSize="10"
+            fill={colors.textMuted}
+            textAnchor="middle"
+          >
+            {l.fechaCorta}
+          </SvgText>
+        ))}
       </Svg>
     </View>
   )
-}
+})
 
 const styles = StyleSheet.create({
   container: {

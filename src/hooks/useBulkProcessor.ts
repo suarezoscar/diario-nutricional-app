@@ -46,14 +46,18 @@ export function useBulkProcessor(userId: string) {
           const desc = await describirPlatoConBase64(item.base64)
           setItems(prev =>
             prev.map(it =>
-              it.id === item.id ? { ...it, estado: 'listo', descripcion: desc } : it,
+              it.id === item.id
+                ? { ...it, estado: 'listo', descripcion: desc, base64: undefined }
+                : it,
             ),
           )
         } catch (err) {
           const msg = err instanceof Error ? err.message : 'Error en IA'
           setItems(prev =>
             prev.map(it =>
-              it.id === item.id ? { ...it, estado: 'error', error: msg } : it,
+              it.id === item.id
+                ? { ...it, estado: 'error', error: msg, base64: undefined }
+                : it,
             ),
           )
         }

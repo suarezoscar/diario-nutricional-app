@@ -24,7 +24,7 @@ const ITEMS: ItemTab[] = [
   { id: 'ajustes', titulo: 'Ajustes', icono: 'cog' },
 ]
 
-export const BottomNav: React.FC<BottomNavProps> = ({ tabActiva, onCambiarTab }) => {
+export const BottomNav: React.FC<BottomNavProps> = React.memo(({ tabActiva, onCambiarTab }) => {
   const { colors } = useTheme()
   const insets = useSafeAreaInsets()
   const bottomPadding = Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 12)
@@ -94,7 +94,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ tabActiva, onCambiarTab })
       })}
     </View>
   )
-}
+})
 
 const styles = StyleSheet.create({
   container: {

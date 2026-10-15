@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useCallback } from 'react'
 import { View, StyleSheet } from 'react-native'
 import { Header } from './common/Header'
 import { BottomNav } from './navigation/BottomNav'
@@ -83,10 +83,22 @@ export const MainScreen: React.FC<MainScreenProps> = ({
 
   const { colors } = useTheme()
 
-  const irADiaEnDiario = (fecha: string) => {
+  const irADiaEnDiario = useCallback((fecha: string) => {
     setFechaSeleccionada(fecha)
     setTabActiva('diario')
-  }
+  }, [])
+
+  const handleLimpiarFecha = useCallback(() => {
+    setFechaSeleccionada(undefined)
+  }, [])
+
+  const handleAbrirHistoricoPdf = useCallback(() => {
+    setShowHistoricoPdf(true)
+  }, [])
+
+  const handleCerrarHistoricoPdf = useCallback(() => {
+    setShowHistoricoPdf(false)
+  }, [])
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -95,7 +107,7 @@ export const MainScreen: React.FC<MainScreenProps> = ({
           <DiarioView
             usuario={usuario}
             fechaSeleccionada={fechaSeleccionada}
-            onLimpiarFechaSeleccionada={() => setFechaSeleccionada(undefined)}
+            onLimpiarFechaSeleccionada={handleLimpiarFecha}
             accionWidget={accionWidget}
             onLogout={onLogout}
             onVerificarActualizacion={onVerificarActualizacion}
@@ -108,14 +120,14 @@ export const MainScreen: React.FC<MainScreenProps> = ({
               usuario={usuario}
               onLogout={onLogout}
               onVerificarActualizacion={onVerificarActualizacion}
-              onAbrirPdf={() => setShowHistoricoPdf(true)}
+              onAbrirPdf={handleAbrirHistoricoPdf}
             />
             <HistoricoView
               userId={usuario.uid}
               nombreUsuario={usuario.displayName || usuario.email || 'Usuario'}
               onEditarDia={irADiaEnDiario}
               showPdfModalExterno={showHistoricoPdf}
-              onCerrarPdfModalExterno={() => setShowHistoricoPdf(false)}
+              onCerrarPdfModalExterno={handleCerrarHistoricoPdf}
             />
           </View>
         )}

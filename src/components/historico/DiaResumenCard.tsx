@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useCallback } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import { FontAwesome } from '@expo/vector-icons'
 import { Card } from '../common/Card'
@@ -13,6 +13,8 @@ interface DiaResumenCardProps {
   onEditar: (fecha: string) => void
 }
 
+const HIT_SLOP_8 = Object.freeze({ top: 8, bottom: 8, left: 8, right: 8 })
+
 const COMIDAS_INFO: { clave: string; label: string; fueraClave: string }[] = [
   { clave: 'desayuno', label: 'Des', fueraClave: 'desayunoFuera' },
   { clave: 'mediaManana', label: 'MM', fueraClave: 'mediaMananaFuera' },
@@ -21,7 +23,7 @@ const COMIDAS_INFO: { clave: string; label: string; fueraClave: string }[] = [
   { clave: 'cena', label: 'Cen', fueraClave: 'cenaFuera' },
 ]
 
-export const DiaResumenCard: React.FC<DiaResumenCardProps> = ({ dia, onEditar }) => {
+export const DiaResumenCard: React.FC<DiaResumenCardProps> = React.memo(({ dia, onEditar }) => {
   const { colors, esOscuro } = useTheme()
   const { fecha, datos } = dia
   const esHoy = fecha === hoy()
@@ -35,10 +37,20 @@ export const DiaResumenCard: React.FC<DiaResumenCardProps> = ({ dia, onEditar })
   const fueraBg = esOscuro ? '#3a2208' : '#fff3e0'
   const fueraColor = esOscuro ? '#ffb74d' : '#e65100'
 
+  const handleToggle = useCallback(() => {
+    if (!sinDatos) {
+      setDesplegado(prev => !prev)
+    }
+  }, [sinDatos])
+
+  const handleEditar = useCallback(() => {
+    onEditar(fecha)
+  }, [onEditar, fecha])
+
   return (
     <Card style={esHoy ? [styles.cardHoy, { borderColor: colors.primaryLight }] : undefined}>
       <TouchableOpacity
-        onPress={() => !sinDatos && setDesplegado(prev => !prev)}
+        onPress={handleToggle}
         activeOpacity={sinDatos ? 1 : 0.75}
       >
         <View style={styles.header}>
@@ -63,9 +75,9 @@ export const DiaResumenCard: React.FC<DiaResumenCardProps> = ({ dia, onEditar })
 
           <TouchableOpacity
             style={[styles.editBtn, { backgroundColor: colors.background }]}
-            onPress={() => onEditar(fecha)}
+            onPress={handleEditar}
             activeOpacity={0.7}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            hitSlop={HIT_SLOP_8}
           >
             <FontAwesome name="pencil" size={13} color={colors.primary} />
             <Text style={[styles.editBtnText, { color: colors.primary }]}>Editar</Text>
@@ -210,7 +222,7 @@ export const DiaResumenCard: React.FC<DiaResumenCardProps> = ({ dia, onEditar })
       )}
     </Card>
   )
-}
+})
 
 const styles = StyleSheet.create({
   cardHoy: {
