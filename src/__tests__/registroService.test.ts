@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { idDocumento, cargarDia, guardarDia } from '../services/registroService'
+import { cerrarDatabase } from '../db/database'
+import { __resetMockDb } from './__mocks__/expo-sqlite'
 
 const mockDoc = vi.fn()
 const mockGetDoc = vi.fn()
@@ -22,6 +24,8 @@ vi.mock('../config/firebase', () => ({
 
 describe('Servicio de Registros Nutricionales (registroService)', () => {
   beforeEach(() => {
+    cerrarDatabase()
+    __resetMockDb()
     vi.clearAllMocks()
     mockDoc.mockImplementation((_db, _col, id) => ({ id }))
   })
@@ -79,6 +83,7 @@ describe('Servicio de Registros Nutricionales (registroService)', () => {
         agua: '1.5',
         userId: 'erica_pixel6a',
         fecha: '2026-10-14',
+        updatedAt: expect.any(Number),
       },
       { merge: true },
     )

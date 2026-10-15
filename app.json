@@ -2,7 +2,7 @@
   "expo": {
     "name": "Diario Nutricional",
     "slug": "diario-nutricional-app",
-    "version": "1.0.26",
+    "version": "1.0.27",
     "scheme": "diarionutricional",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -12,7 +12,7 @@
     },
     "android": {
       "package": "com.oscar.diarionutricional",
-      "versionCode": 27,
+      "versionCode": 28,
       "permissions": [
         "REQUEST_INSTALL_PACKAGES",
         "POST_NOTIFICATIONS",
@@ -55,7 +55,8 @@
             }
           ]
         }
-      ]
+      ],
+      "expo-sqlite"
     ]
   }
 }

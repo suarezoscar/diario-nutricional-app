@@ -15,6 +15,7 @@ export default defineConfig({
       'expo-notifications': path.resolve(import.meta.dirname, 'src/__tests__/__mocks__/expo-notifications.js'),
       '@react-native-async-storage/async-storage': path.resolve(import.meta.dirname, 'src/__tests__/__mocks__/async-storage.js'),
       'react-native-android-widget': path.resolve(import.meta.dirname, 'src/__tests__/__mocks__/react-native-android-widget.js'),
+      'expo-sqlite': path.resolve(import.meta.dirname, 'src/__tests__/__mocks__/expo-sqlite.js'),
     },
   },
 })

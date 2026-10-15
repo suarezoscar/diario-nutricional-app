@@ -12,6 +12,7 @@ import { hoy } from '../utils/fechas'
 import * as Linking from 'expo-linking'
 import * as Notifications from 'expo-notifications'
 import { configurarNotificaciones, sincronizarNotificaciones } from '../services/notificationService'
+import { iniciarEscuchadoresSync } from '../services/syncService'
 import type { TabPrincipal, UsuarioAutenticado } from '../types'
 
 interface MainScreenProps {
@@ -80,6 +81,14 @@ export const MainScreen: React.FC<MainScreenProps> = ({
       notifSub.remove()
     }
   }, [])
+
+  // Sincronización en segundo plano (inicio y vuelta a primer plano)
+  React.useEffect(() => {
+    const limpiarSync = iniciarEscuchadoresSync(usuario.uid)
+    return () => {
+      limpiarSync()
+    }
+  }, [usuario.uid])
 
   const { colors } = useTheme()
 
