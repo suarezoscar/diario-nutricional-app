@@ -12,6 +12,7 @@ import { Card } from '../common/Card'
 import { useTheme } from '../../context/ThemeContext'
 import { theme } from '../../utils/theme'
 import { MAX_CARACTERES_COMIDA } from '../../config/constants'
+import { usePulseAnim } from '../../hooks/usePulseAnim'
 import type { DefinicionComida } from '../../config/comidas'
 import type { Registro } from '../../types'
 
@@ -38,26 +39,7 @@ const HIT_SLOP_8 = Object.freeze({ top: 8, bottom: 8, left: 8, right: 8 })
  */
 const InputSkeletonIa: React.FC = React.memo(() => {
   const { colors } = useTheme()
-  const pulseAnim = useRef(new Animated.Value(0.4)).current
-
-  useEffect(() => {
-    const anim = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 0.9,
-          duration: 650,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 0.4,
-          duration: 650,
-          useNativeDriver: true,
-        }),
-      ]),
-    )
-    anim.start()
-    return () => anim.stop()
-  }, [pulseAnim])
+  const pulseAnim = usePulseAnim()
 
   return (
     <Animated.View

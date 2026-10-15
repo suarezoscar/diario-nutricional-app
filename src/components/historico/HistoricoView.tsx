@@ -4,12 +4,12 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
-  ActivityIndicator,
   StyleSheet,
 } from 'react-native'
 import { FontAwesome } from '@expo/vector-icons'
 import { Card } from '../common/Card'
 import { DiaResumenCard } from './DiaResumenCard'
+import { HistoricoSkeleton } from './HistoricoSkeleton'
 import { ExportarPdfModal } from '../diario/ExportarPdfModal'
 import { CalendarModal } from '../common/CalendarModal'
 import { useHistorico } from '../../hooks/useHistorico'
@@ -158,10 +158,7 @@ export const HistoricoView: React.FC<HistoricoViewProps> = ({
         </Card>
 
         {cargando ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={[styles.loadingText, { color: colors.textMuted }]}>Cargando histórico...</Text>
-          </View>
+          <HistoricoSkeleton />
         ) : (
           <View style={styles.listContainer}>
             {[...dias].reverse().map(dia => (

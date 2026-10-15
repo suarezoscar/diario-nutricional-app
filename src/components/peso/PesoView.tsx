@@ -13,6 +13,11 @@ import { FontAwesome } from '@expo/vector-icons'
 import { Card } from '../common/Card'
 import { CalendarModal } from '../common/CalendarModal'
 import { WeightChart } from './WeightChart'
+import {
+  WeightChartSkeleton,
+  PesoHistorialSkeleton,
+  PesoStatsSkeleton,
+} from './PesoSkeleton'
 import { usePesoHistorial } from '../../hooks/usePesoHistorial'
 import { hoy, formatearFechaLarga, formatearFechaCorta } from '../../utils/fechas'
 import { useTheme } from '../../context/ThemeContext'
@@ -70,7 +75,7 @@ export const PesoView: React.FC<PesoViewProps> = ({ userId, onSeleccionarDia }) 
         automaticallyAdjustKeyboardInsets={true}
       >
         {/* Tarjeta de métricas */}
-        {estadisticas && (
+        {estadisticas ? (
           <Card
             style={[
               styles.statsCard,
@@ -105,7 +110,9 @@ export const PesoView: React.FC<PesoViewProps> = ({ userId, onSeleccionarDia }) 
               </View>
             </View>
           </Card>
-        )}
+        ) : cargando ? (
+          <PesoStatsSkeleton />
+        ) : null}
 
         {/* Gráfica de evolución */}
         <Card>
@@ -114,7 +121,7 @@ export const PesoView: React.FC<PesoViewProps> = ({ userId, onSeleccionarDia }) 
             <Text style={[styles.cardTitle, { color: colors.text }]}>Evolución de peso</Text>
           </View>
           {cargando ? (
-            <ActivityIndicator size="small" color={colors.primary} style={{ marginVertical: 20 }} />
+            <WeightChartSkeleton />
           ) : (
             <WeightChart data={chartData} />
           )}
@@ -219,33 +226,35 @@ export const PesoView: React.FC<PesoViewProps> = ({ userId, onSeleccionarDia }) 
             <Text style={[styles.cardTitle, { color: colors.text }]}>Historial ({chartData.length})</Text>
           </View>
 
-          {chartData.length === 0 && !cargando && (
+          {cargando && chartData.length === 0 ? (
+            <PesoHistorialSkeleton />
+          ) : chartData.length === 0 ? (
             <Text style={[styles.emptyText, { color: colors.textMuted }]}>
               No hay registros de peso guardados todavía.
             </Text>
+          ) : (
+            [...chartData].reverse().map(item => (
+              <View key={item.fecha} style={[styles.historyRow, { borderBottomColor: colors.border }]}>
+                <TouchableOpacity
+                  style={styles.historyInfo}
+                  onPress={() => onSeleccionarDia?.(item.fecha)}
+                  activeOpacity={onSeleccionarDia ? 0.7 : 1}
+                >
+                  <Text style={[styles.historyDate, { color: colors.text }]}>{formatearFechaLarga(item.fecha)}</Text>
+                  <Text style={[styles.historyWeight, { color: colors.primary }]}>{item.peso} kg</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => confirmarBorrado(item.fecha, item.peso)}
+                  style={styles.deleteBtn}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  activeOpacity={0.7}
+                >
+                  <FontAwesome name="trash-o" size={15} color={colors.error} />
+                </TouchableOpacity>
+              </View>
+            ))
           )}
-
-          {[...chartData].reverse().map(item => (
-            <View key={item.fecha} style={[styles.historyRow, { borderBottomColor: colors.border }]}>
-              <TouchableOpacity
-                style={styles.historyInfo}
-                onPress={() => onSeleccionarDia?.(item.fecha)}
-                activeOpacity={onSeleccionarDia ? 0.7 : 1}
-              >
-                <Text style={[styles.historyDate, { color: colors.text }]}>{formatearFechaLarga(item.fecha)}</Text>
-                <Text style={[styles.historyWeight, { color: colors.primary }]}>{item.peso} kg</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() => confirmarBorrado(item.fecha, item.peso)}
-                style={styles.deleteBtn}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                activeOpacity={0.7}
-              >
-                <FontAwesome name="trash-o" size={15} color={colors.error} />
-              </TouchableOpacity>
-            </View>
-          ))}
         </Card>
       </ScrollView>
 

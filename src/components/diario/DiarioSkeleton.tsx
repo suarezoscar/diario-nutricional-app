@@ -1,34 +1,16 @@
-import React, { useEffect, useRef } from 'react'
+import React from 'react'
 import { View, Animated, StyleSheet } from 'react-native'
 import { useTheme } from '../../context/ThemeContext'
 import { theme } from '../../utils/theme'
+import { usePulseAnim } from '../../hooks/usePulseAnim'
 
 /**
  * Componente Skeleton con animación pulsante para mostrar mientras
  * se cargan los datos del diario de un día, reemplazando spinners invasivos.
  */
-export const DiarioSkeleton: React.FC = () => {
+export const DiarioSkeleton: React.FC = React.memo(() => {
   const { colors } = useTheme()
-  const pulseAnim = useRef(new Animated.Value(0.4)).current
-
-  useEffect(() => {
-    const animation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 0.85,
-          duration: 750,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 0.35,
-          duration: 750,
-          useNativeDriver: true,
-        }),
-      ]),
-    )
-    animation.start()
-    return () => animation.stop()
-  }, [pulseAnim])
+  const pulseAnim = usePulseAnim()
 
   // Simulación de 5 tarjetas de comida
   const comidasPlaceholder = [1, 2, 3, 4, 5]
@@ -102,7 +84,7 @@ export const DiarioSkeleton: React.FC = () => {
       </Animated.View>
     </View>
   )
-}
+})
 
 const styles = StyleSheet.create({
   container: {
