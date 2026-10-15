@@ -106,7 +106,6 @@ export const DiarioSkeleton: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
-    padding: theme.spacing.md,
     gap: theme.spacing.sm,
   },
   card: {

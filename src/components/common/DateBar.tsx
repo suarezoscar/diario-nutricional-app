@@ -17,6 +17,7 @@ interface DateBarProps {
 
 export const DateBar: React.FC<DateBarProps> = ({
   fecha,
+  cargando,
   estadoGuardado,
   onCambiarDia,
   onIrAHoy,
@@ -91,6 +92,13 @@ export const DateBar: React.FC<DateBarProps> = ({
             <View style={styles.saveBadgeSuccess}>
               <FontAwesome name="check" size={10} color={colors.primary} style={styles.checkIcon} />
               <Text style={[styles.saveBadgeSuccessText, { color: colors.primary }]}>Guardado</Text>
+            </View>
+          )}
+
+          {cargando && estadoGuardado !== 'guardando' && (
+            <View style={styles.saveBadge}>
+              <ActivityIndicator size="small" color={colors.primary} style={styles.miniSpinner} />
+              <Text style={[styles.saveBadgeText, { color: colors.textMuted }]}>Cargando...</Text>
             </View>
           )}
         </View>

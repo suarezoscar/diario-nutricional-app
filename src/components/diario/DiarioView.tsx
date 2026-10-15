@@ -71,6 +71,10 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
     guardar,
   } = useDiario(usuario.uid, fechaSeleccionada)
 
+  // Datos normalizados estrictamente para la fecha visualizada para evitar cualquier fuga entre días
+  const datosDia = datos.fecha === fecha ? datos : {}
+  const datosAntDia = datos.fecha === fecha ? datosAnterior : {}
+
   const { comidaAnalizando, tomarFotoOSeleccionar } = useFotoPlato()
 
   const fadeAnim = useRef(new Animated.Value(1)).current
@@ -84,7 +88,7 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
       setHorariosUsuario(cfg.horarios)
     }
     void leerConfig()
-  }, [fecha])
+  }, [])
 
   const comidaActual = fecha === hoy() ? obtenerComidaActual(horariosUsuario) : null
 
@@ -99,7 +103,7 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
       if (accionWidget.accion === 'foto') {
         setTimeout(() => {
           tomarFotoOSeleccionar(accionWidget.clave, textoDescrito => {
-            const textoActual = (datos[accionWidget.clave] as string) || ''
+            const textoActual = (datosDia[accionWidget.clave] as string) || ''
             const nuevo = textoActual ? `${textoActual}\n${textoDescrito}` : textoDescrito
             actualizarCampo(accionWidget.clave, nuevo)
           })
@@ -112,7 +116,7 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
         }
       }
     }
-  }, [accionWidget, datos, tomarFotoOSeleccionar, actualizarCampo])
+  }, [accionWidget, datosDia, tomarFotoOSeleccionar, actualizarCampo])
 
   useEffect(() => {
     if (comidaAEnfocar && !cargando) {
@@ -171,28 +175,40 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
     }),
   ).current
 
+  // Manejo de la animación al cambiar de día
   useEffect(() => {
     if (prevFechaRef.current !== fecha) {
       const dir = fecha > prevFechaRef.current ? 1 : -1
       prevFechaRef.current = fecha
 
       fadeAnim.setValue(0.35)
-      slideAnim.setValue(dir * 28)
+      slideAnim.setValue(dir * 24)
 
-      Animated.parallel([
+      const anim = Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
-          duration: 240,
+          duration: 220,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
         Animated.timing(slideAnim, {
           toValue: 0,
-          duration: 240,
+          duration: 220,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
-      ]).start()
+      ])
+
+      anim.start(() => {
+        fadeAnim.setValue(1)
+        slideAnim.setValue(0)
+      })
+
+      return () => {
+        anim.stop()
+        fadeAnim.setValue(1)
+        slideAnim.setValue(0)
+      }
     }
   }, [fecha, fadeAnim, slideAnim])
 
@@ -208,6 +224,14 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
   // El día se considera en estado de carga activa si useDiario está consultando Firestore
   // o si los datos actuales en memoria aún corresponden a otra fecha diferente.
   const estaCargandoDia = cargando || !datos.fecha || datos.fecha !== fecha
+
+  // Garantizar que cuando la carga finalice, la opacidad siempre sea 1 y la traslación 0
+  useEffect(() => {
+    if (!estaCargandoDia) {
+      fadeAnim.setValue(1)
+      slideAnim.setValue(0)
+    }
+  }, [estaCargandoDia, fadeAnim, slideAnim])
 
   return (
     <View
@@ -230,115 +254,112 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
         onAbrirCalendario={() => setShowCalendarModal(true)}
       />
 
-      {estaCargandoDia ? (
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoid}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          ref={scrollViewRef}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: keyboardHeight > 0 ? keyboardHeight + 80 : theme.spacing.xxl },
+          ]}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
         >
-          <DiarioSkeleton />
-        </ScrollView>
-      ) : (
-        <KeyboardAvoidingView
-          style={styles.keyboardAvoid}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
-          <ScrollView
-            ref={scrollViewRef}
-            contentContainerStyle={[
-              styles.scrollContent,
-              { paddingBottom: keyboardHeight > 0 ? keyboardHeight + 80 : theme.spacing.xxl },
-            ]}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            keyboardDismissMode="on-drag"
-          >
-            <Animated.View style={{ opacity: fadeAnim, transform: [{ translateX: slideAnim }] }}>
-              {COMIDAS.map(comida => {
-                const valor = (datos[comida.clave] as string) || ''
-                const valorAnterior = (datosAnterior?.[comida.clave] as string) || ''
-                const fuera = !!datos[comida.claveFuera]
-                const estaAnalizando = comidaAnalizando === comida.clave
-                const debeEnfocar =
-                  comidaAEnfocar?.clave === comida.clave &&
-                  comidaAEnfocar?.timestamp === accionWidget?.timestamp
+          <Animated.View style={{ opacity: fadeAnim, transform: [{ translateX: slideAnim }] }}>
+            {estaCargandoDia ? (
+              <DiarioSkeleton />
+            ) : (
+              <>
+                {COMIDAS.map(comida => {
+                  const valor = (datosDia[comida.clave] as string) || ''
+                  const valorAnterior = (datosAntDia?.[comida.clave] as string) || ''
+                  const fuera = !!datosDia[comida.claveFuera]
+                  const estaAnalizando = comidaAnalizando === comida.clave
+                  const debeEnfocar =
+                    comidaAEnfocar?.clave === comida.clave &&
+                    comidaAEnfocar?.timestamp === accionWidget?.timestamp
 
-                return (
-                  <View
-                    key={`${comida.clave}_${fecha}`}
-                    onLayout={e => {
-                      const y = e.nativeEvent.layout.y
-                      cardLayoutsRef.current[comida.clave] = y
-                      if (comidaAEnfocar?.clave === comida.clave) {
-                        scrollViewRef.current?.scrollTo({ y: Math.max(0, y - 20), animated: true })
-                      }
-                    }}
-                  >
-                    <ComidaCard
-                      comida={comida}
-                      valor={valor}
-                      valorAnterior={valorAnterior}
-                      fuera={fuera}
-                      analizando={estaAnalizando}
-                      esActual={comidaActual === comida.clave}
-                      debeEnfocar={debeEnfocar}
-                      onActualizarTexto={txt => actualizarCampo(comida.clave, txt)}
-                      onToggleFuera={() => actualizarCampo(comida.claveFuera, !fuera)}
-                      onTomarFoto={() => {
-                        tomarFotoOSeleccionar(comida.clave, textoDescrito => {
-                          const textoActual = (datos[comida.clave] as string) || ''
-                          const nuevo = textoActual ? `${textoActual}\n${textoDescrito}` : textoDescrito
-                          actualizarCampo(comida.clave, nuevo)
-                        })
+                  return (
+                    <View
+                      key={`${comida.clave}_${fecha}`}
+                      onLayout={e => {
+                        const y = e.nativeEvent.layout.y
+                        cardLayoutsRef.current[comida.clave] = y
+                        if (comidaAEnfocar?.clave === comida.clave) {
+                          scrollViewRef.current?.scrollTo({ y: Math.max(0, y - 20), animated: true })
+                        }
                       }}
-                    />
-                  </View>
-                )
-              })}
+                    >
+                      <ComidaCard
+                        comida={comida}
+                        valor={valor}
+                        valorAnterior={valorAnterior}
+                        fuera={fuera}
+                        analizando={estaAnalizando}
+                        esActual={comidaActual === comida.clave}
+                        debeEnfocar={debeEnfocar}
+                        onActualizarTexto={txt => actualizarCampo(comida.clave, txt)}
+                        onToggleFuera={() => actualizarCampo(comida.claveFuera, !fuera)}
+                        onTomarFoto={() => {
+                          tomarFotoOSeleccionar(comida.clave, textoDescrito => {
+                            const textoActual = (datosDia[comida.clave] as string) || ''
+                            const nuevo = textoActual ? `${textoActual}\n${textoDescrito}` : textoDescrito
+                            actualizarCampo(comida.clave, nuevo)
+                          })
+                        }}
+                      />
+                    </View>
+                  )
+                })}
 
-              <AguaCard
-                key={`agua_${fecha}`}
-                valor={(datos.agua as string) || ''}
-                onCambiar={val => actualizarCampo('agua', val)}
-              />
+                <AguaCard
+                  key={`agua_${fecha}`}
+                  valor={(datosDia.agua as string) || ''}
+                  onCambiar={val => actualizarCampo('agua', val)}
+                />
 
-              <EjercicioCard
-                key={`ejercicio_${fecha}`}
-                ejercicio={(datos.ejercicio as string) || ''}
-                onCambiarEjercicio={val => actualizarCampo('ejercicio', val)}
-                onFocusInput={handleFocusEjercicio}
-              />
+                <EjercicioCard
+                  key={`ejercicio_${fecha}`}
+                  ejercicio={(datosDia.ejercicio as string) || ''}
+                  onCambiarEjercicio={val => actualizarCampo('ejercicio', val)}
+                  onFocusInput={handleFocusEjercicio}
+                />
 
-              <TouchableOpacity
-                style={[styles.saveBtn, guardando && styles.saveBtnDisabled]}
-                onPress={guardar}
-                disabled={guardando}
-                activeOpacity={0.8}
-              >
-                {guardando ? (
-                  <View style={styles.saveBtnContent}>
-                    <ActivityIndicator color={theme.colors.white} size="small" />
-                    <Text style={styles.saveBtnText}>Guardando cambios...</Text>
-                  </View>
-                ) : estadoGuardado === 'guardado' ? (
-                  <View style={styles.saveBtnContent}>
-                    <FontAwesome name="check-circle" size={16} color={theme.colors.white} />
-                    <Text style={styles.saveBtnText}>Cambios guardados</Text>
-                  </View>
-                ) : (
-                  <View style={styles.saveBtnContent}>
-                    <FontAwesome name="floppy-o" size={16} color={theme.colors.white} />
-                    <Text style={styles.saveBtnText}>Guardar cambios</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.saveBtn, guardando && styles.saveBtnDisabled]}
+                  onPress={guardar}
+                  disabled={guardando}
+                  activeOpacity={0.8}
+                >
+                  {guardando ? (
+                    <View style={styles.saveBtnContent}>
+                      <ActivityIndicator color={theme.colors.white} size="small" />
+                      <Text style={styles.saveBtnText}>Guardando cambios...</Text>
+                    </View>
+                  ) : estadoGuardado === 'guardado' ? (
+                    <View style={styles.saveBtnContent}>
+                      <FontAwesome name="check-circle" size={16} color={theme.colors.white} />
+                      <Text style={styles.saveBtnText}>Cambios guardados</Text>
+                    </View>
+                  ) : (
+                    <View style={styles.saveBtnContent}>
+                      <FontAwesome name="floppy-o" size={16} color={theme.colors.white} />
+                      <Text style={styles.saveBtnText}>Guardar cambios</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
 
-              <Text style={[styles.autoSaveNotice, { color: colors.textMuted }]}>
-                Tus datos se guardan automáticamente al escribir o cambiar de día.
-              </Text>
-            </Animated.View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      )}
+                <Text style={[styles.autoSaveNotice, { color: colors.textMuted }]}>
+                  Tus datos se guardan automáticamente al escribir o cambiar de día.
+                </Text>
+              </>
+            )}
+          </Animated.View>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* Selector de Fecha Rápido (Modal Calendario) */}
       <CalendarModal
