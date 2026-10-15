@@ -59,7 +59,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Configurar Java 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: 17
@@ -77,17 +77,12 @@ jobs:
         run: pnpm exec expo prebuild --platform android --clean
 
       - name: Compilar APK con Gradle
-        env:
-          GRADLE_OPTS: "-Dorg.gradle.jvmargs='-Xmx4096m -XX:MaxMetaspaceSize=1024m -XX:+UseParallelGC' -Dorg.gradle.workers.max=2"
         run: |
           cd android
           sed -i 's/org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m -XX:+UseParallelGC/' gradle.properties || true
           sed -i 's/reactNativeArchitectures=.*/reactNativeArchitectures=arm64-v8a,armeabi-v7a/' gradle.properties || true
-          echo "org.gradle.caching=true" >> gradle.properties
-          echo "org.gradle.vfs.watch=false" >> gradle.properties
-          echo "org.gradle.parallel=true" >> gradle.properties
           chmod +x gradlew
-          ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a,armeabi-v7a --no-daemon --stacktrace
+          ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a,armeabi-v7a --max-workers=2 --no-daemon --stacktrace
 
       - name: Preparar Keystore de Firma
         id: keystore
