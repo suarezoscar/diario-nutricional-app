@@ -17,6 +17,7 @@ import { FontAwesome } from '@expo/vector-icons'
 import { Header } from '../common/Header'
 import { DateBar } from '../common/DateBar'
 import { CalendarModal } from '../common/CalendarModal'
+import { FloatingSaveIndicator } from '../common/FloatingSaveIndicator'
 import { ComidaCard } from './ComidaCard'
 import { AguaCard } from './AguaCard'
 import { EjercicioCard } from './EjercicioCard'
@@ -185,18 +186,18 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
       prevFechaRef.current = fecha
 
       fadeAnim.setValue(0.35)
-      slideAnim.setValue(dir * 24)
+      slideAnim.setValue(dir * 18)
 
       const anim = Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
-          duration: 220,
+          duration: 180,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
         Animated.timing(slideAnim, {
           toValue: 0,
-          duration: 220,
+          duration: 180,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
@@ -293,11 +294,11 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
       <DateBar
         fecha={fecha}
         cargando={estaCargandoDia}
-        estadoGuardado={estadoGuardado}
         onCambiarDia={cambiarDia}
         onIrAHoy={irAHoy}
         onAbrirCalendario={handleAbrirCalendario}
       />
+      <FloatingSaveIndicator estado={estadoGuardado} topOffset={120} />
 
       <KeyboardAvoidingView
         style={styles.keyboardAvoid}

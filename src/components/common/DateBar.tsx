@@ -1,5 +1,5 @@
 import React from 'react'
-import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import { FontAwesome } from '@expo/vector-icons'
 import { useTheme } from '../../context/ThemeContext'
 import { theme } from '../../utils/theme'
@@ -18,7 +18,7 @@ interface DateBarProps {
 export const DateBar: React.FC<DateBarProps> = React.memo(({
   fecha,
   cargando: _cargando,
-  estadoGuardado,
+  estadoGuardado: _estadoGuardado,
   onCambiarDia,
   onIrAHoy,
   onAbrirCalendario,
@@ -102,21 +102,6 @@ export const DateBar: React.FC<DateBarProps> = React.memo(({
               <FontAwesome name="history" size={10} color={colors.primary} style={styles.historyIcon} />
               <Text style={[styles.dayChipText, { color: colors.primary }]}>Ir a Hoy</Text>
             </TouchableOpacity>
-          )}
-
-          {/* Indicador de estado de guardado posicionado de forma absoluta para no desplazar el chip central */}
-          {estadoGuardado === 'guardando' && (
-            <View style={styles.statusAbsolute}>
-              <ActivityIndicator size="small" color={colors.primary} style={styles.miniSpinner} />
-              <Text style={[styles.statusText, { color: colors.textMuted }]}>Guardando...</Text>
-            </View>
-          )}
-
-          {estadoGuardado === 'guardado' && (
-            <View style={styles.statusAbsolute}>
-              <FontAwesome name="check" size={10} color={colors.primary} style={styles.checkIcon} />
-              <Text style={[styles.statusSuccessText, { color: colors.primary }]}>Guardado</Text>
-            </View>
           )}
         </View>
       </View>
@@ -203,27 +188,6 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   dayChipText: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  statusAbsolute: {
-    position: 'absolute',
-    right: 4,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  miniSpinner: {
-    transform: [{ scale: 0.65 }],
-  },
-  statusText: {
-    fontSize: 11,
-    fontStyle: 'italic',
-  },
-  checkIcon: {
-    marginRight: 2,
-  },
-  statusSuccessText: {
     fontSize: 11,
     fontWeight: '600',
   },

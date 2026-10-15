@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react'
-import { View, StyleSheet } from 'react-native'
+import React, { useState, useCallback, useRef } from 'react'
+import { View, StyleSheet, Animated, Easing } from 'react-native'
 import { Header } from './common/Header'
 import { BottomNav } from './navigation/BottomNav'
 import { DiarioView } from './diario/DiarioView'
@@ -15,6 +15,13 @@ import { configurarNotificaciones, sincronizarNotificaciones } from '../services
 import { iniciarEscuchadoresSync } from '../services/syncService'
 import type { TabPrincipal, UsuarioAutenticado } from '../types'
 
+const TAB_INDEX: Record<TabPrincipal, number> = {
+  diario: 0,
+  historico: 1,
+  peso: 2,
+  ajustes: 3,
+}
+
 interface MainScreenProps {
   usuario: UsuarioAutenticado
   onLogout: () => void
@@ -27,6 +34,37 @@ export const MainScreen: React.FC<MainScreenProps> = ({
   onVerificarActualizacion,
 }) => {
   const [tabActiva, setTabActiva] = useState<TabPrincipal>('diario')
+  const prevTabRef = useRef<TabPrincipal>('diario')
+  const tabFadeAnim = useRef(new Animated.Value(1)).current
+  const tabSlideAnim = useRef(new Animated.Value(0)).current
+
+  const cambiarTabConAnimacion = useCallback((nuevaTab: TabPrincipal) => {
+    if (nuevaTab === prevTabRef.current) return
+    const prevIdx = TAB_INDEX[prevTabRef.current]
+    const nextIdx = TAB_INDEX[nuevaTab]
+    const dir = nextIdx > prevIdx ? 1 : -1
+    prevTabRef.current = nuevaTab
+
+    tabFadeAnim.setValue(0.3)
+    tabSlideAnim.setValue(dir * 16)
+    setTabActiva(nuevaTab)
+
+    Animated.parallel([
+      Animated.timing(tabFadeAnim, {
+        toValue: 1,
+        duration: 180,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(tabSlideAnim, {
+        toValue: 0,
+        duration: 180,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start()
+  }, [tabFadeAnim, tabSlideAnim])
+
   const [fechaSeleccionada, setFechaSeleccionada] = useState<string | undefined>(undefined)
   const [accionWidget, setAccionWidget] = useState<
     { clave: string; accion: 'foto' | 'texto'; timestamp: number } | undefined
@@ -45,12 +83,12 @@ export const MainScreen: React.FC<MainScreenProps> = ({
       // diarionutricional://hoy
       if (parsed.hostname === 'hoy' || parsed.path === 'hoy') {
         setFechaSeleccionada(hoy())
-        setTabActiva('diario')
+        cambiarTabConAnimacion('diario')
       }
       // diarionutricional://comida?clave=...&accion=...
       else if (parsed.hostname === 'comida' || parsed.path === 'comida') {
         setFechaSeleccionada(hoy())
-        setTabActiva('diario')
+        cambiarTabConAnimacion('diario')
         const clave = (parsed.queryParams?.clave as string) || 'comida'
         const accion = (parsed.queryParams?.accion as 'foto' | 'texto') || 'texto'
         setAccionWidget({ clave, accion, timestamp: Date.now() })
@@ -94,8 +132,8 @@ export const MainScreen: React.FC<MainScreenProps> = ({
 
   const irADiaEnDiario = useCallback((fecha: string) => {
     setFechaSeleccionada(fecha)
-    setTabActiva('diario')
-  }, [])
+    cambiarTabConAnimacion('diario')
+  }, [cambiarTabConAnimacion])
 
   const handleLimpiarFecha = useCallback(() => {
     setFechaSeleccionada(undefined)
@@ -111,7 +149,15 @@ export const MainScreen: React.FC<MainScreenProps> = ({
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={styles.content}>
+      <Animated.View
+        style={[
+          styles.content,
+          {
+            opacity: tabFadeAnim,
+            transform: [{ translateX: tabSlideAnim }],
+          },
+        ]}
+      >
         {tabActiva === 'diario' && (
           <DiarioView
             usuario={usuario}
@@ -169,9 +215,9 @@ export const MainScreen: React.FC<MainScreenProps> = ({
             />
           </View>
         )}
-      </View>
+      </Animated.View>
 
-      <BottomNav tabActiva={tabActiva} onCambiarTab={setTabActiva} />
+      <BottomNav tabActiva={tabActiva} onCambiarTab={cambiarTabConAnimacion} />
     </View>
   )
 }
