@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react'
-import { View, Text, StyleSheet } from 'react-native'
+import React from 'react'
+import { View, Text } from 'react-native'
 import Svg, {
   Defs,
   LinearGradient,
@@ -11,87 +11,32 @@ import Svg, {
   Text as SvgText,
 } from 'react-native-svg'
 import { useTheme } from '../../context/ThemeContext'
-import { theme } from '../../utils/theme'
 import type { PuntoPeso } from '../../types'
+import { styles } from './WeightChart.styles'
+import {
+  useWeightChartGeometry,
+  CHART_W,
+  CHART_H,
+  PAD_L,
+  PAD_R,
+} from './hooks/useWeightChartGeometry'
 
-interface WeightChartProps {
+export interface WeightChartProps {
   data: PuntoPeso[]
 }
 
-const W = 340
-const H = 170
-const PAD_L = 38
-const PAD_R = 14
-const PAD_T = 16
-const PAD_B = 26
-const plotW = W - PAD_L - PAD_R
-const plotH = H - PAD_T - PAD_B
-
+/**
+ * Gráfica vectorial SVG de evolución temporal del peso corporal.
+ * Presenta curvas fluidas, gradientes de relleno y rejillas de referencia métrica.
+ *
+ * @param props - Historial cronológico de registros de peso.
+ * @returns Componente SVG escalable con la gráfica de evolución o mensaje de estado vacío.
+ */
 export const WeightChart: React.FC<WeightChartProps> = React.memo(({ data }) => {
   const { colors } = useTheme()
+  const geometry = useWeightChartGeometry(data)
 
-  const chartGeometry = useMemo(() => {
-    if (!data || data.length === 0) return null
-
-    const values = data.map(d => d.peso)
-    const minV = Math.min(...values)
-    const maxV = Math.max(...values)
-    const range = maxV - minV || 1
-    const yMin = minV - range * 0.2
-    const yMax = maxV + range * 0.2
-    const ySpan = yMax - yMin
-
-    const scaleX = (i: number) =>
-      PAD_L + (i / Math.max(data.length - 1, 1)) * plotW
-    const scaleY = (v: number) =>
-      PAD_T + (1 - (v - yMin) / ySpan) * plotH
-
-    // Rejilla de 4 líneas
-    const gridLines = Array.from({ length: 4 }, (_, i) => {
-      const v = yMin + (ySpan / 3) * i
-      return { y: scaleY(v), label: v.toFixed(1) }
-    })
-
-    // Coordenadas
-    const points = data.map((d, i) => `${scaleX(i)},${scaleY(d.peso)}`).join(' ')
-    const fillPoints = [
-      `${PAD_L},${scaleY(yMin)}`,
-      ...data.map((d, i) => `${scaleX(i)},${scaleY(d.peso)}`),
-      `${scaleX(data.length - 1)},${scaleY(yMin)}`,
-    ].join(' ')
-
-    // Círculos de puntos
-    const circles = data.map((d, i) => ({
-      fecha: d.fecha,
-      cx: scaleX(i),
-      cy: scaleY(d.peso),
-    }))
-
-    // Etiquetas X
-    const step = Math.max(1, Math.ceil(data.length / 5))
-    const xLabels = data
-      .map((d, idx) => ({ d, idx }))
-      .filter(({ idx }) => idx % step === 0 || idx === data.length - 1)
-      .map(({ d, idx }) => {
-        const partes = d.fecha.split('-')
-        const fechaCorta = `${partes[2]}/${partes[1]}`
-        return {
-          fecha: d.fecha,
-          x: scaleX(idx),
-          fechaCorta,
-        }
-      })
-
-    return {
-      gridLines,
-      points,
-      fillPoints,
-      circles,
-      xLabels,
-    }
-  }, [data])
-
-  if (!chartGeometry) {
+  if (!geometry) {
     return (
       <View style={styles.emptyContainer}>
         <Text style={[styles.emptyText, { color: colors.textMuted }]}>
@@ -101,11 +46,11 @@ export const WeightChart: React.FC<WeightChartProps> = React.memo(({ data }) => 
     )
   }
 
-  const { gridLines, points, fillPoints, circles, xLabels } = chartGeometry
+  const { gridLines, points, fillPoints, circles, xLabels } = geometry
 
   return (
     <View style={[styles.container, { backgroundColor: colors.card }]}>
-      <Svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H}>
+      <Svg viewBox={`0 0 ${CHART_W} ${CHART_H}`} width="100%" height={CHART_H}>
         <Defs>
           <LinearGradient id="pesoGrad" x1="0" y1="0" x2="0" y2="1">
             <Stop offset="0%" stopColor={colors.primaryLight} stopOpacity="0.35" />
@@ -113,13 +58,12 @@ export const WeightChart: React.FC<WeightChartProps> = React.memo(({ data }) => 
           </LinearGradient>
         </Defs>
 
-        {/* Líneas horizontales de rejilla */}
         {gridLines.map(g => (
           <React.Fragment key={g.label}>
             <Line
               x1={PAD_L}
               y1={g.y}
-              x2={W - PAD_R}
+              x2={CHART_W - PAD_R}
               y2={g.y}
               stroke={colors.border}
               strokeDasharray="4 4"
@@ -137,7 +81,6 @@ export const WeightChart: React.FC<WeightChartProps> = React.memo(({ data }) => 
           </React.Fragment>
         ))}
 
-        {/* Área sombreada y línea */}
         <Polygon points={fillPoints} fill="url(#pesoGrad)" />
         <Polyline
           points={points}
@@ -148,7 +91,6 @@ export const WeightChart: React.FC<WeightChartProps> = React.memo(({ data }) => 
           strokeLinejoin="round"
         />
 
-        {/* Puntos de datos */}
         {circles.map(c => (
           <Circle
             key={c.fecha}
@@ -161,12 +103,11 @@ export const WeightChart: React.FC<WeightChartProps> = React.memo(({ data }) => 
           />
         ))}
 
-        {/* Etiquetas fecha eje X */}
         {xLabels.map(l => (
           <SvgText
             key={l.fecha}
             x={l.x}
-            y={H - 4}
+            y={CHART_H - 4}
             fontSize="10"
             fill={colors.textMuted}
             textAnchor="middle"
@@ -177,20 +118,4 @@ export const WeightChart: React.FC<WeightChartProps> = React.memo(({ data }) => 
       </Svg>
     </View>
   )
-})
-
-const styles = StyleSheet.create({
-  container: {
-    borderRadius: theme.radius.md,
-    paddingVertical: theme.spacing.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyContainer: {
-    padding: theme.spacing.xl,
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontSize: 13,
-  },
 })

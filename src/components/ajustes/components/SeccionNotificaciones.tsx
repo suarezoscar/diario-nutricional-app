@@ -5,6 +5,7 @@ import { Card } from '../../common/Card'
 import { useTheme } from '../../../context/ThemeContext'
 import type { NotificacionesConfig } from '../../../services/configService'
 import { styles } from '../AjustesView.styles'
+import { NotifOpcionItem } from './NotifOpcionItem'
 
 export interface SeccionNotificacionesProps {
   notificaciones: NotificacionesConfig
@@ -16,6 +17,9 @@ export interface SeccionNotificacionesProps {
 
 /**
  * Sección para la configuración y prueba de recordatorios de comidas y fin de jornada.
+ *
+ * @param props - Configuración de notificaciones y manejadores para alternar avisos y horas.
+ * @returns Tarjeta de ajustes con opciones de avisos y stepper de horario.
  */
 export const SeccionNotificaciones: React.FC<SeccionNotificacionesProps> = React.memo(({
   notificaciones,
@@ -57,87 +61,22 @@ export const SeccionNotificaciones: React.FC<SeccionNotificacionesProps> = React
         Programa recordatorios locales en tu móvil para registrar comidas a tiempo o al finalizar tu día.
       </Text>
 
-      {/* Opción 1: Recordatorio individual */}
-      <View style={[styles.notifOptionItem, { borderBottomColor: colors.border }]}>
-        <View style={styles.notifOptionInfo}>
-          <Text style={[styles.notifOptionTitle, { color: colors.text }]}>Avisar al terminar cada comida</Text>
-          <Text style={[styles.notifOptionDesc, { color: colors.textMuted }]}>
-            Te avisa al finalizar el horario si aún no la has anotado.
-          </Text>
-        </View>
+      <NotifOpcionItem
+        titulo="Avisar al terminar cada comida"
+        descripcion="Te avisa al finalizar el horario si aún no la has anotado."
+        activo={notificaciones.recordatorioComidas}
+        onToggle={onToggleComidas}
+        accessibilityLabel="Alternar recordatorio de fin de comida"
+      />
 
-        <TouchableOpacity
-          style={[
-            styles.notifSwitchBtn,
-            { borderColor: colors.border, backgroundColor: colors.background },
-            notificaciones.recordatorioComidas && {
-              borderColor: colors.primary,
-              backgroundColor: colors.primarySoft,
-            },
-          ]}
-          onPress={onToggleComidas}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel="Alternar recordatorio de fin de comida"
-        >
-          <FontAwesome
-            name={notificaciones.recordatorioComidas ? 'check-circle' : 'circle-o'}
-            size={14}
-            color={notificaciones.recordatorioComidas ? colors.primary : colors.textMuted}
-          />
-          <Text
-            style={[
-              styles.notifSwitchText,
-              { color: colors.textMuted },
-              notificaciones.recordatorioComidas && { color: colors.primary, fontWeight: '700' },
-            ]}
-          >
-            {notificaciones.recordatorioComidas ? 'Activo' : 'Inactivo'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <NotifOpcionItem
+        titulo="Resumen al final de la jornada"
+        descripcion="Aviso con la lista de comidas pendientes hoy."
+        activo={notificaciones.recordatorioFinJornada}
+        onToggle={onToggleFinJornada}
+        accessibilityLabel="Alternar recordatorio de fin de jornada"
+      />
 
-      {/* Opción 2: Resumen final de jornada */}
-      <View style={[styles.notifOptionItem, { borderBottomColor: colors.border }]}>
-        <View style={styles.notifOptionInfo}>
-          <Text style={[styles.notifOptionTitle, { color: colors.text }]}>Resumen al final de la jornada</Text>
-          <Text style={[styles.notifOptionDesc, { color: colors.textMuted }]}>
-            Aviso con la lista de comidas pendientes hoy.
-          </Text>
-        </View>
-
-        <TouchableOpacity
-          style={[
-            styles.notifSwitchBtn,
-            { borderColor: colors.border, backgroundColor: colors.background },
-            notificaciones.recordatorioFinJornada && {
-              borderColor: colors.primary,
-              backgroundColor: colors.primarySoft,
-            },
-          ]}
-          onPress={onToggleFinJornada}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel="Alternar recordatorio de fin de jornada"
-        >
-          <FontAwesome
-            name={notificaciones.recordatorioFinJornada ? 'check-circle' : 'circle-o'}
-            size={14}
-            color={notificaciones.recordatorioFinJornada ? colors.primary : colors.textMuted}
-          />
-          <Text
-            style={[
-              styles.notifSwitchText,
-              { color: colors.textMuted },
-              notificaciones.recordatorioFinJornada && { color: colors.primary, fontWeight: '700' },
-            ]}
-          >
-            {notificaciones.recordatorioFinJornada ? 'Activo' : 'Inactivo'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Selector de hora para resumen final */}
       {notificaciones.recordatorioFinJornada && (
         <View style={[styles.horaFinRow, { backgroundColor: colors.background, borderColor: colors.border }]}>
           <View style={styles.horaFinLabelWrap}>
@@ -171,7 +110,6 @@ export const SeccionNotificaciones: React.FC<SeccionNotificacionesProps> = React
         </View>
       )}
 
-      {/* Botón de prueba */}
       <TouchableOpacity
         style={[styles.testNotifBtn, { borderColor: colors.border, backgroundColor: colors.background }]}
         onPress={onProbarNotificacion}
