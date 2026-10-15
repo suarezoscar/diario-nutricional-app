@@ -216,3 +216,26 @@ export async function exportarPDFPorRango({
     })
   }
 }
+
+/**
+ * Genera el documento PDF y abre el servicio de impresión nativo del sistema operativo
+ * (Android Print Spooler / iOS AirPrint) para imprimir directamente en una impresora física o red.
+ *
+ * @param parametros - Objeto con `userId`, `nombre`, `desde` y `hasta`.
+ * @returns Promesa que resuelve una vez abierto el diálogo nativo de impresión.
+ */
+export async function imprimirPDFPorRango({
+  userId,
+  nombre,
+  desde,
+  hasta,
+}: ParametrosExportacion): Promise<void> {
+  const dias = generarListaDias(desde, hasta)
+  const registros = await cargarRango(userId, desde, hasta)
+
+  const html = construirHtmlReporte(nombre, desde, hasta, dias, registros)
+
+  await Print.printAsync({
+    html,
+  })
+}

@@ -12,7 +12,7 @@ import { FontAwesome } from '@expo/vector-icons'
 import { useTheme } from '../../context/ThemeContext'
 import { theme } from '../../utils/theme'
 import { hoy, desplazarDia, formatearFechaCorta, inicioYFinMesActual } from '../../utils/fechas'
-import { exportarPDFPorRango } from '../../services/pdfService'
+import { exportarPDFPorRango, imprimirPDFPorRango } from '../../services/pdfService'
 import { CalendarModal } from '../common/CalendarModal'
 
 interface ExportarPdfModalProps {
@@ -34,7 +34,7 @@ export const ExportarPdfModal: React.FC<ExportarPdfModalProps> = ({
   const fechaHoy = hoy()
   const [desde, setDesde] = useState(rangoInicial?.desde || desplazarDia(fechaHoy, -6))
   const [hasta, setHasta] = useState(rangoInicial?.hasta || fechaHoy)
-  const [generando, setGenerando] = useState(false)
+  const [generando, setGenerando] = useState<'imprimir' | 'compartir' | null>(null)
   const [showCalendar, setShowCalendar] = useState(false)
 
   const aplicarRangoRapido = (diasAtras: number) => {
@@ -55,7 +55,7 @@ export const ExportarPdfModal: React.FC<ExportarPdfModalProps> = ({
     return Math.round(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24)) + 1
   }
 
-  const handleExportar = async () => {
+  const handleAccion = async (accion: 'imprimir' | 'compartir') => {
     if (!desde || !hasta) {
       Alert.alert('Fechas requeridas', 'Por favor selecciona un rango de fechas.')
       return
@@ -66,20 +66,29 @@ export const ExportarPdfModal: React.FC<ExportarPdfModalProps> = ({
       return
     }
 
-    setGenerando(true)
+    setGenerando(accion)
     try {
-      await exportarPDFPorRango({
-        userId,
-        nombre: nombreUsuario,
-        desde,
-        hasta,
-      })
+      if (accion === 'imprimir') {
+        await imprimirPDFPorRango({
+          userId,
+          nombre: nombreUsuario,
+          desde,
+          hasta,
+        })
+      } else {
+        await exportarPDFPorRango({
+          userId,
+          nombre: nombreUsuario,
+          desde,
+          hasta,
+        })
+      }
       onClose()
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Error al generar el PDF'
-      Alert.alert('Error al exportar', msg)
+      const msg = err instanceof Error ? err.message : 'Error al procesar el PDF'
+      Alert.alert(accion === 'imprimir' ? 'Error al imprimir' : 'Error al exportar', msg)
     } finally {
-      setGenerando(false)
+      setGenerando(null)
     }
   }
 
@@ -157,21 +166,51 @@ export const ExportarPdfModal: React.FC<ExportarPdfModalProps> = ({
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.exportBtn, { backgroundColor: colors.primary }, generando && styles.exportBtnDisabled]}
-            onPress={handleExportar}
-            disabled={generando}
-            activeOpacity={0.8}
-          >
-            {generando ? (
-              <ActivityIndicator color="#ffffff" />
-            ) : (
-              <View style={styles.btnContent}>
-                <FontAwesome name="share-alt" size={16} color="#ffffff" style={styles.btnIcon} />
-                <Text style={styles.exportBtnText}>Generar y Compartir PDF</Text>
-              </View>
-            )}
-          </TouchableOpacity>
+          <View style={styles.actionsRow}>
+            <TouchableOpacity
+              style={[
+                styles.actionBtn,
+                styles.printBtn,
+                { backgroundColor: colors.primary },
+                generando !== null && styles.actionBtnDisabled,
+              ]}
+              onPress={() => handleAccion('imprimir')}
+              disabled={generando !== null}
+              activeOpacity={0.8}
+              accessibilityLabel="Imprimir reporte directamente"
+            >
+              {generando === 'imprimir' ? (
+                <ActivityIndicator color="#ffffff" size="small" />
+              ) : (
+                <View style={styles.btnContent}>
+                  <FontAwesome name="print" size={16} color="#ffffff" style={styles.btnIcon} />
+                  <Text style={styles.printBtnText}>Imprimir</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.actionBtn,
+                styles.shareBtn,
+                { backgroundColor: colors.primarySoft, borderColor: colors.primaryLight },
+                generando !== null && styles.actionBtnDisabled,
+              ]}
+              onPress={() => handleAccion('compartir')}
+              disabled={generando !== null}
+              activeOpacity={0.8}
+              accessibilityLabel="Compartir archivo PDF"
+            >
+              {generando === 'compartir' ? (
+                <ActivityIndicator color={colors.primary} size="small" />
+              ) : (
+                <View style={styles.btnContent}>
+                  <FontAwesome name="share-alt" size={16} color={colors.primary} style={styles.btnIcon} />
+                  <Text style={[styles.shareBtnText, { color: colors.primary }]}>Compartir</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -305,25 +344,45 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: theme.colors.primary,
   },
-  exportBtn: {
-    backgroundColor: theme.colors.primary,
+  actionsRow: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+  },
+  actionBtn: {
+    flex: 1,
     borderRadius: theme.radius.md,
     paddingVertical: theme.spacing.md,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  exportBtnDisabled: {
-    opacity: 0.7,
+  printBtn: {
+    elevation: 2,
+    shadowColor: theme.colors.primaryDark,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+  },
+  shareBtn: {
+    borderWidth: 1.5,
+  },
+  actionBtnDisabled: {
+    opacity: 0.6,
   },
   btnContent: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   btnIcon: {
-    marginRight: theme.spacing.sm,
+    marginRight: 6,
   },
-  exportBtnText: {
+  printBtnText: {
     color: theme.colors.white,
-    fontSize: 15,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  shareBtnText: {
+    fontSize: 14,
     fontWeight: '700',
   },
 })

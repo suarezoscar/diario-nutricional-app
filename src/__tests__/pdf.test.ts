@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { construirHtmlReporte } from '../services/pdfService'
+import {
+  construirHtmlReporte,
+  imprimirPDFPorRango,
+  exportarPDFPorRango,
+} from '../services/pdfService'
 import type { Registro } from '../types'
 
 describe('Motor de generación de reportes PDF (pdfService.ts)', () => {
@@ -96,5 +100,10 @@ describe('Motor de generación de reportes PDF (pdfService.ts)', () => {
 
     expect(html).toContain('Café con leche<br/>Tostada con aceite')
     expect(html).toContain('Calistenia<br/>Estiramientos')
+  })
+
+  it('exporta las funciones imprimirPDFPorRango y exportarPDFPorRango correctamente', () => {
+    expect(typeof imprimirPDFPorRango).toBe('function')
+    expect(typeof exportarPDFPorRango).toBe('function')
   })
 })
