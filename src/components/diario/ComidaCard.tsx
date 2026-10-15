@@ -1,22 +1,16 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  Animated,
-  StyleSheet,
-} from 'react-native'
-import { FontAwesome } from '@expo/vector-icons'
+import React from 'react'
+import { View, Text, TextInput } from 'react-native'
 import { Card } from '../common/Card'
 import { useTheme } from '../../context/ThemeContext'
-import { theme } from '../../utils/theme'
 import { MAX_CARACTERES_COMIDA } from '../../config/constants'
-import { usePulseAnim } from '../../hooks/usePulseAnim'
 import type { DefinicionComida } from '../../config/comidas'
 import type { Registro } from '../../types'
+import { styles } from './ComidaCard.styles'
+import { ComidaHeader } from './components/ComidaHeader'
+import { InputSkeletonIa } from './components/InputSkeletonIa'
+import { useComidaCard } from './hooks/useComidaCard'
 
-interface ComidaCardProps {
+export interface ComidaCardProps {
   comida: DefinicionComida
   valor: string
   valorAnterior?: string
@@ -31,39 +25,24 @@ interface ComidaCardProps {
   onTomarFoto?: () => void
 }
 
-const HIT_SLOP_8 = Object.freeze({ top: 8, bottom: 8, left: 8, right: 8 })
-
 /**
- * Skeleton animado que sustituye al TextInput mientras la IA
- * analiza la foto del plato seleccionado.
+ * Componente de tarjeta para registrar y editar una comida diaria (desayuno, almuerzo, etc.).
+ * Soporta entrada de texto, transcripción por IA fotográfica y copia rápida del día previo.
+ *
+ * @param props - Propiedades de visualización y callbacks para gestionar la comida.
+ * @returns Tarjeta contenedora de la comida con área de texto y acciones contextuales.
+ *
+ * @example
+ * ```tsx
+ * <ComidaCard
+ *   comida={comidaDef}
+ *   valor={textoPlato}
+ *   fuera={false}
+ *   analizando={false}
+ *   onActualizarCampo={actualizar}
+ * />
+ * ```
  */
-const InputSkeletonIa: React.FC = React.memo(() => {
-  const { colors } = useTheme()
-  const pulseAnim = usePulseAnim()
-
-  return (
-    <Animated.View
-      style={[
-        styles.skeletonContainer,
-        {
-          backgroundColor: colors.primarySoft,
-          borderColor: colors.primaryLight,
-          opacity: pulseAnim,
-        },
-      ]}
-    >
-      <View style={styles.skeletonHeader}>
-        <FontAwesome name="magic" size={13} color={colors.primary} />
-        <Text style={[styles.skeletonTitle, { color: colors.primary }]}>
-          Identificando plato con IA...
-        </Text>
-      </View>
-      <View style={[styles.skeletonLine, { backgroundColor: colors.border, width: '85%' }]} />
-      <View style={[styles.skeletonLine, { backgroundColor: colors.border, width: '55%' }]} />
-    </Animated.View>
-  )
-})
-
 export const ComidaCard: React.FC<ComidaCardProps> = React.memo(({
   comida,
   valor,
@@ -79,64 +58,27 @@ export const ComidaCard: React.FC<ComidaCardProps> = React.memo(({
   onTomarFoto,
 }) => {
   const { colors } = useTheme()
-  const [isFocused, setIsFocused] = useState(false)
-  const inputRef = useRef<TextInput>(null)
-
-  const handleFocus = useCallback(() => setIsFocused(true), [])
-  const handleBlur = useCallback(() => setIsFocused(false), [])
-
-  const handleTexto = useCallback(
-    (txt: string) => {
-      if (onActualizarCampo) {
-        onActualizarCampo(comida.clave, txt)
-      } else {
-        onActualizarTexto?.(txt)
-      }
-    },
-    [comida.clave, onActualizarCampo, onActualizarTexto],
-  )
-
-  const handleToggle = useCallback(() => {
-    if (onActualizarCampo) {
-      onActualizarCampo(comida.claveFuera, !fuera)
-    } else {
-      onToggleFuera?.()
-    }
-  }, [comida.claveFuera, fuera, onActualizarCampo, onToggleFuera])
-
-  const handleCopiarAyer = useCallback(() => {
-    if (valorAnterior) {
-      if (onActualizarCampo) {
-        onActualizarCampo(comida.clave, valorAnterior)
-      } else {
-        onActualizarTexto?.(valorAnterior)
-      }
-    }
-  }, [comida.clave, valorAnterior, onActualizarCampo, onActualizarTexto])
-
-  const handleFoto = useCallback(() => {
-    if (onTomarFotoComida) {
-      onTomarFotoComida(comida.clave)
-    } else {
-      onTomarFoto?.()
-    }
-  }, [comida.clave, onTomarFotoComida, onTomarFoto])
-
-  // Auto-enfoque inmediato y despliegue del teclado cuando se solicita (por ejemplo, desde el Widget)
-  useEffect(() => {
-    if (debeEnfocar && !analizando) {
-      const timer1 = setTimeout(() => {
-        inputRef.current?.focus()
-      }, 150)
-      const timer2 = setTimeout(() => {
-        inputRef.current?.focus()
-      }, 400)
-      return () => {
-        clearTimeout(timer1)
-        clearTimeout(timer2)
-      }
-    }
-  }, [debeEnfocar, analizando])
+  const {
+    isFocused,
+    inputRef,
+    handleFocus,
+    handleBlur,
+    handleTexto,
+    handleToggle,
+    handleCopiarAyer,
+    handleFoto,
+  } = useComidaCard({
+    comida,
+    valorAnterior,
+    fuera,
+    analizando,
+    debeEnfocar,
+    onActualizarCampo,
+    onTomarFotoComida,
+    onActualizarTexto,
+    onToggleFuera,
+    onTomarFoto,
+  })
 
   return (
     <Card
@@ -152,75 +94,16 @@ export const ComidaCard: React.FC<ComidaCardProps> = React.memo(({
           : undefined
       }
     >
-      <View style={styles.header}>
-        <View style={styles.titleWrap}>
-          <FontAwesome
-            name={comida.icono as keyof typeof FontAwesome.glyphMap}
-            size={16}
-            color={colors.primary}
-            style={styles.icon}
-          />
-          <Text style={[styles.title, { color: colors.text }]}>{comida.titulo}</Text>
-          {esActual && (
-            <View style={[styles.actualBadge, { backgroundColor: colors.primarySoft }]}>
-              <FontAwesome name="clock-o" size={10} color={colors.primary} />
-              <Text style={[styles.actualBadgeText, { color: colors.primary }]}>En curso</Text>
-            </View>
-          )}
-        </View>
-
-        <View style={styles.actions}>
-          {!!valorAnterior && valorAnterior.trim().length > 0 && (
-            <TouchableOpacity
-              style={[
-                styles.ayerBtn,
-                { backgroundColor: colors.primarySoft, borderColor: colors.primaryLight },
-              ]}
-              onPress={handleCopiarAyer}
-              activeOpacity={0.7}
-              accessibilityLabel="Copiar comida del día anterior"
-            >
-              <FontAwesome name="history" size={11} color={colors.primary} style={styles.ayerIcon} />
-              <Text style={[styles.ayerBtnText, { color: colors.primary }]}>Ayer</Text>
-            </TouchableOpacity>
-          )}
-
-          <TouchableOpacity
-            style={[
-              styles.fueraBtn,
-              { backgroundColor: colors.background, borderColor: colors.border },
-              fuera && { backgroundColor: colors.primarySoft, borderColor: colors.primaryLight },
-            ]}
-            onPress={handleToggle}
-            activeOpacity={0.7}
-          >
-            <Text
-              style={[
-                styles.fueraBtnText,
-                { color: colors.textMuted },
-                fuera && { color: colors.primary, fontWeight: '700' },
-              ]}
-            >
-              {fuera ? '✓ Fuera' : 'Fuera'}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.camBtn}
-            onPress={handleFoto}
-            disabled={analizando}
-            hitSlop={HIT_SLOP_8}
-            activeOpacity={0.7}
-            accessibilityLabel="Fotografiar plato para IA"
-          >
-            <FontAwesome
-              name="camera"
-              size={16}
-              color={analizando ? colors.textMuted : colors.primary}
-            />
-          </TouchableOpacity>
-        </View>
-      </View>
+      <ComidaHeader
+        comida={comida}
+        esActual={esActual}
+        valorAnterior={valorAnterior}
+        fuera={fuera}
+        analizando={analizando}
+        onCopiarAyer={handleCopiarAyer}
+        onToggleFuera={handleToggle}
+        onTomarFoto={handleFoto}
+      />
 
       {analizando ? (
         <InputSkeletonIa />
@@ -257,116 +140,4 @@ export const ComidaCard: React.FC<ComidaCardProps> = React.memo(({
       </View>
     </Card>
   )
-})
-
-const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: theme.spacing.sm,
-  },
-  titleWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  icon: {
-    marginRight: theme.spacing.sm,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  actions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-  },
-  ayerBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: 3,
-    borderRadius: theme.radius.sm,
-    borderWidth: 1,
-  },
-  ayerIcon: {
-    marginRight: 4,
-  },
-  ayerBtnText: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  fueraBtn: {
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: 3,
-    borderRadius: theme.radius.sm,
-    borderWidth: 1,
-  },
-  fueraBtnText: {
-    fontSize: 12,
-  },
-  camBtn: {
-    padding: theme.spacing.xs,
-    marginLeft: theme.spacing.xs,
-  },
-  input: {
-    borderWidth: 1.5,
-    borderRadius: theme.radius.sm,
-    padding: theme.spacing.sm,
-    fontSize: 14,
-    minHeight: 64,
-    textAlignVertical: 'top',
-  },
-  skeletonContainer: {
-    minHeight: 64,
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
-    borderRadius: theme.radius.sm,
-    padding: theme.spacing.sm,
-    justifyContent: 'center',
-    gap: 8,
-  },
-  skeletonHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 2,
-  },
-  skeletonTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  skeletonLine: {
-    height: 10,
-    borderRadius: 4,
-  },
-  footer: {
-    alignItems: 'flex-end',
-    marginTop: 4,
-  },
-  countText: {
-    fontSize: 11,
-  },
-  cardActual: {
-    borderWidth: 1.5,
-    elevation: 3,
-    shadowColor: theme.colors.primaryDark,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 5,
-  },
-  actualBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: 2,
-    borderRadius: theme.radius.full,
-    marginLeft: theme.spacing.xs,
-  },
-  actualBadgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-  },
 })

@@ -1,39 +1,21 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
-import {
-  View,
-  ScrollView,
-  TouchableOpacity,
-  Text,
-  ActivityIndicator,
-  Animated,
-  KeyboardAvoidingView,
-  Keyboard,
-  Platform,
-  PanResponder,
-  Easing,
-  StyleSheet,
-} from 'react-native'
-import { FontAwesome } from '@expo/vector-icons'
+import React, { useCallback } from 'react'
+import { View, ScrollView, Animated, KeyboardAvoidingView, Platform } from 'react-native'
 import { Header } from '../common/Header'
 import { DateBar } from '../common/DateBar'
-import { CalendarModal } from '../common/CalendarModal'
 import { FloatingSaveIndicator } from '../common/FloatingSaveIndicator'
-import { ComidaCard } from './ComidaCard'
 import { AguaCard } from './AguaCard'
 import { EjercicioCard } from './EjercicioCard'
 import { DiarioSkeleton } from './DiarioSkeleton'
-import { ExportarPdfModal } from './ExportarPdfModal'
-import { BulkUploadModal } from './BulkUploadModal'
-import { useDiario } from '../../hooks/useDiario'
-import { useFotoPlato } from '../../hooks/useFotoPlato'
-import { COMIDAS } from '../../config/comidas'
-import { hoy, obtenerComidaActual } from '../../utils/fechas'
-import { cargarConfiguracion, type HorariosConfig } from '../../services/configService'
+import { BotonGuardarDiario } from './components/BotonGuardarDiario'
+import { ListaComidasDiario } from './components/ListaComidasDiario'
+import { DiarioModales } from './components/DiarioModales'
+import { useDiarioView } from './hooks/useDiarioView'
 import { useTheme } from '../../context/ThemeContext'
 import { theme } from '../../utils/theme'
-import type { UsuarioAutenticado, Registro } from '../../types'
+import type { UsuarioAutenticado } from '../../types'
+import { styles } from './DiarioView.styles'
 
-interface DiarioViewProps {
+export interface DiarioViewProps {
   usuario: UsuarioAutenticado
   fechaSeleccionada?: string
   onLimpiarFechaSeleccionada?: () => void
@@ -42,6 +24,14 @@ interface DiarioViewProps {
   onVerificarActualizacion?: () => void
 }
 
+/**
+ * Pantalla principal del Diario Nutricional.
+ * Presenta las comidas del día, consumo de agua, registro de ejercicio
+ * y coordina las acciones de exportación y análisis por IA.
+ *
+ * @param props - Propiedades de navegación, usuario y sincronización de fecha.
+ * @returns Vista de registro nutricional con animaciones de transición fluidas.
+ */
 export const DiarioView: React.FC<DiarioViewProps> = ({
   usuario,
   fechaSeleccionada,
@@ -51,236 +41,21 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
   onVerificarActualizacion,
 }) => {
   const { colors } = useTheme()
-  const [showPdfModal, setShowPdfModal] = useState(false)
-  const [showBulkModal, setShowBulkModal] = useState(false)
-  const [showCalendarModal, setShowCalendarModal] = useState(false)
-  const [keyboardHeight, setKeyboardHeight] = useState(0)
+  const v = useDiarioView({ usuario, fechaSeleccionada, onLimpiarFechaSeleccionada, accionWidget })
 
-  const scrollViewRef = useRef<ScrollView>(null)
-
-  const {
-    fecha,
-    datos,
-    datosAnterior,
-    cargando,
-    guardando,
-    estadoGuardado,
-    cambiarDia,
-    irAHoy,
-    establecerFecha,
-    actualizarCampo,
-    guardar,
-  } = useDiario(usuario.uid, fechaSeleccionada)
-
-  // Solo mostrar el Skeleton en la primera carga en frío de la aplicación
-  const haCargadoInicialRef = useRef(false)
-  if (datos.fecha) {
-    haCargadoInicialRef.current = true
-  }
-  const esCargaInicial = !haCargadoInicialRef.current && (cargando || !datos.fecha)
-
-  const datosDiaRef = useRef<Partial<Registro>>({})
-  if (datos.fecha === fecha) {
-    datosDiaRef.current = datos
-  }
-
-  // Datos normalizados estrictamente para la fecha visualizada para evitar cualquier fuga entre días
-  const datosDia = datos.fecha === fecha ? datos : (haCargadoInicialRef.current ? datosDiaRef.current : {})
-  const datosAntDia = datos.fecha === fecha ? datosAnterior : {}
-
-  const { comidaAnalizando, tomarFotoOSeleccionar } = useFotoPlato()
-
-  const fadeAnim = useRef(new Animated.Value(1)).current
-  const slideAnim = useRef(new Animated.Value(0)).current
-  const ultimaFechaAnimadaRef = useRef(fecha)
-  const [horariosUsuario, setHorariosUsuario] = useState<HorariosConfig | undefined>(undefined)
-
-  useEffect(() => {
-    async function leerConfig() {
-      const cfg = await cargarConfiguracion()
-      setHorariosUsuario(cfg.horarios)
-    }
-    void leerConfig()
-  }, [])
-
-  const comidaActual = fecha === hoy() ? obtenerComidaActual(horariosUsuario) : null
-
-  // Manejo de acciones enviadas desde el Widget del escritorio de Android
-  const ultimaAccionRef = useRef<number>(0)
-  const cardLayoutsRef = useRef<Record<string, number>>({})
-  const [comidaAEnfocar, setComidaAEnfocar] = useState<{ clave: string; timestamp: number } | null>(null)
-
-  useEffect(() => {
-    if (accionWidget && accionWidget.timestamp !== ultimaAccionRef.current) {
-      ultimaAccionRef.current = accionWidget.timestamp
-      if (accionWidget.accion === 'foto') {
-        setTimeout(() => {
-          tomarFotoOSeleccionar(accionWidget.clave, textoDescrito => {
-            const textoActual = (datosDiaRef.current[accionWidget.clave] as string) || ''
-            const nuevo = textoActual ? `${textoActual}\n${textoDescrito}` : textoDescrito
-            actualizarCampo(accionWidget.clave, nuevo)
-          })
-        }, 350)
-      } else if (accionWidget.accion === 'texto') {
-        setComidaAEnfocar({ clave: accionWidget.clave, timestamp: accionWidget.timestamp })
-        const posY = cardLayoutsRef.current[accionWidget.clave]
-        if (posY !== undefined) {
-          scrollViewRef.current?.scrollTo({ y: Math.max(0, posY - 20), animated: true })
-        }
-      }
-    }
-  }, [accionWidget, tomarFotoOSeleccionar, actualizarCampo])
-
-  useEffect(() => {
-    if (comidaAEnfocar && !cargando) {
-      const posY = cardLayoutsRef.current[comidaAEnfocar.clave]
-      if (posY !== undefined) {
-        scrollViewRef.current?.scrollTo({ y: Math.max(0, posY - 20), animated: true })
-      }
-    }
-  }, [comidaAEnfocar, cargando])
-
-  // Manejo de eventos de teclado para ajustar dinámicamente el scroll y evitar solapamientos
-  useEffect(() => {
-    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow'
-    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide'
-
-    const showSub = Keyboard.addListener(showEvent, (e) => {
-      setKeyboardHeight(e.endCoordinates.height)
-    })
-    const hideSub = Keyboard.addListener(hideEvent, () => {
-      setKeyboardHeight(0)
-    })
-
-    return () => {
-      showSub.remove()
-      hideSub.remove()
-    }
-  }, [])
-
-  // Auto-scroll hacia el fondo cuando se enfoca ejercicio para que el teclado no lo tape
-  const handleFocusEjercicio = () => {
-    setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({ animated: true })
-    }, 160)
-  }
-
-  // Gestor de deslizamiento (Swipe horizontal para cambiar de día)
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => false,
-      onMoveShouldSetPanResponder: (_evt, gestureState) => {
-        const { dx, dy } = gestureState
-        // Solo capturar si es claramente horizontal para no bloquear el scroll vertical
-        return Math.abs(dx) > 30 && Math.abs(dx) > Math.abs(dy) * 2
-      },
-      onPanResponderRelease: (_evt, gestureState) => {
-        const { dx, vx } = gestureState
-        // Deslizar izquierda ➔ Día siguiente (+1)
-        if (dx < -60 || (dx < -25 && vx < -0.4)) {
-          void cambiarDia(1)
-        }
-        // Deslizar derecha ➔ Día anterior (-1)
-        else if (dx > 60 || (dx > 25 && vx > 0.4)) {
-          void cambiarDia(-1)
-        }
-      },
-    }),
-  ).current
-
-  // Manejo de la animación fluida al cambiar de día (80px y 220ms con curva cúbica)
-  useEffect(() => {
-    if (datos.fecha === fecha && fecha !== ultimaFechaAnimadaRef.current) {
-      const dir = fecha > ultimaFechaAnimadaRef.current ? 1 : -1
-      ultimaFechaAnimadaRef.current = fecha
-
-      fadeAnim.setValue(0.25)
-      slideAnim.setValue(dir * 80)
-
-      const anim = Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 220,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }),
-        Animated.timing(slideAnim, {
-          toValue: 0,
-          duration: 220,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }),
-      ])
-
-      anim.start(({ finished }) => {
-        if (finished) {
-          fadeAnim.setValue(1)
-          slideAnim.setValue(0)
-        }
-      })
-
-      return () => {
-        anim.stop()
-      }
-    }
-  }, [fecha, datos.fecha, fadeAnim, slideAnim])
-
-  useEffect(() => {
-    if (fechaSeleccionada) {
-      if (fechaSeleccionada !== fecha) {
-        establecerFecha(fechaSeleccionada)
-      }
-      onLimpiarFechaSeleccionada?.()
-    }
-  }, [fechaSeleccionada, fecha, establecerFecha, onLimpiarFechaSeleccionada])
-
-  const animatedContainerStyle = useMemo(
-    () => ({ opacity: fadeAnim, transform: [{ translateX: slideAnim }] }),
-    [fadeAnim, slideAnim],
-  )
-
-  const handleTomarFotoComida = useCallback(
-    (clave: string) => {
-      tomarFotoOSeleccionar(clave, textoDescrito => {
-        const textoActual = (datosDiaRef.current[clave] as string) || ''
-        const nuevo = textoActual ? `${textoActual}\n${textoDescrito}` : textoDescrito
-        actualizarCampo(clave, nuevo)
-      })
-    },
-    [tomarFotoOSeleccionar, actualizarCampo],
-  )
-
-  const handleCambiarAgua = useCallback(
-    (val: string) => {
-      actualizarCampo('agua', val)
-    },
-    [actualizarCampo],
-  )
-
-  const handleCambiarEjercicio = useCallback(
-    (val: string) => {
-      actualizarCampo('ejercicio', val)
-    },
-    [actualizarCampo],
-  )
-
-  const handleAbrirPdf = useCallback(() => setShowPdfModal(true), [])
-  const handleCerrarPdf = useCallback(() => setShowPdfModal(false), [])
-  const handleAbrirBulk = useCallback(() => setShowBulkModal(true), [])
-  const handleCerrarBulk = useCallback(() => setShowBulkModal(false), [])
-  const handleAbrirCalendario = useCallback(() => setShowCalendarModal(true), [])
-  const handleCerrarCalendario = useCallback(() => setShowCalendarModal(false), [])
-  const handleSeleccionarFecha = useCallback(
-    (f: string) => void establecerFecha(f),
-    [establecerFecha],
-  )
-  const handleRecargarDia = useCallback(() => void establecerFecha(fecha), [establecerFecha, fecha])
+  const handleCambiarAgua = useCallback((val: string) => v.actualizarCampo('agua', val), [v])
+  const handleCambiarEjercicio = useCallback((val: string) => v.actualizarCampo('ejercicio', val), [v])
+  const handleAbrirPdf = useCallback(() => v.setShowPdfModal(true), [v])
+  const handleCerrarPdf = useCallback(() => v.setShowPdfModal(false), [v])
+  const handleAbrirBulk = useCallback(() => v.setShowBulkModal(true), [v])
+  const handleCerrarBulk = useCallback(() => v.setShowBulkModal(false), [v])
+  const handleAbrirCalendario = useCallback(() => v.setShowCalendarModal(true), [v])
+  const handleCerrarCalendario = useCallback(() => v.setShowCalendarModal(false), [v])
+  const handleSeleccionarFecha = useCallback((f: string) => void v.establecerFecha(f), [v])
+  const handleRecargarDia = useCallback(() => void v.establecerFecha(v.fecha), [v])
 
   return (
-    <View
-      style={[styles.container, { backgroundColor: colors.background }]}
-      {...panResponder.panHandlers}
-    >
+    <View style={[styles.container, { backgroundColor: colors.background }]} {...v.panResponder.panHandlers}>
       <Header
         usuario={usuario}
         onLogout={onLogout}
@@ -289,187 +64,80 @@ export const DiarioView: React.FC<DiarioViewProps> = ({
         onVerificarActualizacion={onVerificarActualizacion}
       />
       <DateBar
-        fecha={fecha}
-        cargando={esCargaInicial}
-        onCambiarDia={cambiarDia}
-        onIrAHoy={irAHoy}
+        fecha={v.fecha}
+        cargando={v.esCargaInicial}
+        onCambiarDia={v.cambiarDia}
+        onIrAHoy={v.irAHoy}
         onAbrirCalendario={handleAbrirCalendario}
       />
-      <FloatingSaveIndicator estado={estadoGuardado} topOffset={120} />
+      <FloatingSaveIndicator estado={v.estadoGuardado} topOffset={120} />
 
-      <KeyboardAvoidingView
-        style={styles.keyboardAvoid}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+      <KeyboardAvoidingView style={styles.keyboardAvoid} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
-          ref={scrollViewRef}
+          ref={v.scrollViewRef}
           contentContainerStyle={[
             styles.scrollContent,
-            { paddingBottom: keyboardHeight > 0 ? keyboardHeight + 80 : theme.spacing.xxl },
+            { paddingBottom: v.keyboardHeight > 0 ? v.keyboardHeight + 80 : theme.spacing.xxl },
           ]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >
-          <Animated.View style={animatedContainerStyle}>
-            {esCargaInicial ? (
+          <Animated.View style={v.animatedContainerStyle}>
+            {v.esCargaInicial ? (
               <DiarioSkeleton />
             ) : (
               <>
-                {COMIDAS.map(comida => {
-                  const valor = (datosDia[comida.clave] as string) || ''
-                  const valorAnterior = (datosAntDia?.[comida.clave] as string) || ''
-                  const fuera = !!datosDia[comida.claveFuera]
-                  const estaAnalizando = comidaAnalizando === comida.clave
-                  const debeEnfocar =
-                    comidaAEnfocar?.clave === comida.clave &&
-                    comidaAEnfocar?.timestamp === accionWidget?.timestamp
-
-                  return (
-                    <View
-                      key={`${comida.clave}_${fecha}`}
-                      onLayout={e => {
-                        const y = e.nativeEvent.layout.y
-                        cardLayoutsRef.current[comida.clave] = y
-                        if (comidaAEnfocar?.clave === comida.clave) {
-                          scrollViewRef.current?.scrollTo({ y: Math.max(0, y - 20), animated: true })
-                        }
-                      }}
-                    >
-                      <ComidaCard
-                        comida={comida}
-                        valor={valor}
-                        valorAnterior={valorAnterior}
-                        fuera={fuera}
-                        analizando={estaAnalizando}
-                        esActual={comidaActual === comida.clave}
-                        debeEnfocar={debeEnfocar}
-                        onActualizarCampo={actualizarCampo}
-                        onTomarFotoComida={handleTomarFotoComida}
-                      />
-                    </View>
-                  )
-                })}
+                <ListaComidasDiario
+                  fecha={v.fecha}
+                  datosDia={v.datosDia}
+                  datosAntDia={v.datosAntDia}
+                  comidaActual={v.comidaActual}
+                  comidaAnalizando={v.comidaAnalizando}
+                  comidaAEnfocar={v.comidaAEnfocar}
+                  accionWidgetTimestamp={accionWidget?.timestamp}
+                  cardLayoutsRef={v.cardLayoutsRef}
+                  scrollViewRef={v.scrollViewRef}
+                  onActualizarCampo={v.actualizarCampo}
+                  onTomarFotoComida={v.handleTomarFotoComida}
+                />
 
                 <AguaCard
-                  key={`agua_${fecha}`}
-                  valor={(datosDia.agua as string) || ''}
+                  key={`agua_${v.fecha}`}
+                  valor={(v.datosDia.agua as string) || ''}
                   onCambiar={handleCambiarAgua}
                 />
 
                 <EjercicioCard
-                  key={`ejercicio_${fecha}`}
-                  ejercicio={(datosDia.ejercicio as string) || ''}
+                  key={`ejercicio_${v.fecha}`}
+                  ejercicio={(v.datosDia.ejercicio as string) || ''}
                   onCambiarEjercicio={handleCambiarEjercicio}
-                  onFocusInput={handleFocusEjercicio}
+                  onFocusInput={v.handleFocusEjercicio}
                 />
 
-                <TouchableOpacity
-                  style={[styles.saveBtn, guardando && styles.saveBtnDisabled]}
-                  onPress={guardar}
-                  disabled={guardando}
-                  activeOpacity={0.8}
-                >
-                  {guardando ? (
-                    <View style={styles.saveBtnContent}>
-                      <ActivityIndicator color={theme.colors.white} size="small" />
-                      <Text style={styles.saveBtnText}>Guardando cambios...</Text>
-                    </View>
-                  ) : estadoGuardado === 'guardado' ? (
-                    <View style={styles.saveBtnContent}>
-                      <FontAwesome name="check-circle" size={16} color={theme.colors.white} />
-                      <Text style={styles.saveBtnText}>Cambios guardados</Text>
-                    </View>
-                  ) : (
-                    <View style={styles.saveBtnContent}>
-                      <FontAwesome name="floppy-o" size={16} color={theme.colors.white} />
-                      <Text style={styles.saveBtnText}>Guardar cambios</Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-
-                <Text style={[styles.autoSaveNotice, { color: colors.textMuted }]}>
-                  Tus datos se guardan automáticamente al escribir o cambiar de día.
-                </Text>
+                <BotonGuardarDiario
+                  guardando={v.guardando}
+                  estadoGuardado={v.estadoGuardado}
+                  onGuardar={v.guardar}
+                />
               </>
             )}
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Selector de Fecha Rápido (Modal Calendario) */}
-      <CalendarModal
-        visible={showCalendarModal}
-        modo="single"
-        fechaSeleccionada={fecha}
-        titulo="Ir a un día"
+      <DiarioModales
+        visibleCalendar={v.showCalendarModal}
+        fecha={v.fecha}
         onSeleccionarFecha={handleSeleccionarFecha}
-        onClose={handleCerrarCalendario}
-      />
-
-      {/* Exportar Resumen PDF */}
-      <ExportarPdfModal
-        visible={showPdfModal}
-        userId={usuario.uid}
-        nombreUsuario={usuario.displayName || usuario.email || 'Usuario'}
-        onClose={handleCerrarPdf}
-      />
-
-      {/* Subida Múltiple con IA */}
-      <BulkUploadModal
-        visible={showBulkModal}
-        userId={usuario.uid}
-        onClose={handleCerrarBulk}
-        onCompletado={handleRecargarDia}
+        onCerrarCalendario={handleCerrarCalendario}
+        visiblePdf={v.showPdfModal}
+        usuario={usuario}
+        onCerrarPdf={handleCerrarPdf}
+        visibleBulk={v.showBulkModal}
+        onCerrarBulk={handleCerrarBulk}
+        onRecargarDia={handleRecargarDia}
       />
     </View>
   )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  keyboardAvoid: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: theme.spacing.md,
-    paddingBottom: theme.spacing.xxl,
-  },
-  saveBtn: {
-    backgroundColor: theme.colors.primary,
-    borderRadius: theme.radius.md,
-    paddingVertical: theme.spacing.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: theme.spacing.sm,
-    elevation: 2,
-    shadowColor: theme.colors.primaryDark,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-  },
-  saveBtnDisabled: {
-    opacity: 0.7,
-  },
-  saveBtnContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  saveBtnText: {
-    color: theme.colors.white,
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  autoSaveNotice: {
-    fontSize: 11,
-    color: theme.colors.textMuted,
-    textAlign: 'center',
-    marginTop: theme.spacing.sm,
-    marginBottom: theme.spacing.lg,
-    fontStyle: 'italic',
-  },
-})
