@@ -1,13 +1,13 @@
 import React from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, Platform, StatusBar as RNStatusBar } from 'react-native'
+import { View, Text, TouchableOpacity, Platform, StatusBar as RNStatusBar } from 'react-native'
 import { FontAwesome } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '../../context/ThemeContext'
-import { theme } from '../../utils/theme'
 import { APP_VERSION } from '../../config/constants'
 import type { UsuarioAutenticado } from '../../types'
+import { styles } from './Header.styles'
 
-interface HeaderProps {
+export interface HeaderProps {
   usuario: UsuarioAutenticado
   onLogout: () => void
   onAbrirPdf?: () => void
@@ -17,6 +17,14 @@ interface HeaderProps {
 
 const HIT_SLOP_10 = Object.freeze({ top: 10, bottom: 10, left: 10, right: 10 })
 
+/**
+ * Cabecera superior persistente de la aplicación.
+ * Muestra el logotipo de la app, número de versión, accesos rápidos a subida múltiple, PDF,
+ * buscador de actualizaciones y cierre de sesión.
+ *
+ * @param props - Usuario autenticado y callbacks de acción para herramientas auxiliares.
+ * @returns Barra de encabezado adaptada a la zona segura superior.
+ */
 export const Header: React.FC<HeaderProps> = React.memo(({
   usuario,
   onLogout,
@@ -105,47 +113,4 @@ export const Header: React.FC<HeaderProps> = React.memo(({
       </View>
     </View>
   )
-})
-
-const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: theme.spacing.md,
-    paddingBottom: theme.spacing.sm,
-    borderBottomWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  icon: {
-    marginRight: 6,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  versionBadge: {
-    marginLeft: 6,
-    fontSize: 10,
-    fontWeight: '700',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: theme.radius.sm,
-  },
-  userRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    maxWidth: '65%',
-  },
-  actionBtn: {
-    padding: theme.spacing.xs,
-  },
-  email: {
-    fontSize: 12,
-    maxWidth: 90,
-  },
 })

@@ -1,12 +1,12 @@
 import React from 'react'
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, Text, TouchableOpacity } from 'react-native'
 import { FontAwesome } from '@expo/vector-icons'
 import { useTheme } from '../../context/ThemeContext'
-import { theme } from '../../utils/theme'
 import { formatearFechaLarga, hoy } from '../../utils/fechas'
 import type { EstadoGuardado } from '../../hooks/useDiario'
+import { styles } from './DateBar.styles'
 
-interface DateBarProps {
+export interface DateBarProps {
   fecha: string
   cargando?: boolean
   estadoGuardado?: EstadoGuardado
@@ -15,6 +15,13 @@ interface DateBarProps {
   onAbrirCalendario?: () => void
 }
 
+/**
+ * Barra interactiva de selección y navegación rápida entre fechas.
+ * Proporciona botones de día previo y posterior, acceso a calendario y un chip con atajo a "Hoy".
+ *
+ * @param props - Fecha seleccionada, estados de carga y manejadores de navegación.
+ * @returns Elemento horizontal centrado con controles ergonómicos de fecha.
+ */
 export const DateBar: React.FC<DateBarProps> = React.memo(({
   fecha,
   cargando: _cargando,
@@ -71,7 +78,6 @@ export const DateBar: React.FC<DateBarProps> = React.memo(({
         </TouchableOpacity>
 
         <View style={styles.subRow}>
-          {/* Chip central fijo: "Hoy" si estamos en el día actual, o botón "Ir a Hoy" si es otro día */}
           {esHoy ? (
             <View
               style={[
@@ -116,79 +122,4 @@ export const DateBar: React.FC<DateBarProps> = React.memo(({
       </TouchableOpacity>
     </View>
   )
-})
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    borderBottomWidth: 1,
-  },
-  navButton: {
-    padding: theme.spacing.sm,
-    borderRadius: theme.radius.sm,
-  },
-  centerSection: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  dateButton: {
-    paddingVertical: 2,
-    paddingHorizontal: 6,
-    borderRadius: theme.radius.sm,
-  },
-  dateRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  calendarIcon: {
-    marginRight: 2,
-  },
-  caretIcon: {
-    marginLeft: 2,
-  },
-  dateText: {
-    fontSize: 15,
-    fontWeight: '600',
-    textTransform: 'capitalize',
-  },
-  subRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 24,
-    marginTop: 4,
-    width: '100%',
-    position: 'relative',
-  },
-  dayChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 2,
-    borderRadius: theme.radius.full,
-    borderWidth: 1,
-    height: 22,
-  },
-  dayChipButton: {
-    // Estilo interactivo consistente
-  },
-  activeDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginRight: 5,
-  },
-  historyIcon: {
-    marginRight: 4,
-  },
-  dayChipText: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
 })
