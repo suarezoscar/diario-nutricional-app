@@ -20,7 +20,6 @@ export interface DiaResumenDetalleProps {
 export const DiaResumenDetalle: React.FC<DiaResumenDetalleProps> = React.memo(({ datos }) => {
   const { colors, esOscuro } = useTheme()
   const tieneAgua = !!datos.agua
-  const tienePeso = !!datos.peso
   const fueraBg = esOscuro ? '#3a2208' : '#fff3e0'
   const fueraColor = esOscuro ? '#ffb74d' : '#e65100'
 
@@ -39,11 +38,12 @@ export const DiaResumenDetalle: React.FC<DiaResumenDetalleProps> = React.memo(({
           >
             <View style={styles.comidaHeader}>
               <View style={styles.comidaTituloWrap}>
-                <FontAwesome name={c.icono as any} size={13} color={colors.primary} />
+                <FontAwesome name={c.icono as keyof typeof FontAwesome.glyphMap} size={13} color={colors.primary} />
                 <Text style={[styles.comidaTitulo, { color: colors.primary }]}>{c.titulo}</Text>
               </View>
               {fuera && (
                 <View style={[styles.fueraBadge, { backgroundColor: fueraBg }]}>
+                  <FontAwesome name="map-marker" size={10} color={fueraColor} />
                   <Text style={[styles.fueraBadgeText, { color: fueraColor }]}>Fuera</Text>
                 </View>
               )}
@@ -57,21 +57,13 @@ export const DiaResumenDetalle: React.FC<DiaResumenDetalleProps> = React.memo(({
         )
       })}
 
-      {(tieneAgua || tienePeso || !!datos.ejercicio) && (
+      {(tieneAgua || !!datos.ejercicio) && (
         <View style={[styles.extraDetalles, { borderTopColor: colors.border }]}>
           {tieneAgua && (
             <View style={styles.extraItem}>
               <FontAwesome name="tint" size={12} color={colors.water} />
               <Text style={[styles.extraText, { color: colors.textMuted }]}>
                 Agua: <Text style={[styles.extraBold, { color: colors.text }]}>{datos.agua} L</Text>
-              </Text>
-            </View>
-          )}
-          {tienePeso && (
-            <View style={styles.extraItem}>
-              <FontAwesome name="dashboard" size={12} color={colors.primary} />
-              <Text style={[styles.extraText, { color: colors.textMuted }]}>
-                Peso: <Text style={[styles.extraBold, { color: colors.text }]}>{datos.peso} kg</Text>
               </Text>
             </View>
           )}

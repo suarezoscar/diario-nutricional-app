@@ -5,12 +5,19 @@ import { useTheme } from '../../../context/ThemeContext'
 import type { Registro } from '../../../types'
 import { styles } from '../DiaResumenCard.styles'
 
-export const COMIDAS_INFO: { clave: string; label: string; fueraClave: string }[] = [
-  { clave: 'desayuno', label: 'Des', fueraClave: 'desayunoFuera' },
-  { clave: 'mediaManana', label: 'MM', fueraClave: 'mediaMananaFuera' },
-  { clave: 'comida', label: 'Com', fueraClave: 'comidaFuera' },
-  { clave: 'merienda', label: 'Mer', fueraClave: 'meriendaFuera' },
-  { clave: 'cena', label: 'Cen', fueraClave: 'cenaFuera' },
+export interface ComidaPillConfig {
+  clave: string
+  label: string
+  fueraClave: string
+  icono: keyof typeof FontAwesome.glyphMap
+}
+
+export const COMIDAS_INFO: ComidaPillConfig[] = [
+  { clave: 'desayuno', label: 'Des', fueraClave: 'desayunoFuera', icono: 'coffee' },
+  { clave: 'mediaManana', label: 'MM', fueraClave: 'mediaMananaFuera', icono: 'sun-o' },
+  { clave: 'comida', label: 'Com', fueraClave: 'comidaFuera', icono: 'cutlery' },
+  { clave: 'merienda', label: 'Mer', fueraClave: 'meriendaFuera', icono: 'apple' },
+  { clave: 'cena', label: 'Cen', fueraClave: 'cenaFuera', icono: 'moon-o' },
 ]
 
 export interface DiaResumenPillsProps {
@@ -19,14 +26,14 @@ export interface DiaResumenPillsProps {
 
 /**
  * Indicadores tipo cápsula (pills) para las comidas y métricas de un día en el histórico.
+ * Muestra el icono de cada comida delante de la etiqueta y el icono de ubicación si se comió fuera.
  *
- * @param props - Registro de datos del día con comidas, agua, peso y ejercicio.
- * @returns Fila de cápsulas y resumen de métricas diarias.
+ * @param props - Registro de datos del día con comidas, agua y ejercicio.
+ * @returns Fila de cápsulas con iconos y métricas asociadas.
  */
 export const DiaResumenPills: React.FC<DiaResumenPillsProps> = React.memo(({ datos }) => {
   const { colors, esOscuro } = useTheme()
   const tieneAgua = !!datos.agua
-  const tienePeso = !!datos.peso
 
   const fueraBg = esOscuro ? '#3a2208' : '#fff3e0'
   const fueraColor = esOscuro ? '#ffb74d' : '#e65100'
@@ -38,6 +45,7 @@ export const DiaResumenPills: React.FC<DiaResumenPillsProps> = React.memo(({ dat
           const valor = datos[c.clave] as string
           const fuera = !!datos[c.fueraClave]
           const registrado = !!valor && valor.trim().length > 0
+          const iconoColor = fuera ? fueraColor : registrado ? colors.primary : colors.textMuted
 
           return (
             <View
@@ -49,6 +57,11 @@ export const DiaResumenPills: React.FC<DiaResumenPillsProps> = React.memo(({ dat
                 fuera && { backgroundColor: fueraBg },
               ]}
             >
+              <FontAwesome
+                name={c.icono}
+                size={10}
+                color={iconoColor}
+              />
               <Text
                 style={[
                   styles.mealPillText,
@@ -57,8 +70,15 @@ export const DiaResumenPills: React.FC<DiaResumenPillsProps> = React.memo(({ dat
                   fuera && { color: fueraColor, fontWeight: '700' },
                 ]}
               >
-                {c.label} {fuera ? '★' : ''}
+                {c.label}
               </Text>
+              {fuera && (
+                <FontAwesome
+                  name="map-marker"
+                  size={10}
+                  color={fueraColor}
+                />
+              )}
             </View>
           )
         })}
@@ -72,17 +92,10 @@ export const DiaResumenPills: React.FC<DiaResumenPillsProps> = React.memo(({ dat
           </View>
         )}
 
-        {tienePeso && (
-          <View style={styles.metricItem}>
-            <FontAwesome name="dashboard" size={12} color={colors.primary} />
-            <Text style={[styles.metricText, { color: colors.textMuted }]}>{datos.peso} kg</Text>
-          </View>
-        )}
-
         {!!datos.ejercicio && (
           <View style={styles.metricItem}>
             <FontAwesome name="heartbeat" size={12} color={colors.primary} />
-            <Text style={[styles.metricText, { color: colors.textMuted }]} numberOfLines={1}>
+            <Text style={[styles.metricText, { color: colors.textMuted }]}>
               {datos.ejercicio as string}
             </Text>
           </View>

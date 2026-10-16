@@ -31,8 +31,8 @@ export const DiaResumenCard: React.FC<DiaResumenCardProps> = React.memo(({ dia, 
 
   const tieneComidas = COMIDAS_INFO.some(c => !!datos[c.clave])
   const tieneAgua = !!datos.agua
-  const tienePeso = !!datos.peso
-  const sinDatos = !tieneComidas && !tieneAgua && !tienePeso
+  const tieneEjercicio = !!datos.ejercicio
+  const sinDatos = !tieneComidas && !tieneAgua && !tieneEjercicio
 
   const handleToggle = useCallback(() => {
     if (!sinDatos) {
