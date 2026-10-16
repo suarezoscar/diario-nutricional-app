@@ -2,7 +2,7 @@ export const API_DESCRIPCION_URL = 'https://diario-nutricional.netlify.app/api/d
 
 export const MAX_CARACTERES_COMIDA = 500
 
-export const APP_VERSION = '1.1.0'
+export const APP_VERSION = '1.1.1'
 
 export const GITHUB_REPO = 'suarezoscar/diario-nutricional-app'
 
