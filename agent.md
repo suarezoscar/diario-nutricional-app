@@ -127,6 +127,7 @@ export function calcularEspaciadoSeguro(insetBase: number, multiplicador = 1): n
 - ❌ **NO** superar el límite de 120-150 líneas por archivo bajo ninguna excusa; divide en subcomponentes o utilidades.
 - ❌ **NO** generar documentación o comentarios en inglés; todo debe estar estrictamente en español.
 - ❌ **NO** hardcodear cadenas literales de versión en constantes o componentes; consumir siempre `APP_VERSION` vinculada a `app.json`.
+- ❌ **NO** publicar un tag o release sin consultar previamente el último tag existente en Git (`git tag --list --sort=-v:refname`).
 
 ---
 
@@ -136,8 +137,9 @@ export function calcularEspaciadoSeguro(insetBase: number, multiplicador = 1): n
   - La versión de la aplicación y el código de versión nativo se definen en `app.json` (`expo.version` y `expo.android.versionCode`).
   - La constante `APP_VERSION` en `src/config/constants.ts` debe importar siempre dinámicamente `appConfig.expo.version` desde `app.json` para evitar discrepancias de versión en el bundle de JavaScript y en el actualizador de la app (`updateService.ts`).
 - **Procedimiento para Nueva Versión:**
-  1. Incrementar `"version"` en `app.json` y `package.json` (ej: `1.1.2` -> `1.1.3`).
-  2. Incrementar obligatoriamente `"versionCode"` en `app.json` bajo `expo.android.versionCode` (ej: `34` -> `35`).
-  3. Ejecutar `pnpm run typecheck` y `pnpm test`.
-  4. Generar el commit: `chore(release): bump version to X.Y.Z (code N)`.
-  5. Crear y subir el tag Git para disparar la GitHub Action de compilación: `git tag vX.Y.Z && git push origin main --tags`.
+  1. **Comprobar último tag en Git:** Ejecutar siempre `git tag --list --sort=-v:refname | head -n 5` para verificar correlación exacta antes de decidir la siguiente versión.
+  2. Incrementar `"version"` en `app.json` y `package.json` (ej: `1.1.3` -> `1.1.4`).
+  3. Incrementar obligatoriamente `"versionCode"` en `app.json` bajo `expo.android.versionCode` (ej: `35` -> `36`).
+  4. Ejecutar `pnpm run typecheck` y `pnpm test`.
+  5. Generar el commit: `chore(release): bump version to X.Y.Z (code N)`.
+  6. Crear y subir el tag Git para disparar la compilación: `git tag vX.Y.Z && git push origin main && git push origin vX.Y.Z`.
