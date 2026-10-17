@@ -42,29 +42,33 @@ describe('Motor de fechas y horarios (fechas.ts)', () => {
       expect(asignarComidaPorHora(19, 59)).toBe('merienda')
     })
 
-    it('asigna cena entre 20:00 y 23:29, y pasa a desayuno a partir de 23:30 y de madrugada', () => {
+    it('asigna cena a partir de las 20:00 y durante la madrugada hasta las 03:59', () => {
       expect(asignarComidaPorHora(20, 0)).toBe('cena')
       expect(asignarComidaPorHora(21, 30)).toBe('cena')
-      expect(asignarComidaPorHora(23, 29)).toBe('cena')
-      expect(asignarComidaPorHora(23, 30)).toBe('desayuno')
-      expect(asignarComidaPorHora(0, 0)).toBe('desayuno')
-      expect(asignarComidaPorHora(3, 15)).toBe('desayuno')
+      expect(asignarComidaPorHora(23, 59)).toBe('cena')
+      expect(asignarComidaPorHora(0, 0)).toBe('cena')
+      expect(asignarComidaPorHora(1, 30)).toBe('cena')
+      expect(asignarComidaPorHora(3, 59)).toBe('cena')
+    })
+
+    it('pasa a desayuno a partir del corte de jornada a las 04:00 AM', () => {
+      expect(asignarComidaPorHora(4, 0)).toBe('desayuno')
+      expect(asignarComidaPorHora(5, 30)).toBe('desayuno')
       expect(asignarComidaPorHora(5, 59)).toBe('desayuno')
     })
 
-    it('respeta horarios personalizados y cenas tardías que cruzan medianoche', () => {
+    it('respeta horarios personalizados diurnos manteniendo cena activa en madrugada', () => {
       const horariosCustom = {
         desayuno: { inicio: '07:00', fin: '10:00' },
         mediaManana: { inicio: '10:00', fin: '12:00' },
         comida: { inicio: '12:00', fin: '15:00' },
         merienda: { inicio: '15:00', fin: '19:00' },
-        cena: { inicio: '21:00', fin: '01:00' },
+        cena: { inicio: '21:00', fin: '00:00' },
       }
 
       expect(asignarComidaPorHora(12, 30, horariosCustom)).toBe('comida')
-      expect(asignarComidaPorHora(0, 30, horariosCustom)).toBe('cena')
-      expect(asignarComidaPorHora(1, 0, horariosCustom)).toBe('desayuno')
-      expect(asignarComidaPorHora(6, 30, horariosCustom)).toBe('desayuno')
+      expect(asignarComidaPorHora(2, 0, horariosCustom)).toBe('cena')
+      expect(asignarComidaPorHora(4, 30, horariosCustom)).toBe('desayuno')
     })
   })
 

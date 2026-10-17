@@ -15,7 +15,7 @@ export function horaTextoAMinutos(horaTexto: string): number {
 
 /**
  * Comprueba si un momento del día en minutos se encuentra dentro de un intervalo horario.
- * Soporta de forma nativa intervalos que cruzan la medianoche (ej. 21:00 a 01:00).
+ * Soporta de forma nativa intervalos que cruzan la medianoche (ej. 20:00 a 00:00 o 21:00 a 01:00).
  *
  * @param minutos - Minutos transcurridos en el día actual (0 a 1439).
  * @param inicioStr - Hora de inicio en formato "HH:mm".
@@ -28,14 +28,13 @@ export function estaEnRangoHorario(minutos: number, inicioStr: string, finStr: s
   if (inicio < fin) {
     return minutos >= inicio && minutos < fin
   }
-  // Rango que cruza la medianoche (ej: 21:00 a 01:00)
   return minutos >= inicio || minutos < fin
 }
 
 /**
  * Determina y clasifica la casilla de comida según la hora y minuto del día.
- * Si la hora no coincide con ninguna franja (ej. en la noche tras concluir la cena),
- * devuelve 'desayuno' como siguiente comida natural del ciclo nutricional.
+ * En la madrugada (antes de las 04:00 AM), se mantiene activa la cena de la noche en curso.
+ * A partir de las 04:00 AM, la jornada se renueva y la comida activa pasa al desayuno.
  *
  * @param hora - Hora del día (0 a 23).
  * @param minuto - Minuto de la hora (0 a 59). Por defecto 0.
@@ -47,6 +46,12 @@ export function asignarComidaPorHora(
   minuto: number = 0,
   horarios?: HorariosConfig,
 ): ClaveComida {
+  // Franja de madrugada antes del corte de jornada (00:00 a 03:59):
+  // Sigue activa la cena de la jornada nocturna en curso
+  if (hora < 4) {
+    return 'cena'
+  }
+
   const tiempoMinutos = hora * 60 + minuto
 
   if (horarios) {
@@ -68,12 +73,12 @@ export function asignarComidaPorHora(
     return 'desayuno'
   }
 
-  // Rangos estándar por defecto
+  // Rangos estándar por defecto (hora >= 4)
   if (tiempoMinutos >= 6 * 60 && tiempoMinutos < 11 * 60) return 'desayuno'
   if (tiempoMinutos >= 11 * 60 && tiempoMinutos < 13 * 60 + 30) return 'mediaManana'
   if (tiempoMinutos >= 13 * 60 + 30 && tiempoMinutos < 17 * 60) return 'comida'
   if (tiempoMinutos >= 17 * 60 && tiempoMinutos < 20 * 60) return 'merienda'
-  if (tiempoMinutos >= 20 * 60 && tiempoMinutos < 23 * 60 + 30) return 'cena'
+  if (tiempoMinutos >= 20 * 60) return 'cena'
   return 'desayuno'
 }
 
@@ -90,21 +95,22 @@ export function obtenerComidaActual(horarios?: HorariosConfig): ClaveComida {
 
 /**
  * Determina la fecha operativa del diario considerando la jornada nocturna.
- * Si el reloj marca la madrugada (antes de las 06:00) y la comida activa sigue siendo la cena,
- * la fecha operativa corresponde al día anterior (ayer).
+ * Si el reloj marca la madrugada (antes de las 04:00 AM), la jornada operativa
+ * corresponde al día anterior (ayer). A partir de las 04:00 AM, pasa a hoy.
  *
- * @param horarios - Configuración opcional de horarios de comidas.
+ * @param _horarios - Parámetro reservado para compatibilidad de interfaz.
  * @returns Cadena con la fecha operativa en formato `YYYY-MM-DD`.
+ *
+ * @example
+ * ```ts
+ * const fecha = obtenerFechaOperativa(); // '2026-10-16' a la 01:30 AM
+ * ```
  */
-export function obtenerFechaOperativa(horarios?: HorariosConfig): string {
+export function obtenerFechaOperativa(_horarios?: HorariosConfig): string {
   const ahora = new Date()
-  const hora = ahora.getHours()
-  const minuto = ahora.getMinutes()
-
-  if (hora < 6 && asignarComidaPorHora(hora, minuto, horarios) === 'cena') {
+  if (ahora.getHours() < 4) {
     return desplazarDia(hoy(), -1)
   }
-
   return hoy()
 }
 
