@@ -1,21 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, Platform, Keyboard } from 'react-native'
-import { FontAwesome } from '@expo/vector-icons'
+import { View, Platform, Keyboard } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '../../context/ThemeContext'
-import { theme } from '../../utils/theme'
-import type { TabPrincipal } from '../../types'
+import type { BottomNavProps, ItemTab } from './BottomNav.types'
+import { BottomNavItem } from './components/BottomNavItem'
+import { styles } from './BottomNav.styles'
 
-interface BottomNavProps {
-  tabActiva: TabPrincipal
-  onCambiarTab: (tab: TabPrincipal) => void
-}
-
-interface ItemTab {
-  id: TabPrincipal
-  titulo: string
-  icono: keyof typeof FontAwesome.glyphMap
-}
+export type { BottomNavProps }
 
 const ITEMS: ItemTab[] = [
   { id: 'diario', titulo: 'Diario', icono: 'calendar-check-o' },
@@ -24,6 +15,14 @@ const ITEMS: ItemTab[] = [
   { id: 'ajustes', titulo: 'Ajustes', icono: 'cog' },
 ]
 
+/**
+ * Barra inferior de navegación principal de la aplicación.
+ * Oculta su renderizado cuando el teclado virtual está visible en pantalla
+ * y adapta el padding a las zonas seguras (safe area) del dispositivo.
+ *
+ * @param props - Pestaña actualmente activa y callback de navegación.
+ * @returns Componente de navegación anclado a la zona ergonómica inferior.
+ */
 export const BottomNav: React.FC<BottomNavProps> = React.memo(({ tabActiva, onCambiarTab }) => {
   const { colors } = useTheme()
   const insets = useSafeAreaInsets()
@@ -58,69 +57,14 @@ export const BottomNav: React.FC<BottomNavProps> = React.memo(({ tabActiva, onCa
         },
       ]}
     >
-      {ITEMS.map(item => {
-        const activo = tabActiva === item.id
-        return (
-          <TouchableOpacity
-            key={item.id}
-            style={styles.tabBtn}
-            onPress={() => onCambiarTab(item.id)}
-            activeOpacity={0.7}
-            accessibilityLabel={`Pestaña ${item.titulo}`}
-          >
-            <View
-              style={[
-                styles.iconWrap,
-                activo && { backgroundColor: colors.primarySoft },
-              ]}
-            >
-              <FontAwesome
-                name={item.icono}
-                size={18}
-                color={activo ? colors.primary : colors.textMuted}
-              />
-            </View>
-            <Text
-              style={[
-                styles.tabText,
-                { color: colors.textMuted },
-                activo && { color: colors.primary, fontWeight: '700' },
-              ]}
-            >
-              {item.titulo}
-            </Text>
-          </TouchableOpacity>
-        )
-      })}
+      {ITEMS.map(item => (
+        <BottomNavItem
+          key={item.id}
+          item={item}
+          activo={tabActiva === item.id}
+          onCambiarTab={onCambiarTab}
+        />
+      ))}
     </View>
   )
-})
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    borderTopWidth: 1,
-    paddingTop: theme.spacing.xs,
-    elevation: 8,
-    shadowColor: theme.colors.primaryDark,
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-  },
-  tabBtn: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 4,
-  },
-  iconWrap: {
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: 2,
-    borderRadius: theme.radius.full,
-  },
-  tabText: {
-    fontSize: 11,
-    fontWeight: '500',
-    marginTop: 2,
-  },
 })
