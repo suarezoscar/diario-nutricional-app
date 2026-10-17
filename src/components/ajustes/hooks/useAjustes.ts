@@ -11,6 +11,7 @@ import {
 import { sincronizarNotificaciones } from '../../../services/notificationService'
 import type { ClaveComida } from '../../../types'
 import { ajustarHora } from '../utils/ajustarHora'
+import { validarCambioHorario } from '../utils/validarHorarios'
 import { useAjustesNotificaciones } from './useAjustesNotificaciones'
 
 export { ajustarHora }
@@ -59,6 +60,15 @@ export function useAjustes() {
   const modificarHorario = useCallback((comida: ClaveComida, campo: 'inicio' | 'fin', delta: number) => {
     const actual = horarios[comida][campo]
     const nuevaHora = ajustarHora(actual, delta)
+
+    const validacion = validarCambioHorario(comida, campo, nuevaHora, horarios)
+    if (!validacion.esValido) {
+      if (validacion.error) {
+        Alert.alert('Horario no permitido', validacion.error)
+      }
+      return
+    }
+
     const nuevos: HorariosConfig = {
       ...horarios,
       [comida]: { ...horarios[comida], [campo]: nuevaHora },
