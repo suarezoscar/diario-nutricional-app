@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
-import { hoy, desplazarDia } from '../utils/fechas'
+import { hoy, desplazarDia, obtenerFechaOperativa } from '../utils/fechas'
 import { cargarDia, guardarDia } from '../services/registroService'
 import { guardarCacheHoyYSincronizarWidget } from '../services/widgetService'
 import { sincronizarNotificaciones } from '../services/notificationService'
@@ -16,7 +16,7 @@ export type { EstadoGuardado }
  * @returns Objeto con el estado reactivo del diario y manejadores de acción.
  */
 export function useDiario(userId: string, fechaInicial?: string) {
-  const [fecha, setFecha] = useState<string>(fechaInicial || hoy())
+  const [fecha, setFecha] = useState<string>(fechaInicial || obtenerFechaOperativa())
   const [datos, setDatos] = useState<Partial<Registro>>({})
   const [datosAnterior, setDatosAnterior] = useState<Partial<Registro>>({})
   const [cargando, setCargando] = useState<boolean>(true)
@@ -25,7 +25,7 @@ export function useDiario(userId: string, fechaInicial?: string) {
   fechaRef.current = fecha
   const datosRef = useRef(datos)
   datosRef.current = datos
-  const fechaDeDatosRef = useRef<string>(fechaInicial || hoy())
+  const fechaDeDatosRef = useRef<string>(fechaInicial || obtenerFechaOperativa())
   const requestIdRef = useRef<number>(0)
 
   const persistence = useDiarioPersistence(userId)
@@ -65,7 +65,7 @@ export function useDiario(userId: string, fechaInicial?: string) {
           hayCambiosPendientesRef.current = false
           setEstadoGuardado('al_dia')
 
-          if (fecha === hoy()) {
+          if (fecha === hoy() || fecha === obtenerFechaOperativa()) {
             void guardarCacheHoyYSincronizarWidget(docNormalizado)
             void sincronizarNotificaciones(docNormalizado)
           }
@@ -102,7 +102,7 @@ export function useDiario(userId: string, fechaInicial?: string) {
   }, [userId, hayCambiosPendientesRef])
 
   const cambiarDia = useCallback((delta: number) => setFecha(prev => desplazarDia(prev, delta)), [])
-  const irAHoy = useCallback(() => setFecha(hoy()), [])
+  const irAHoy = useCallback(() => setFecha(obtenerFechaOperativa()), [])
   const establecerFecha = useCallback((nuevaFecha: string) => setFecha(nuevaFecha), [])
 
   const actualizarCampo = useCallback(

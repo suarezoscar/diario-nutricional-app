@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import {
   asignarComidaPorHora,
+  obtenerFechaOperativa,
+  calcularFechaParaComida,
+  hoy,
   desplazarDia,
   formatearFechaLarga,
   formatearFechaCorta,
@@ -39,30 +42,39 @@ describe('Motor de fechas y horarios (fechas.ts)', () => {
       expect(asignarComidaPorHora(19, 59)).toBe('merienda')
     })
 
-    it('asigna cena a partir de las 20:00 y en la madrugada hasta las 05:59', () => {
+    it('asigna cena entre 20:00 y 23:29, y pasa a desayuno a partir de 23:30 y de madrugada', () => {
       expect(asignarComidaPorHora(20, 0)).toBe('cena')
       expect(asignarComidaPorHora(21, 30)).toBe('cena')
-      expect(asignarComidaPorHora(23, 59)).toBe('cena')
-      expect(asignarComidaPorHora(0, 0)).toBe('cena')
-      expect(asignarComidaPorHora(3, 15)).toBe('cena')
-      expect(asignarComidaPorHora(5, 59)).toBe('cena')
+      expect(asignarComidaPorHora(23, 29)).toBe('cena')
+      expect(asignarComidaPorHora(23, 30)).toBe('desayuno')
+      expect(asignarComidaPorHora(0, 0)).toBe('desayuno')
+      expect(asignarComidaPorHora(3, 15)).toBe('desayuno')
+      expect(asignarComidaPorHora(5, 59)).toBe('desayuno')
     })
 
-    it('respeta horarios personalizados configurados por el usuario', () => {
+    it('respeta horarios personalizados y cenas tardías que cruzan medianoche', () => {
       const horariosCustom = {
         desayuno: { inicio: '07:00', fin: '10:00' },
         mediaManana: { inicio: '10:00', fin: '12:00' },
         comida: { inicio: '12:00', fin: '15:00' },
         merienda: { inicio: '15:00', fin: '19:00' },
-        cena: { inicio: '19:00', fin: '07:00' },
+        cena: { inicio: '21:00', fin: '01:00' },
       }
 
-      // Con el default 12:30 era mediaManana, pero con el custom es comida
       expect(asignarComidaPorHora(12, 30, horariosCustom)).toBe('comida')
-      // A las 19:30 con default era merienda, pero con custom es cena
-      expect(asignarComidaPorHora(19, 30, horariosCustom)).toBe('cena')
-      // A las 06:30 con default era desayuno, pero con custom es cena
-      expect(asignarComidaPorHora(6, 30, horariosCustom)).toBe('cena')
+      expect(asignarComidaPorHora(0, 30, horariosCustom)).toBe('cena')
+      expect(asignarComidaPorHora(1, 0, horariosCustom)).toBe('desayuno')
+      expect(asignarComidaPorHora(6, 30, horariosCustom)).toBe('desayuno')
+    })
+  })
+
+  describe('Cálculo de fecha operativa y enlaces de comida', () => {
+    it('calcula fecha para enlaces respetando fechaParam explícita', () => {
+      expect(calcularFechaParaComida('cena', '2026-10-15')).toBe('2026-10-15')
+    })
+
+    it('devuelve hoy para comidas diurnas sin fechaParam', () => {
+      expect(calcularFechaParaComida('desayuno')).toBe(hoy())
     })
   })
 

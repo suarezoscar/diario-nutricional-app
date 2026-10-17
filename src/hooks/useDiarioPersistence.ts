@@ -2,7 +2,7 @@ import { useState, useCallback, useRef } from 'react'
 import { guardarDia } from '../services/registroService'
 import { guardarCacheHoyYSincronizarWidget } from '../services/widgetService'
 import { sincronizarNotificaciones } from '../services/notificationService'
-import { hoy } from '../utils/fechas'
+import { hoy, obtenerFechaOperativa } from '../utils/fechas'
 import type { Registro } from '../types'
 
 /**
@@ -39,7 +39,7 @@ export function useDiarioPersistence(userId: string) {
         hayCambiosPendientesRef.current = false
         setEstadoGuardado('guardado')
 
-        if (fechaDestino === hoy()) {
+        if (fechaDestino === hoy() || fechaDestino === obtenerFechaOperativa()) {
           void guardarCacheHoyYSincronizarWidget(datosAGuardar)
           void sincronizarNotificaciones(datosAGuardar)
         }

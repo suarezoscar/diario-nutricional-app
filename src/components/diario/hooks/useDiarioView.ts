@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { Keyboard, Platform } from 'react-native'
 import { useDiario } from '../../../hooks/useDiario'
 import { useFotoPlato } from '../../../hooks/useFotoPlato'
-import { hoy, obtenerComidaActual } from '../../../utils/fechas'
+import { hoy, obtenerComidaActual, obtenerFechaOperativa } from '../../../utils/fechas'
 import { cargarConfiguracion, type HorariosConfig } from '../../../services/configService'
 import type { UsuarioAutenticado, Registro } from '../../../types'
 import { useDayAnimation } from './useDayAnimation'
@@ -72,7 +72,10 @@ export function useDiarioView({
     void leerConfig()
   }, [])
 
-  const comidaActual = diario.fecha === hoy() ? obtenerComidaActual(horariosUsuario) : null
+  const comidaActual =
+    diario.fecha === hoy() || diario.fecha === obtenerFechaOperativa(horariosUsuario)
+      ? obtenerComidaActual(horariosUsuario)
+      : null
 
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow'

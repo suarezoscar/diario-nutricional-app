@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import { Animated, Easing } from 'react-native'
 import * as Linking from 'expo-linking'
 import * as Notifications from 'expo-notifications'
-import { hoy } from '../../utils/fechas'
+import { calcularFechaParaComida, obtenerFechaOperativa } from '../../utils/fechas'
 import { configurarNotificaciones, sincronizarNotificaciones } from '../../services/notificationService'
 import { iniciarEscuchadoresSync } from '../../services/syncService'
 import type { TabPrincipal } from '../../types'
@@ -72,13 +72,15 @@ export function useMainScreen({ userId }: UseMainScreenParams) {
     const procesarUrl = (url: string | null) => {
       if (!url) return
       const parsed = Linking.parse(url)
+      const fechaQuery = parsed.queryParams?.fecha as string | undefined
       if (parsed.hostname === 'hoy' || parsed.path === 'hoy') {
-        setFechaSeleccionada(hoy())
+        setFechaSeleccionada(fechaQuery || obtenerFechaOperativa())
         cambiarTabConAnimacion('diario')
       } else if (parsed.hostname === 'comida' || parsed.path === 'comida') {
-        setFechaSeleccionada(hoy())
-        cambiarTabConAnimacion('diario')
         const clave = (parsed.queryParams?.clave as string) || 'comida'
+        const fechaTarget = calcularFechaParaComida(clave, fechaQuery)
+        setFechaSeleccionada(fechaTarget)
+        cambiarTabConAnimacion('diario')
         const accion = (parsed.queryParams?.accion as 'foto' | 'texto') || 'texto'
         setAccionWidget({ clave, accion, timestamp: Date.now() })
       }

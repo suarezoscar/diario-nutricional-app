@@ -28,7 +28,7 @@ export const HORARIOS_POR_DEFECTO: HorariosConfig = {
   mediaManana: { inicio: '11:00', fin: '13:30' },
   comida: { inicio: '13:30', fin: '17:00' },
   merienda: { inicio: '17:00', fin: '20:00' },
-  cena: { inicio: '20:00', fin: '06:00' },
+  cena: { inicio: '20:00', fin: '23:30' },
 }
 
 export const CONFIGURACION_POR_DEFECTO: ConfiguracionApp = {
@@ -54,12 +54,19 @@ export async function cargarConfiguracion(): Promise<ConfiguracionApp> {
     if (!raw) return CONFIGURACION_POR_DEFECTO
 
     const parsed = JSON.parse(raw) as Partial<ConfiguracionApp>
+    const horarios = {
+      ...CONFIGURACION_POR_DEFECTO.horarios,
+      ...(parsed.horarios || {}),
+    }
+
+    // Saneamiento automático para configuraciones previas con fin a las 06:00
+    if (horarios.cena?.fin === '06:00') {
+      horarios.cena.fin = '23:30'
+    }
+
     return {
       tema: parsed.tema || CONFIGURACION_POR_DEFECTO.tema,
-      horarios: {
-        ...CONFIGURACION_POR_DEFECTO.horarios,
-        ...(parsed.horarios || {}),
-      },
+      horarios,
       notificaciones: {
         ...CONFIGURACION_POR_DEFECTO.notificaciones,
         ...(parsed.notificaciones || {}),
