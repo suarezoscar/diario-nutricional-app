@@ -1,8 +1,10 @@
+import appConfig from '../../app.json'
+
 export const API_DESCRIPCION_URL = 'https://diario-nutricional.netlify.app/api/describir-plato'
 
 export const MAX_CARACTERES_COMIDA = 500
 
-export const APP_VERSION = '1.1.1'
+export const APP_VERSION = appConfig.expo.version
 
 export const GITHUB_REPO = 'suarezoscar/diario-nutricional-app'
 

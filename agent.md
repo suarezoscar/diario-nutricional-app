@@ -126,3 +126,18 @@ export function calcularEspaciadoSeguro(insetBase: number, multiplicador = 1): n
 - ❌ **NO** ejecutar animaciones dependientes del hilo de JavaScript sin `useNativeDriver: true`.
 - ❌ **NO** superar el límite de 120-150 líneas por archivo bajo ninguna excusa; divide en subcomponentes o utilidades.
 - ❌ **NO** generar documentación o comentarios en inglés; todo debe estar estrictamente en español.
+- ❌ **NO** hardcodear cadenas literales de versión en constantes o componentes; consumir siempre `APP_VERSION` vinculada a `app.json`.
+
+---
+
+## 9. Flujo de Versiones y Releases (Android / In-App Updates)
+
+- **Fuente Única de Verdad (`app.json`):**
+  - La versión de la aplicación y el código de versión nativo se definen en `app.json` (`expo.version` y `expo.android.versionCode`).
+  - La constante `APP_VERSION` en `src/config/constants.ts` debe importar siempre dinámicamente `appConfig.expo.version` desde `app.json` para evitar discrepancias de versión en el bundle de JavaScript y en el actualizador de la app (`updateService.ts`).
+- **Procedimiento para Nueva Versión:**
+  1. Incrementar `"version"` en `app.json` y `package.json` (ej: `1.1.2` -> `1.1.3`).
+  2. Incrementar obligatoriamente `"versionCode"` en `app.json` bajo `expo.android.versionCode` (ej: `34` -> `35`).
+  3. Ejecutar `pnpm run typecheck` y `pnpm test`.
+  4. Generar el commit: `chore(release): bump version to X.Y.Z (code N)`.
+  5. Crear y subir el tag Git para disparar la GitHub Action de compilación: `git tag vX.Y.Z && git push origin main --tags`.
